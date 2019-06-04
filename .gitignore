@@ -1,0 +1,30 @@
+# ignore compiled files of any sort
+*.pyc
+*.c
+*.so
+*~
+.#*
+*.swp
+*.swo
+
+# coverage
+.coverage
+
+# ignore specific usual dir
+.DS_Store
+.cache
+build
+.pytest_cache
+__pycache__
+.cachedir
+
+# ignore example results
+*results_*
+*.png
+*.pdf
+
+# ignore all type of zipped files
+*.zip
+*.nt.bz2
+*.tar.gz
+*.tgz
