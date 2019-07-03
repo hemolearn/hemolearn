@@ -9,7 +9,8 @@ from threadpoolctl import threadpool_limits
 from alphacsc.utils.convolution import _dense_tr_conv_d
 from alphacsc.utils.compute_constants import _compute_DtD_uv
 
-from .utils import lipschitz_est, check_random_state, get_lambda_max
+from .utils import (lipschitz_est, check_random_state, get_lambda_max,
+                    check_lbda, raise_if_vanished, check_obj, EarlyStopping)
 from .optim import scdclinmodel, proximal_descent
 from .loss_grad import _grad_Lz, obj_u_z
 from .prox import _prox_tv_multi
@@ -65,8 +66,9 @@ def _update_Lz(Lz0, constants):
 
 def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
                    max_iter=50, get_obj=False, get_time=False,
-                   random_state=None, name="DL", early_stopping=True,
-                   eps=1.0e-5, raise_on_increase=True, verbose=False):
+                   u_init='random', random_state=None, name="DL",
+                   early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+                   verbose=False):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
     """
     X = X.astype(np.float64)
@@ -79,23 +81,17 @@ def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
     n_times_valid = n_times - n_times_atom + 1
 
     Lz_hat = np.zeros((n_atoms, n_times_valid))
-    u_hat = rng.randn(n_atoms, n_channels)
+    if u_init == 'random':
+        u_hat = rng.randn(n_atoms, n_channels)
+    else:
+        raise ValueError("u_init should be in ['random', ]"
+                         ", got {}".format(u_init))
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"
                          "to True if get_obj is True")
 
-    if lbda_strategy not in ['ratio', 'fixed']:
-        raise ValueError("'lbda_strategy' should belong to "
-                         "['ratio', 'fixed'], got '{}'".format(lbda_strategy))
-
-    if lbda_strategy == 'ratio':
-        lbda_max = get_lambda_max(X, u_hat, v_)
-        lbda = lbda * lbda_max
-    else:
-        if not isintance(lbda, (int, float)):
-            raise ValueError("If 'lbda_strategy' is 'fixed', 'lbda' should be "
-                             "numerical, got '{}'".format(lbda_strategy))
+    lbda = check_lbda(lbda, lbda_strategy, X, u_hat, v_)
 
     constants = dict(lbda=lbda, X=X)
     if get_obj:
@@ -119,7 +115,7 @@ def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
         constants['B'] = A.T.dot(X.T)
 
         if get_obj:
-            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, A=A, valid=True)
+            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, v=v, valid=True)
             lobj.append(obj_)
             if verbose > 1:
                 if get_time:
@@ -130,11 +126,9 @@ def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
                                             ii + 1, max_iter, obj_ / lobj[0]))
 
         # check if some Lz_k vanished
-        norm_Lz_hat_k = [Lz_hat_k.dot(Lz_hat_k) for Lz_hat_k in Lz_hat]
-        check_Lz_hat_k_nonzero = norm_Lz_hat_k > np.finfo(np.float64).eps
         msg = ("Temporal component vanished, may be 'lbda' is too high, "
                "please try to reduce its value.")
-        assert np.all(check_Lz_hat_k_nonzero), msg
+        raise_if_vanished(Lz_hat, msg)
 
         # Update u
         if get_time:
@@ -144,7 +138,7 @@ def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
             ltime.append(time.process_time() - t0)
 
         if get_obj:
-            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, A=A, valid=True)
+            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, v=v, valid=True)
             lobj.append(obj_)
             if verbose > 1:
                 if get_time:
@@ -155,27 +149,20 @@ def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
                                             ii + 1, max_iter, obj_ / lobj[0]))
 
         if ii > 2 and get_obj:
-            eps_Lz = ((lobj[-4] - lobj[-2]) / lobj[-4])
-            eps_u = ((lobj[-3] - lobj[-1]) / lobj[-3])
-
-            # check increasing cost-function
-            if raise_on_increase and eps_Lz < np.finfo(np.float64).eps:
-                raise RuntimeError("[{}/{}] Updating Lz relatively increase "
-                                   "global cost-function of "
-                                   "{:.3e}".format(ii + 1, max_iter, -eps_Lz))
-            if raise_on_increase and eps_u < np.finfo(np.float64).eps:
-                raise RuntimeError("[{}/{}] Updating u relatively increase "
-                                   "global cost-function of "
-                                   "{:.3e}".format(ii + 1, max_iter, -eps_u))
-
-            # check early-stopping
-            if early_stopping and eps_Lz < eps and eps_u < eps:
+            try:
+                check_obj(lobj, raise_on_increase, eps)
+            except EarlyStopping as e:
                 if verbose > 1:
-                    print("[{}/{}] Early-stopping done with: Lz-eps={:.3e}, "
-                          "u-eps={:.3e}".format(ii + 1, max_iter,
-                                                eps_Lz, eps_u))
+                    print(str(e))
                 break
 
     z_hat = np.diff(Lz_hat, axis=-1)
 
-    return Lz_hat, z_hat, u_hat, lbda, np.array(lobj), np.array(ltime)
+    if get_obj and get_time:
+        return Lz_hat, z_hat, u_hat, lbda, np.array(lobj), np.array(ltime)
+    elif get_obj and not get_time:
+        return Lz_hat, z_hat, u_hat, lbda, np.array(lobj), None
+    elif not get_obj and get_time:
+        return Lz_hat, z_hat, u_hat, lbda, None, np.array(ltime)
+    else:
+        return Lz_hat, z_hat, u_hat, lbda, None, None

@@ -48,6 +48,8 @@ def obj_u_z(X, lbda, u, Lz, v=None, A=None, valid=True):
         valid_u = _prox_positive_L2_ball_multi(u)
 
     if A is None:
+        if v is None:
+            raise ValueError("if A is None, v should be given.")
         A = np.r_[[np.convolve(v, Lz_k) for Lz_k in Lz]].T
 
     res = (X.T - A.dot(valid_u)).ravel()

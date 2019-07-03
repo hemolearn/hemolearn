@@ -4,12 +4,13 @@
 
 import numpy as np
 from skimage.draw import circle
-
-from alphacsc.utils.hrf_model import spm_hrf
 from alphacsc.datasets.fmri import add_gaussian_noise
 from alphacsc.utils.compute_constants import (_compute_DtD_uv, compute_ztX,
                                               compute_ztz)
 from alphacsc.utils.convolution import _dense_tr_conv_d
+
+from .hrf_model import spm_hrf
+from .utils import check_random_state
 
 
 def _gen_one_voxel(tr, len_h, snr, s, T, rng):
@@ -30,10 +31,12 @@ def _gen_one_voxel(tr, len_h, snr, s, T, rng):
 
 
 def _gen_multi_voxels(tr, n_times_atom, snr, s, n_times_valid, n_atoms,
-                      n_channels, rng):
+                      n_channels, random_state):
     """Generate multiple synthetic voxel."""
     n_s = int(s * n_times_valid)  # l0-norm support of each z_k
     h = spm_hrf(tr, n_times_atom)  # HRF
+
+    rng = check_random_state(random_state)
 
     # construction of the synthetics signals
     l_z_k, l_Lz_k, l_h_conv_Lz_k, l_u_k = [], [], [], []
