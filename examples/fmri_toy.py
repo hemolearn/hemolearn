@@ -7,45 +7,29 @@ import os
 import shutil
 import subprocess
 import itertools
-from datetime import datetime
+from joblib import Parallel, delayed, Memory
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from seven import SLRDM
+from seven.learn_u_z_multi import lean_u_z_multi
 from seven.data import _gen_multi_voxels
-from seven.utils import check_random_state
+from seven.utils import check_random_state, get_unique_dirname
 
-
-###############################################################################
-# results management
-print(__doc__)
-
-date = datetime.now()
-dirname = 'results_toy_#{0}{1}{2}{3}{4}{5}'.format(date.year, date.month,
-                                                   date.day, date.hour,
-                                                   date.minute, date.second)
-
-if not os.path.exists(dirname):
-    os.makedirs(dirname)
-
-print("archiving '{0}' under '{1}'".format(__file__, dirname))
-shutil.copyfile(__file__, os.path.join(dirname, __file__))
 
 ###############################################################################
 # define data
-seed = None
-rng = check_random_state(seed)
+seed = 0
 tr = 1.0
 snr = 1.0
 len_h = n_times_atom = 30
 n_atoms = 2
 n_times_valid = 200
-s = 0.1
+s = 0.01
 p = 100
 n_channels = p ** 2
 tmp = _gen_multi_voxels(tr, n_times_atom, snr, s, n_times_valid, n_atoms,
-                        n_channels, rng)
+                        n_channels, seed)
 noisy_X, _, Lz, z, _, u, h, _, _, _, _ = tmp
 noisy_X /= np.std(noisy_X)
 u_0 = u[0, :]
@@ -53,12 +37,16 @@ u_1 = u[1, :]
 
 ###############################################################################
 # estimation of u an z
-cdl = SLRDM(n_atoms=n_atoms, v=h, lbda=0.1, max_iter=50, random_state=rng,
-            verbose=1)
-cdl.fit(noisy_X, nb_fit_try=3)
-pobj, times = cdl.lobj, cdl.ltime
-u_hat = cdl.u_hat
-z_hat, Lz_hat = cdl.z_hat, cdl.Lz_hat
+params = dict(X=noisy_X, v=h, n_atoms=n_atoms, lbda_strategy='ratio',
+              lbda=0.01, max_iter=50, get_obj=True, get_time=True,
+              random_state=None, verbose=1)
+nb_fit_try = 3
+results = Parallel(n_jobs=-2)(delayed(lean_u_z_multi)(**params)
+                              for _ in range(nb_fit_try))
+l_last_pobj = np.array([res[-2][-1] for res in results])
+best_run = np.argmin(l_last_pobj)
+res = results[best_run]
+Lz_hat, z_hat, u_hat, lbda, pobj, times = res
 
 Lz_0_true = Lz[0, :].T
 Lz_1_true = Lz[1, :].T
@@ -67,7 +55,12 @@ Lz_1_hat = Lz_hat[1, :].T
 u_0_hat = u_hat[0, :]
 u_1_hat = u_hat[1, :]
 
-if np.dot(Lz_0_true, Lz_0_hat) < np.dot(Lz_0_true, Lz_1_hat):
+corr_00 = np.dot(Lz_0_true, Lz_0_hat)
+corr_00 /= (np.dot(Lz_0_true, Lz_0_true) * np.dot(Lz_0_hat, Lz_0_hat))
+corr_01 = np.dot(Lz_0_true, Lz_1_hat)
+corr_01 /= (np.dot(Lz_0_true, Lz_0_true) * np.dot(Lz_1_hat, Lz_1_hat))
+
+if corr_00 < corr_01:
     tmp = Lz_0_hat
     Lz_0_hat = Lz_1_hat
     Lz_1_hat = tmp
@@ -79,6 +72,17 @@ Lz_0_hat /= np.max(np.abs(Lz_0_hat))
 Lz_1_hat /= np.max(np.abs(Lz_1_hat))
 Lz_0_true /= np.max(np.abs(Lz_0_true))
 Lz_1_true /= np.max(np.abs(Lz_1_true))
+
+###############################################################################
+# results management
+dirname = get_unique_dirname("results_toy_#")
+
+if not os.path.exists(dirname):
+    os.makedirs(dirname)
+
+print("archiving '{0}' under '{1}'".format(__file__, dirname))
+shutil.copyfile(__file__, os.path.join(dirname, __file__))
+
 
 ###############################################################################
 # archiving results
