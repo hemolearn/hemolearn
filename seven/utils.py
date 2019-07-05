@@ -2,71 +2,37 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
-import numpy as np
+import os
+import cProfile
 from datetime import datetime
+import numpy as np
+from joblib import Memory
+from scipy.interpolate import splrep, sproot
+import numba
 
-from alphacsc.utils.convolution import _dense_tr_conv_d
+from nilearn import input_data
 
 
-class EarlyStopping(Exception):
-    """ Raised when the algorithm converged."""
-    pass
+def _compute_uvtuv_z(z, uvtuv):
+    """ compute uvtuv_z
 
+    Parameters
+    ----------
+    z : array, shape (n_atoms, n_times_valid)
+    uvtuv : array, shape (n_atoms, n_atoms, 2 * n_times_atom - 1)
 
-def check_obj(lobj, ii, max_iter, early_stopping=True, raise_on_increase=True,
-              eps=np.finfo(np.float64).eps):
-    """ If raise_on_increase is True raise a RunTimeError exception when the
-    objectif function has increased. Raise a EarlyStopping exception if the
-    algorithm converged.
+    Return
+    ------
+    uvtuv_z : array, shape (n_atoms, n_times_valid)
     """
-    eps_Lz = ((lobj[-4] - lobj[-2]) / lobj[-4])
-    eps_u = ((lobj[-3] - lobj[-1]) / lobj[-3])
-
-    # check increasing cost-function
-    if raise_on_increase and eps_Lz < eps:
-        raise RuntimeError("[{}/{}] Updating Lz relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_Lz))
-    if raise_on_increase and eps_u < eps:
-        raise RuntimeError("[{}/{}] Updating u relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_u))
-
-    # check early-stopping
-    if early_stopping and eps_Lz < eps and eps_u < eps:
-        msg = ("[{}/{}] Early-stopping done with: Lz-eps={:.3e}, "
-               "u-eps={:.3e}".format(ii + 1, max_iter, eps_Lz, eps_u))
-        raise EarlyStopping(msg)
-
-
-def raise_if_vanished(A, msg="Vanished raw", eps=np.finfo(np.float64).eps):
-    """ Raise an AssertionException if one raw of A has negligeable
-    l2-norm.
-    """
-    norm_A_k = [A_k.dot(A_k) for A_k in A]
-    check_A_k_nonzero = norm_A_k > eps
-    assert np.all(check_A_k_nonzero), msg
-
-
-def get_lambda_max(X, u, v_):
-    """ Get lambda max.
-    """
-    n_atoms, n_channels = u.shape
-    D_hat = np.c_[u, v_]
-    DtX = _dense_tr_conv_d(X, D=D_hat, n_channels=n_channels)[:, None]
-    return np.max(np.abs(DtX))
-
-
-def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance. """
-    if seed is None or seed is np.random:
-        return np.random.mtrand._rand
-    if isinstance(seed, (int, np.integer)):
-        return np.random.RandomState(seed)
-    if isinstance(seed, np.random.RandomState):
-        return seed
-    raise ValueError('{0} cannot be used to seed a numpy.random.RandomState'
-                     ' instance'.format(seed))
+    n_atoms, n_times_valid = z.shape
+    uvtuv_z = np.empty((n_atoms, n_times_valid))
+    for k0 in range(n_atoms):
+        _sum = np.convolve(z[0, :], uvtuv[k0, 0, :], mode='same')
+        for k in range(1, n_atoms):
+            _sum += np.convolve(z[k, :], uvtuv[k0, k, :], mode='same')
+        uvtuv_z[k0, :] = _sum
+    return uvtuv_z
 
 
 def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
@@ -84,20 +50,83 @@ def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
     return np.linalg.norm(x_new)
 
 
-def sort_atoms_by_explained_variances(u_hat, Lz_hat, v=None):
+def fwhm(t, hrf, k=3):
+    """Return the full width at half maximum. """
+    half_max = np.amax(hrf) / 2.0
+    s = splrep(t, hrf - half_max, k=k)
+    roots = sproot(s)
+    try:
+        return np.abs(roots[1] - roots[0])
+    except IndexError:
+        return -1
+
+
+def tp(t, hrf):
+    """ Return time to peak oh the signal. """
+    return t[np.argmax(hrf)]
+
+
+def get_nifti_ext(func_fname):
+    """ Return the extension of the Nifti. """
+    err_msg = "Filename extension not understood, {extension}"
+    fname, ext = os.path.splitext(func_fname)
+    if ext == '.gz':
+        fname, ext_ = os.path.splitext(fname)
+        if ext_ == '.nii':
+            return fname, ext_ + ext
+        else:
+            raise ValueError(err_msg.format(extension=ext))
+    elif ext == '.nii':
+        return fname, ext
+    else:
+        raise ValueError(err_msg.format(extension=ext))
+
+
+def fmri_preprocess(
+        func_fname, mask_img=None, sessions=None, smoothing_fwhm=None,
+        standardize=False, detrend=False, low_pass=None, high_pass=None,
+        t_r=None, target_affine=None, target_shape=None,
+        mask_strategy='background', mask_args=None, sample_mask=None,
+        dtype=None, memory_level=1, memory=None, verbose=0,
+        confounds=None, suffix='_preproc'):
+    """ Preprocess the fMRI data. """
+    if not isinstance(func_fname, str):
+        raise ValueError("func_fname should be the filename of "
+                         "a 4d Nifti file")
+
+    masker = input_data.NiftiMasker(
+        mask_img=mask_img, sessions=sessions, smoothing_fwhm=smoothing_fwhm,
+        standardize=standardize, detrend=detrend, low_pass=low_pass,
+        high_pass=high_pass, t_r=t_r, target_affine=target_affine,
+        target_shape=target_shape, mask_strategy=mask_strategy,
+        mask_args=mask_args, sample_mask=sample_mask, dtype=dtype,
+        memory_level=memory_level, memory=memory, verbose=verbose)
+
+    preproc_X = masker.fit_transform(func_fname, confounds=confounds)
+    preproc_X_img = masker.inverse_transform(preproc_X)
+    fname, ext = get_nifti_ext(func_fname)
+    nfname = fname + suffix + ext
+    preproc_X_img.to_filename(nfname)
+
+    return nfname
+
+
+def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     """ Sorted the temporal the spatial maps and the associated activation by
     explained variance."""
-    assert Lz_hat.shape[0] == u_hat.shape[0]
-    n_atoms, _ = u_hat.shape
-    variances = np.zeros(n_atoms)
-    if v is not None:
-        vLz = np.r_[[np.convolve(v, Lz_hat_k) for Lz_hat_k in Lz_hat]]
-    else:
-        vLz = Lz_hat
+    n_atoms, n_voxels = u.shape
+    _, n_times_valid = z.shape
+    n_hrf_rois, n_times_atom = v.shape
+    n_times = n_times_valid + n_times_atom - 1
+    variances = np.empty(n_atoms)
     for k in range(n_atoms):
-        variances[k] = np.var(np.outer(u_hat[k, :], vLz[k, :]))
+        X_hat = np.empty((n_voxels, n_times))
+        for m in range(n_hrf_rois):
+            for j in hrf_rois[m + 1]:
+                X_hat[j, :] = np.convolve(u[k, j] * v[m, :], z[k, :])
+        variances[k] = np.var(X_hat)
     order = np.argsort(variances)[::-1]
-    return u_hat[order, :], Lz_hat[order, :], variances[order]
+    return u[order, :], z[order, :], variances[order]
 
 
 def get_unique_dirname(prefix):
@@ -111,17 +140,12 @@ def get_unique_dirname(prefix):
     return prefix + date_tag
 
 
-def check_lbda(lbda, lbda_strategy, X, u_hat, v_):
-    """ Return the regularization factor."""
-    if lbda_strategy not in ['ratio', 'fixed']:
-        raise ValueError("'lbda_strategy' should belong to "
-                         "['ratio', 'fixed'], got '{}'".format(lbda_strategy))
-
-    if lbda_strategy == 'ratio':
-        lbda_max = get_lambda_max(X, u_hat, v_)
-        lbda = lbda * lbda_max
-    else:
-        if not isintance(lbda, (int, float)):
-            raise ValueError("If 'lbda_strategy' is 'fixed', 'lbda' should be "
-                             "numerical, got '{}'".format(lbda_strategy))
-    return lbda
+def profile_me(fn):
+    """ Profiling decorator. """
+    def profiled_fn(*args, **kwargs):
+        filename = fn.__name__ + '.profile'
+        prof = cProfile.Profile()
+        ret = prof.runcall(fn, *args, **kwargs)
+        prof.dump_stats(filename)
+        return ret
+    return profiled_fn

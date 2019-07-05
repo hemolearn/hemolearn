@@ -4,165 +4,346 @@
 
 import time
 import numpy as np
+from joblib import Memory, Parallel, delayed
 from threadpoolctl import threadpool_limits
 
-from alphacsc.utils.convolution import _dense_tr_conv_d
-from alphacsc.utils.compute_constants import _compute_DtD_uv
-
-from .utils import (lipschitz_est, check_random_state, get_lambda_max,
-                    check_lbda, raise_if_vanished, check_obj, EarlyStopping)
+from .checks import (check_lbda, check_if_vanished, check_obj,
+                     EarlyStopping, check_random_state)
+from .utils import lipschitz_est
+from .constants import _precompute_uvtuv, _precompute_B_C
 from .optim import scdclinmodel, proximal_descent
-from .loss_grad import _grad_Lz, obj_u_z
+from .loss_grad import _grad_z, _obj
 from .prox import _prox_tv_multi
+from .hrf_model import spm_scaled_hrf, spm_hrf_3_basis, spm_hrf_2_basis
+from .estim_v import _estim_v_d_basis, _estim_v_scaled_hrf
+from .atlas import split_atlas
+from .convolution import adjconv_uH, make_toeplitz
+
+
+def _update_v(a, constants):
+    """ Update HRF."""
+    msg = "'z' is missing in 'constants' for '_update_v' step."
+    assert ('z' in constants), msg
+    msg = "'u' is missing in 'constants' for '_update_v' step."
+    assert ('u' in constants), msg
+    msg = "'rois_idx' is missing in 'constants' for '_update_z' step."
+    assert ('rois_idx' in constants), msg
+    msg = "'X' is missing in 'constants' for '_update_v' step."
+    assert ('X' in constants), msg
+    msg = "'hrf_model' is missing in 'constants' for '_update_v' step."
+    assert ('hrf_model' in constants), msg
+
+    z, u = constants['z'], constants['u']
+    X, rois_idx = constants['X'], constants['rois_idx']
+    hrf_model = constants['hrf_model']
+
+    if hrf_model in ['2_basis_hrf', '3_basis_hrf']:
+        msg = "'h' is missing in 'constants' for '_update_v' step."
+        assert ('h' in constants), msg
+        h = constants['h']
+        return _estim_v_d_basis(a, X, h, z, u, rois_idx)
+
+    elif hrf_model == 'scaled_hrf':
+        msg = "'t_r' is missing in 'constants' for '_update_v' step."
+        assert ('t_r' in constants), msg
+        msg = ("'n_times_atom' is missing in 'constants' for "
+                "'_update_v' step.")
+        assert ('n_times_atom' in constants), msg
+        t_r, n_times_atom = constants['t_r'], constants['n_times_atom']
+        return _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom)
+
+    else:
+        raise ValueError("hrf_model should be in ['3_basis_hrf', "
+                            "'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
+                            "got {}".format(hrf_model))
 
 
 def _update_u(u0, constants):
-    """ Update spatiel maps."""
-    with threadpool_limits(limits=1, user_api='blas'):
-        msg = "'C' is missing in 'constants' for '_update_u' step."
-        assert ('C' in constants), msg
-        msg = "'B' is missing in 'constants' for '_update_u' step."
-        assert ('B' in constants), msg
+    """ Update spatial maps."""
+    msg = "'C' is missing in 'constants' for '_update_u' step."
+    assert ('C' in constants), msg
+    msg = "'B' is missing in 'constants' for '_update_u' step."
+    assert ('B' in constants), msg
 
-        params = dict(u0=u0, r=1, max_iter=100, constants=constants)
-        u_hat = scdclinmodel(**params)
+    params = dict(u0=u0, max_iter=100, constants=constants)
+    u_hat = scdclinmodel(**params)
 
     return u_hat
 
 
-def _update_Lz(Lz0, constants):
+def _update_z(z0, constants):
     """ Update temporal components."""
-    msg = "'uv' is missing in 'constants' for '_update_Lz' step."
-    assert ('uv' in constants), msg
-    msg = "'X' is missing in 'constants' for '_update_Lz' step."
+    msg = "'v' is missing in 'constants' for '_update_z' step."
+    assert ('v' in constants), msg
+    msg = "'H' is missing in 'constants' for '_update_z' step."
+    assert ('H' in constants), msg
+    msg = "'u' is missing in 'constants' for '_update_z' step."
+    assert ('u' in constants), msg
+    msg = "'rois_idx' is missing in 'constants' for '_update_z' step."
+    assert ('rois_idx' in constants), msg
+    msg = "'X' is missing in 'constants' for '_update_z' step."
     assert ('X' in constants), msg
-    msg = "'lbda' is missing in 'constants' for '_update_Lz' step."
+    msg = "'lbda' is missing in 'constants' for '_update_z' step."
     assert ('lbda' in constants), msg
 
-    uv = constants['uv']
+    u = constants['u']
+    H = constants['H']
+    v = constants['v']
+    rois_idx = constants['rois_idx']
     X = constants['X']
     lbda = constants['lbda']
 
-    n_channels, _ = X.shape
-    DtD = _compute_DtD_uv(uv, n_channels)
-    DtX = _dense_tr_conv_d(X, D=uv, n_channels=n_channels)
+    uvtuv = _precompute_uvtuv(u=u, v=v, rois_idx=rois_idx)
+    uvtX = adjconv_uH(X, u=u, H=H, rois_idx=rois_idx)
 
-    def prox(Lz, step_size):
-        return _prox_tv_multi(Lz, lbda, step_size)
+    def prox(z, step_size):
+        return _prox_tv_multi(z, lbda, step_size)
 
-    def grad(Lz):
-        return _grad_Lz(Lz, DtD, DtX)
+    def grad(z):
+        return _grad_z(z, uvtuv, uvtX)
 
-    def AtA(Lz):
-        return _grad_Lz(Lz, DtD)
-    step_size = 0.9 / lipschitz_est(AtA, Lz0.shape)
+    def AtA(z):
+        return _grad_z(z, uvtuv)
+    step_size = 0.9 / lipschitz_est(AtA, z0.shape)
 
-    params = dict(x0=Lz0, grad=grad, prox=prox, step_size=step_size,
+    params = dict(x0=z0, grad=grad, prox=prox, step_size=step_size,
                   momentum='fista', restarting='descent', max_iter=100)
-    Lz_hat = proximal_descent(**params)
+    z_hat = proximal_descent(**params)
 
-    return Lz_hat
+    return z_hat
 
 
-def lean_u_z_multi(X, v, n_atoms, lbda_strategy='ratio', lbda=0.1,
-                   max_iter=50, get_obj=False, get_time=False,
-                   u_init='random', random_state=None, name="DL",
-                   early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-                   verbose=False):
+def learn_u_z_multi(
+        X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
+        lbda_strategy='ratio', lbda=0.1, lbda_hrf=1.0, max_iter=50,
+        get_obj=0, get_time=0, u_init='random', random_seed=None,
+        name="DL", early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+        verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
     """
     X = X.astype(np.float64)
-    v_ = np.repeat(v[None, :], n_atoms, axis=0).squeeze()
 
-    rng = check_random_state(random_state)
+    rng = check_random_state(random_seed)
 
-    n_channels, n_times = X.shape
-    n_times_atom = v.shape[0]
+    n_voxels, n_times = X.shape
     n_times_valid = n_times - n_times_atom + 1
 
-    Lz_hat = np.zeros((n_atoms, n_times_valid))
+    # split atlas
+    rois_idx, rois_label, n_hrf_rois = split_atlas(hrf_rois)
+
+    constants = dict(X=X, rois_idx=rois_idx, hrf_model=hrf_model)
+
+    # v initialization
+    if hrf_model == '3_basis_hrf':
+        h = spm_hrf_3_basis(t_r, n_times_atom)
+        a_hat = np.c_[[np.array([1.0, 0.0, 0.0]) for _ in range(n_hrf_rois)]]
+        v_hat = np.c_[[a_.dot(h) for a_ in a_hat]]
+        constants['h'] = h
+
+    elif hrf_model == '2_basis_hrf':
+        h = spm_hrf_2_basis(t_r, n_times_atom)
+        a_hat = np.c_[[np.array([1.0, 0.0]) for _ in range(n_hrf_rois)]]
+        v_hat = np.c_[[a_.dot(h) for a_ in a_hat]]
+        constants['h'] = h
+
+    elif hrf_model == 'scaled_hrf':
+        delta = 1.0
+        a_hat = delta * np.ones(n_hrf_rois)
+        v_ = spm_scaled_hrf(delta=delta, t_r=t_r, n_times_atom=n_times_atom)
+        v_hat = np.c_[[v_ for a_ in a_hat]]
+        constants['t_r'] = t_r
+        constants['n_times_atom'] = n_times_atom
+
+    else:
+        raise ValueError("hrf_model should be in ['3_basis_hrf', '2_basis_hrf'"
+                         ", 'scaled_hrf', 'fir_hrf'], got {}".format(hrf_model))
+    v_init = v_hat[0, :]
+
+    # H initialization
+    H_hat = np.empty((n_hrf_rois, n_times, n_times_valid))
+    for m in range(n_hrf_rois):
+        H_hat[m, :, :] = make_toeplitz(v_hat[m], n_times_valid=n_times_valid)
+
+    # z initialization
+    z_hat = np.zeros((n_atoms, n_times_valid))
+
+    # u initialization
     if u_init == 'random':
-        u_hat = rng.randn(n_atoms, n_channels)
+        u_hat = rng.randn(n_atoms, n_voxels)
     else:
         raise ValueError("u_init should be in ['random', ]"
-                         ", got {}".format(u_init))
+                        ", got {}".format(u_init))
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"
-                         "to True if get_obj is True")
+                        "to True if get_obj is True")
 
-    lbda = check_lbda(lbda, lbda_strategy, X, u_hat, v_)
+    # temporal regularization parameter
+    lbda = check_lbda(lbda, lbda_strategy, X, u_hat, H_hat, rois_idx)
 
-    constants = dict(lbda=lbda, X=X)
+    constants['lbda'] = lbda
+
     if get_obj:
-        lobj = [obj_u_z(X=X, lbda=lbda, u=u_hat, v=v, Lz=Lz_hat, valid=True)]
+        lobj = [_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
+                     rois_idx=rois_idx, valid=True)]
     if get_time:
         ltime = [0.0]
 
-    for ii in range(max_iter):
+    # main loop
+    with threadpool_limits(limits=1, user_api='blas'):
 
-        # Update Lz
-        constants['uv'] = np.c_[u_hat, v_]
+        for ii in range(max_iter):
 
-        if get_time:
-            t0 = time.process_time()
-        Lz_hat = _update_Lz(Lz_hat, constants)  # update
-        if get_time:
-            ltime.append(time.process_time() - t0)
+            if get_time == 1:
+                t0 = time.process_time()
 
-        A = np.r_[[np.convolve(v, Lz_hat_k) for Lz_hat_k in Lz_hat]].T
-        constants['C'] = A.T.dot(A)
-        constants['B'] = A.T.dot(X.T)
+            # use Toeplitz matrices for obj. func. computation (Numpy speed-up)
+            for m in range(n_hrf_rois):
+                H_hat[m, ...] = make_toeplitz(v_hat[m],
+                                            n_times_valid=n_times_valid)
 
-        if get_obj:
-            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, v=v, valid=True)
-            lobj.append(obj_)
-            if verbose > 1:
-                if get_time:
-                    print("[{}/{}] Update Lz done: {:.4f} in {:.3f}s".format(
-                                ii + 1, max_iter, obj_ / lobj[0], ltime[-1]))
-                else:
-                    print("[{}/{}] Update Lz done: {:.4f}".format(
-                                            ii + 1, max_iter, obj_ / lobj[0]))
+            # Update z
+            constants['a'] = a_hat
+            constants['v'] = v_hat
+            constants['H'] = H_hat
+            constants['u'] = u_hat
 
-        # check if some Lz_k vanished
-        msg = ("Temporal component vanished, may be 'lbda' is too high, "
-               "please try to reduce its value.")
-        raise_if_vanished(Lz_hat, msg)
+            if get_time == 2:
+                t0 = time.process_time()
+            z_hat = _update_z(z_hat, constants)  # update
+            if get_time == 2:
+                ltime.append(time.process_time() - t0)
 
-        # Update u
-        if get_time:
-            t0 = time.process_time()
-        u_hat = _update_u(u_hat, constants)  # update
-        if get_time:
-            ltime.append(time.process_time() - t0)
-
-        if get_obj:
-            obj_ = obj_u_z(X=X, lbda=lbda, u=u_hat, Lz=Lz_hat, v=v, valid=True)
-            lobj.append(obj_)
-            if verbose > 1:
-                if get_time:
-                    print("[{}/{}] Update u done: {:.4f} in {:.3f}s".format(
-                                ii + 1, max_iter, obj_ / lobj[0], ltime[-1]))
-                else:
-                    print("[{}/{}] Update u done: {:.4f}".format(
-                                            ii + 1, max_iter, obj_ / lobj[0]))
-
-        if ii > 2 and get_obj:
-            try:
-                check_obj(lobj, raise_on_increase, eps)
-            except EarlyStopping as e:
+            if get_obj == 2:
+                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
+                            rois_idx=rois_idx, valid=True))
                 if verbose > 1:
-                    print(str(e))
-                break
+                    if get_time:
+                        print("[{}/{}] Update z done in {:.1f} s : "
+                            "cost = {:.6f}".format(
+                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                    else:
+                        print("[{}/{}] Update z done: cost = {:.6f}".format(
+                                        ii + 1, max_iter, lobj[-1] / lobj[0]))
 
-    z_hat = np.diff(Lz_hat, axis=-1)
+            # check if some z_k vanished
+            msg = ("Temporal component vanished, may be 'lbda' is too high, "
+                "please try to reduce its value.")
+            check_if_vanished(z_hat, msg)
+
+            # Update u
+            B, C = _precompute_B_C(X, z_hat, H_hat, rois_idx)
+            constants['C'] = C
+            constants['B'] = B
+
+            if get_time == 2:
+                t0 = time.process_time()
+            u_hat = _update_u(u_hat, constants)  # update
+            if get_time == 2:
+                ltime.append(time.process_time() - t0)
+
+            if get_obj == 2:
+                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
+                            rois_idx=rois_idx, valid=True))
+                if verbose > 1:
+                    if get_time:
+                        print("[{}/{}] Update u done in {:.1f} s : "
+                            "cost = {:.6f}".format(
+                           ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                    else:
+                        print("[{}/{}] Update u done: cost = {:.6f}".format(
+                                        ii + 1, max_iter, lobj[-1] / lobj[0]))
+
+            # Update v
+            constants['u'] = u_hat
+            constants['z'] = z_hat
+
+            if get_time == 2:
+                t0 = time.process_time()
+            a_hat, v_hat = _update_v(a_hat, constants)  # update
+            if get_time == 2:
+                ltime.append(time.process_time() - t0)
+
+            if get_obj == 2:
+                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
+                            rois_idx=rois_idx, valid=True))
+                if verbose > 1:
+                    if get_time:
+                        print("[{}/{}] Update v done in {:.1f} s : "
+                            "cost = {:.6f}".format(
+                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                    else:
+                        print("[{}/{}] Update v done: cost = {:.6f}".format(
+                                       ii + 1, max_iter, lobj[-1] / lobj[0]))
+
+            if get_time == 1:
+                ltime.append(time.process_time() - t0)
+
+            if get_obj == 1:
+                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
+                            rois_idx=rois_idx, valid=True))
+                if verbose > 1:
+                    if get_time:
+                        print("[{}/{}] Iteration done in {:.1f} s : "
+                            "cost = {:.6f}".format(
+                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                    else:
+                        print("[{}/{}] Iteration done: cost = {:.6f}".format(
+                                       ii + 1, max_iter, lobj[-1] / lobj[0]))
+
+            if ii > 2 and get_obj:
+                try:
+                    check_obj(lobj, ii + 1, max_iter,
+                            early_stopping=early_stopping,
+                            raise_on_increase=raise_on_increase, eps=eps,
+                            level=1)
+                except EarlyStopping as e:
+                    if verbose > 1:
+                        print(str(e))
+                    break
+
+    Dz_hat = np.diff(z_hat, axis=-1)
 
     if get_obj and get_time:
-        return Lz_hat, z_hat, u_hat, lbda, np.array(lobj), np.array(ltime)
+        return z_hat, Dz_hat, u_hat, a_hat, v_hat, v_init, lbda, \
+               np.array(lobj), np.array(ltime)
     elif get_obj and not get_time:
-        return Lz_hat, z_hat, u_hat, lbda, np.array(lobj), None
+        return z_hat, Dz_hat, u_hat, a_hat, v_hat, v_init, lbda, \
+               np.array(lobj), None
     elif not get_obj and get_time:
-        return Lz_hat, z_hat, u_hat, lbda, None, np.array(ltime)
+        return z_hat, Dz_hat, u_hat, a_hat, v_hat, v_init, lbda, None, \
+               np.array(ltime)
     else:
-        return Lz_hat, z_hat, u_hat, lbda, None, None
+        return z_hat, Dz_hat, u_hat, a_hat, v_hat, v_init, lbda, None, None
+
+
+def multi_runs_learn_u_z_multi(
+        X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
+        lbda_strategy='ratio', lbda=0.1, lbda_hrf=1.0, max_iter=50, get_obj=False,
+        get_time=False, u_init='random', random_seed=None, name="DL",
+        early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+        verbose=0, n_jobs=1, nb_fit_try=1):
+    """ Multiple runs version of paralell_learn_u_z_multi. """
+    params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
+                    n_atoms=n_atoms, n_times_atom=n_times_atom,
+                    lbda_strategy=lbda_strategy, lbda=lbda, lbda_hrf=lbda_hrf,
+                    max_iter=max_iter, get_obj=get_obj, get_time=get_time,
+                    u_init=u_init, random_seed=random_seed, name=name,
+                    early_stopping=early_stopping, eps=eps,
+                    raise_on_increase=raise_on_increase, verbose=verbose)
+
+    results = Parallel(n_jobs=n_jobs)(
+                delayed(learn_u_z_multi)(**params)
+                for _ in range(nb_fit_try))
+
+    l_last_pobj = np.array([res[-2][-1] for res in results])
+    best_run = np.argmin(l_last_pobj)
+
+    if verbose > 0:
+        print("[{}] Best fitting: {}".format(name, best_run + 1))
+
+    return results[best_run]
+
+
+cached_multi_runs_learn_u_z_multi = \
+                             Memory('.cache').cache(multi_runs_learn_u_z_multi)

@@ -5,54 +5,85 @@
 import numpy as np
 import numba
 
-from alphacsc.loss_and_gradient import _compute_DtD_z_i
-
-from .prox import _lazy_prox_positive_L2_ball, _prox_positive_L2_ball_multi
-
-
-@numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :],
-            numba.float64[:], numba.float64[:], numba.int64, numba.int64),
-            nopython=True, cache=True, fastmath=True)
-def _subsampled_cd_iter(C, u, B, step_size, norm_u, offset, block_len):
-    """ Main iteration of the subsample scdclinmodel.
-    """
-    for k in range(u.shape[0]):
-        sub_u_k_view = u[k, offset: offset + block_len]
-        norm_sub_u_k = sub_u_k_view.dot(sub_u_k_view)
-        grad_ = C[k, :].dot(u[:, offset: offset + block_len])
-        grad_ -= B[k, offset: offset + block_len]
-        sub_u_k_view -= step_size[k] * grad_
-        sub_u_k_view, diff_norm_sub_u_k = _lazy_prox_positive_L2_ball(
-                                    sub_u_k_view, norm_sub_u_k, norm_u[k])
-        norm_u[k] += diff_norm_sub_u_k
-
-# force compilation
-_subsampled_cd_iter(np.empty((2, 2)), np.empty((2, 6)), np.empty((2, 6)),
-                    np.empty(2), np.empty(2), 0, 2)
+from .utils import _compute_uvtuv_z
+from .prox import _prox_positive_L2_ball_multi
+from .atlas import get_indices_from_roi
 
 
-def _grad_Lz(Lz, DtD, DtX=None):
-    """ Gradient for the temporal prox for multiple voxels.
-    """
-    grad = _compute_DtD_z_i(z_i=Lz, DtD=DtD)
-    if DtX is not None:
-        grad -= DtX
+def _grad_v_hrf_d_basis(a, AtA, AtX=None):
+    """ v d-basis HRF gradient. """
+    grad = a.dot(AtA)
+    if AtX is not None:
+        grad -= AtX
     return grad
 
 
-def obj_u_z(X, lbda, u, Lz, v=None, A=None, valid=True):
-    """ Main objective function.
-    """
-    valid_u = u
-    if valid:
-        valid_u = _prox_positive_L2_ball_multi(u)
+def _grad_z(z, uvtuv, uvtX=None):
+    """ z gradient. """
+    grad = _compute_uvtuv_z(z=z, uvtuv=uvtuv)
+    if uvtX is not None:
+        grad -= uvtX
+    return grad
 
-    if A is None:
-        if v is None:
-            raise ValueError("if A is None, v should be given.")
-        A = np.r_[[np.convolve(v, Lz_k) for Lz_k in Lz]].T
 
-    res = (X.T - A.dot(valid_u)).ravel()
-    cost = 0.5 * res.dot(res) + lbda * np.sum(np.abs(np.diff(Lz, axis=-1)))
+def _grad_u_k(u, B, C, k, rois_idx):
+    """ u gradient. """
+    n_atoms, n_voxels = C[0, :, :].shape[0], B[0, :, :].shape[1]
+    grad = np.empty(n_voxels)
+    for m in range(rois_idx.shape[0]):
+        indices = get_indices_from_roi(m, rois_idx)
+        grad[indices] = C[m, k, :].dot(u[:, indices])
+        grad[indices] -= B[m, k, indices]
+    return grad
 
-    return cost
+
+@numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :],
+            numba.int64[:, :]), nopython=True, cache=True, fastmath=True)
+def construct_X_hat_from_v(v, z, u, rois_idx):
+    """Return X_hat from v, z, u. """
+    n_voxels, n_times = u.shape[1], z.shape[1] + v.shape[1] - 1
+    uz = z.T.dot(u).T
+    X_hat = np.empty((n_voxels, n_times))
+    for m in range(rois_idx.shape[0]):
+        indices = get_indices_from_roi(m, rois_idx)
+        for j in indices:
+            X_hat[j, :] = np.convolve(v[m, :], uz[j, :])
+    return X_hat
+
+
+@numba.jit((numba.float64[:, :, :], numba.float64[:, :], numba.float64[:, :],
+            numba.int64[:, :]), nopython=True, cache=True, fastmath=True)
+def construct_X_hat_from_H(H, z, u, rois_idx):
+    """Return X_hat from H, z, u. """
+    n_voxels, n_times = u.shape[1], H.shape[1]
+    zu = z.T.dot(u)
+    X_hat = np.empty((n_voxels, n_times))
+    for m in range(rois_idx.shape[0]):
+        indices = get_indices_from_roi(m, rois_idx)
+        X_hat[indices, :] = H[m, :, :].dot(zu[:, indices]).T
+    return X_hat
+
+
+def _obj(X, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True, lbda=None):
+    """ Main objective function. """
+    u = _prox_positive_L2_ball_multi(u) if valid else u
+
+    if v is not None:
+        X_hat = construct_X_hat_from_v(v, z, u, rois_idx)
+    if v is None and H is not None:
+        X_hat = construct_X_hat_from_H(H, z, u, rois_idx)
+    elif H is None and v is None:
+        raise ValueError("_obj must have either H or v.")
+
+    residual = (X - X_hat).ravel()
+    cost = 0.5 * residual.dot(residual)
+
+    if return_reg:
+        if lbda is not None:
+            regu = lbda * np.sum(np.abs(np.diff(z, axis=-1)))
+            return cost + regu
+        else:
+            raise ValueError("obj must have lbda to return regularization "
+                             "value")
+    else:
+        return cost

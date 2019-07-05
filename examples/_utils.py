@@ -15,19 +15,44 @@ from hcp_builder.dataset import (get_data_dirs, download_experiment,
 
 
 EPOCH_DUR_HCP = 12.0
-DUR_RUN_HCP = 3*60 + 34
-N_SCANS_HCP = 284
-TR_HCP = DUR_RUN_HCP / float(N_SCANS_HCP)
+DUR_RUN_HCP_MOTOR = 3*60 + 34
+N_SCANS_HCP_MOTOR = 284
+TR_HCP_MOTOR = DUR_RUN_HCP_MOTOR / float(N_SCANS_HCP_MOTOR)
+DUR_RUN_HCP_REST = 14*60 + 33
+N_SCANS_HCP_REST = 1200
+TR_HCP_REST = DUR_RUN_HCP_REST / float(N_SCANS_HCP_REST)
 
 
-def get_hcp_fmri_fname(subject_id, anat_data=False):
+def _get_hcp_rest_fmri_fname(subject_id, anat_data=False):
+    """ Return the tfMRI filename for rest data. """
+    data_dir = get_data_dirs()[0]
+    path = os.path.join(data_dir, str(subject_id))
+    fmri_path = path
+    fmri_dirs = ['MNINonLinear', 'Results', 'rfMRI_REST1_RL',
+                 'rfMRI_REST1_RL.nii.gz']
+    for dir_ in fmri_dirs:
+        fmri_path = os.path.join(fmri_path, dir_)
+    anat_path = path
+    anat_dirs = ['MNINonLinear', 'Results', 'rfMRI_REST1_RL',
+                 'rfMRI_REST1_RL_SBRef.nii.gz']
+    for dir_ in anat_dirs:
+        anat_path = os.path.join(anat_path, dir_)
+
+    if not os.path.exists(fmri_path):
+        download_experiment(subject=subject_id, data_dir=None,
+                            data_type='rest', tasks=None, sessions=None,
+                            overwrite=False, mock=False, verbose=10)
+
+    if anat_data:
+        return fmri_path, anat_path
+    else:
+        return fmri_path
+
+
+def _get_hcp_motor_task_fmri_fname(subject_id, anat_data=False):
     """Return the tfMRI filename."""
     data_dir = get_data_dirs()[0]
     path = os.path.join(data_dir, str(subject_id))
-    if not os.path.exists(path):
-        download_experiment(subject=subject_id, data_dir=None,
-                            data_type='task', tasks='MOTOR', sessions=None,
-                            overwrite=True, mock=False, verbose=10)
     fmri_path = path
     fmri_dirs = ['MNINonLinear', 'Results', 'tfMRI_MOTOR_RL',
                  'tfMRI_MOTOR_RL.nii.gz']
@@ -38,6 +63,12 @@ def get_hcp_fmri_fname(subject_id, anat_data=False):
                  'tfMRI_MOTOR_RL_SBRef.nii.gz']
     for dir_ in anat_dirs:
         anat_path = os.path.join(anat_path, dir_)
+
+    if not os.path.exists(fmri_path):
+        download_experiment(subject=subject_id, data_dir=None,
+                            data_type='task', tasks='MOTOR', sessions=None,
+                            overwrite=False, mock=False, verbose=10)
+
     if anat_data:
         return fmri_path, anat_path
     else:
@@ -76,7 +107,7 @@ def get_paradigm_hcp(subject_id, data_dir=None):
     df = df[['session', 'trial_type', 'onset', 'duration']]
     df.reset_index(inplace=True, drop=True)
 
-    return df, np.linspace(0.0, DUR_RUN_HCP, N_SCANS_HCP)
+    return df, np.linspace(0.0, DUR_RUN_HCP_MOTOR, N_SCANS_HCP_MOTOR)
 
 
 def get_protocol_hcp(subject_id, trial, data_dir=None):
@@ -91,9 +122,9 @@ def get_protocol_hcp(subject_id, trial, data_dir=None):
     onset = np.array(onset)
     trial_type = np.array(trial_type)
 
-    t = np.linspace(0.0, DUR_RUN_HCP, N_SCANS_HCP)
+    t = np.linspace(0.0, DUR_RUN_HCP_MOTOR, N_SCANS_HCP_MOTOR)
 
-    p_e = np.zeros(N_SCANS_HCP)
+    p_e = np.zeros(N_SCANS_HCP_MOTOR)
     mask_cond = (paradigm['trial_type'] == trial).values
     onset_t = paradigm['onset'][mask_cond].values
     onset_idx = (onset_t / TR_HCP).astype(int)
