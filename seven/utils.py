@@ -6,9 +6,7 @@ import os
 import cProfile
 from datetime import datetime
 import numpy as np
-from joblib import Memory
 from scipy.interpolate import splrep, sproot
-import numba
 
 from nilearn import input_data
 

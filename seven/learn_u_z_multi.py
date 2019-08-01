@@ -115,10 +115,9 @@ def _update_z(z0, constants):
 
 def learn_u_z_multi(
         X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, lbda_hrf=1.0, max_iter=50,
+        lbda_strategy='ratio', lbda=0.1, max_iter=50,
         get_obj=0, get_time=0, u_init='random', random_seed=None,
-        name="DL", early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-        verbose=0):
+        early_stopping=True, eps=1.0e-5, raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
     """
     X = X.astype(np.float64)
@@ -129,7 +128,7 @@ def learn_u_z_multi(
     n_times_valid = n_times - n_times_atom + 1
 
     # split atlas
-    rois_idx, rois_label, n_hrf_rois = split_atlas(hrf_rois)
+    rois_idx, _, n_hrf_rois = split_atlas(hrf_rois)
 
     constants = dict(X=X, rois_idx=rois_idx, hrf_model=hrf_model)
 
@@ -319,16 +318,15 @@ def learn_u_z_multi(
 
 def multi_runs_learn_u_z_multi(
         X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, lbda_hrf=1.0, max_iter=50, get_obj=False,
-        get_time=False, u_init='random', random_seed=None, name="DL",
-        early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-        verbose=0, n_jobs=1, nb_fit_try=1):
+        lbda_strategy='ratio', lbda=0.1, max_iter=50, get_obj=False,
+        get_time=False, u_init='random', random_seed=None, early_stopping=True,
+        eps=1.0e-5, raise_on_increase=True, verbose=0, n_jobs=1, nb_fit_try=1):
     """ Multiple runs version of paralell_learn_u_z_multi. """
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
                     n_atoms=n_atoms, n_times_atom=n_times_atom,
-                    lbda_strategy=lbda_strategy, lbda=lbda, lbda_hrf=lbda_hrf,
+                    lbda_strategy=lbda_strategy, lbda=lbda,
                     max_iter=max_iter, get_obj=get_obj, get_time=get_time,
-                    u_init=u_init, random_seed=random_seed, name=name,
+                    u_init=u_init, random_seed=random_seed,
                     early_stopping=early_stopping, eps=eps,
                     raise_on_increase=raise_on_increase, verbose=verbose)
 
@@ -340,7 +338,7 @@ def multi_runs_learn_u_z_multi(
     best_run = np.argmin(l_last_pobj)
 
     if verbose > 0:
-        print("[{}] Best fitting: {}".format(name, best_run + 1))
+        print("[Decomposition] Best fitting: {}".format(best_run + 1))
 
     return results[best_run]
 

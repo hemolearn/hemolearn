@@ -10,8 +10,7 @@ import numpy as np
 import nibabel as nib
 from nilearn import plotting
 
-from .atlas import fetch_atlas, split_atlas
-from .hrf_model import spm_hrf_3_basis
+from .atlas import fetch_atlas
 from .utils import tp, fwhm
 
 
@@ -70,7 +69,7 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
                           verbose=False):
     """ Plot each spatial estimated component. """
     n_atoms, n_voxels = u.shape
-    img_u =[]
+    img_u = []
     for k in range(1, n_atoms + 1):
         u_k = u[k - 1]
         last_retained_voxel_idx = int(perc_voxels_to_retain * n_voxels)
@@ -87,7 +86,6 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
                                    threshold=th)
         img_u_k.to_filename(os.path.join(plot_dir, "u_{0:03d}.nii".format(k)))
         plt.savefig(os.path.join(plot_dir, "u_{0:03d}.pdf".format(k)), dpi=150)
-    # XXX hack to concatenate the spatial maps in one pdf
     pdf_files = os.path.join(plot_dir, 'u_*.pdf')
     pdf_file = os.path.join(plot_dir, 'u.pdf')
     subprocess.call("pdftk {} cat output {}".format(pdf_files, pdf_file),
@@ -138,7 +136,6 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
              fontsize=2 * (n_cols * 2))
     fig.suptitle("HRFs", fontsize=5 * (n_cols * 2))
     plt.savefig(os.path.join(plot_dir, "hrf_.pdf"), dpi=150)
-    # XXX hack to concatenate the spatial maps in one pdf
     pdf_files = os.path.join(plot_dir, 'rois_.pdf')
     pdf_files += ' '
     pdf_files += os.path.join(plot_dir, 'hrf_.pdf')

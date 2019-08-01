@@ -130,11 +130,11 @@ class SLRDM(TransformerMixin):
 
         return self
 
-    def fit_transform(self, func_fname):
+    def fit_transform(self, X):
         self.fit(X)
         return self
 
-    def transform(self, func_fname, confounds=None):
+    def transform(self, X, confounds=None):
         self._check_fitted()
         raise NotImplementedError("tranform method no implemented for now...")
         return self

@@ -28,7 +28,7 @@ def _grad_z(z, uvtuv, uvtX=None):
 
 def _grad_u_k(u, B, C, k, rois_idx):
     """ u gradient. """
-    n_atoms, n_voxels = C[0, :, :].shape[0], B[0, :, :].shape[1]
+    _, n_voxels = C[0, :, :].shape[0], B[0, :, :].shape[1]
     grad = np.empty(n_voxels)
     for m in range(rois_idx.shape[0]):
         indices = get_indices_from_roi(m, rois_idx)

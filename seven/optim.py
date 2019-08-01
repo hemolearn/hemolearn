@@ -33,9 +33,7 @@ def cdclinmodel(
     diag = [np.diag(C[m, :, :]) for m in range(n_hrf_rois)]
     step_size = 1.0 / np.r_[diag].max(axis=0)
 
-    grad_ = np.empty((n_voxels,))
-
-    for ii in range(max_iter):
+    for _ in range(max_iter):
 
         if benchmark:
             t0 = time.process_time()

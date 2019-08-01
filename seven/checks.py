@@ -8,7 +8,6 @@ from .convolution import adjconv_uH
 
 class EarlyStopping(Exception):
     """ Raised when the algorithm converged."""
-    pass
 
 
 def check_obj(lobj, ii, max_iter, early_stopping=True, raise_on_increase=True,
@@ -18,14 +17,12 @@ def check_obj(lobj, ii, max_iter, early_stopping=True, raise_on_increase=True,
     algorithm converged.
     """
     if level == 1:
-        _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
-                           raise_on_increase=True,
-                           eps=np.finfo(np.float64).eps)
+        _check_obj_level_1(lobj, ii, max_iter, early_stopping=early_stopping,
+                           raise_on_increase=raise_on_increase, eps=eps)
 
     if level == 2:
-        _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
-                           raise_on_increase=True,
-                           eps=np.finfo(np.float64).eps)
+        _check_obj_level_2(lobj, ii, max_iter, early_stopping=early_stopping,
+                           raise_on_increase=raise_on_increase, eps=eps)
 
 
 def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
@@ -121,7 +118,7 @@ def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx):
         lbda_max = _get_lambda_max(X, u=u, H=H, rois_idx=rois_idx)
         lbda = lbda * lbda_max
     else:
-        if not isintance(lbda, (int, float)):
+        if not isinstance(lbda, (int, float)):
             raise ValueError("If 'lbda_strategy' is 'fixed', 'lbda' should be "
                              "numerical, got '{}'".format(lbda_strategy))
     return lbda
