@@ -41,7 +41,7 @@ seed = 0
 n_atoms = 10
 hrf_atlas = 'basc-036'
 slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas,
-              hrf_model='3_basis_hrf', lbda=2.0e-2, max_iter=50,
+              hrf_model='3_basis_hrf', lbda=5.0e-3, max_iter=100,
               raise_on_increase=False, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)
 
