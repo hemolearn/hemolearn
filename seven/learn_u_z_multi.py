@@ -11,7 +11,7 @@ from .checks import (check_lbda, check_if_vanished, check_obj,
                      EarlyStopping, check_random_state)
 from .utils import lipschitz_est
 from .constants import _precompute_uvtuv, _precompute_B_C
-from .optim import scdclinmodel, proximal_descent
+from .optim import cdclinmodel, proximal_descent
 from .loss_grad import _grad_z, _obj
 from .prox import _prox_tv_multi
 from .hrf_model import spm_scaled_hrf, spm_hrf_3_basis, spm_hrf_2_basis
@@ -66,7 +66,7 @@ def _update_u(u0, constants):
     assert ('B' in constants), msg
 
     params = dict(u0=u0, max_iter=100, constants=constants)
-    u_hat = scdclinmodel(**params)
+    u_hat = cdclinmodel(**params)
 
     return u_hat
 

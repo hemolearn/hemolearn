@@ -2,16 +2,17 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
+import time
 import numpy as np
 
 from .loss_grad import _grad_u_k
 from .prox import _prox_positive_L2_ball
 
 
-def scdclinmodel(
+def cdclinmodel(
         u0, constants=dict(), max_iter=100, early_stopping=False,
         eps=np.finfo(np.float64).eps, obj=None, benchmark=False):
-    """ Subsampled coordinate descente on constraint linear model:
+    """ Coordinate descente on constraint linear model:
     grad_u(u) = C.dot(u) - B and prox_u(.) = _prox_positive_L2_ball(.)
     (see prox.py for the definition of _prox_positive_L2_ball)
     """
