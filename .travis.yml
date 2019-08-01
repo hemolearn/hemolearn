@@ -1,19 +1,21 @@
 language: python
-
-python:
-  - "3.5"
+python: "3.5"
 
 install:
-  # for testing
-  - pip install pytest pytest-cov
-  - pip install coverage codecov
-  # seven dependencies
-  - pip install 'numba>=0.41.0' 'joblib>=0.11' 'numpy>=1.14.0' 'scipy>=1.0.0' 'matplotlib>=2.1.2' 'nibabel>=2.3.0' 'nilearn>=0.5.2' 'scikit-learn>=0.19.2' 'threadpoolctl>=1.0.0' 'prox_tv'
+      # Install deps
+    - pip install numpy
+      # Install seven
+    - pip install -e .
+      # Install test deps
+    - pip install pytest pytest-cov coverage coveralls flake8
 
 script:
-  # run tests
-  - python setup.py install
-  - pytest --cov=./
+    - set -e
+    - flake8 --count seven
+    - pytest -vl --cov=seven --cov-append
 
 after_success:
-  - codecov
+    - codecov
+
+notifications:
+    email: false
