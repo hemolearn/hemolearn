@@ -53,7 +53,7 @@ def test_lipschitz_est(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_tp(seed):
     """ Test the estimation of the Time to Peak. """
-    t = np.linspace(-10.0, 10.0, 1.0e5)
+    t = np.linspace(-10.0, 10.0, int(1.0e5))
     mu = 0.0
     sigma = 1.0
     d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) *\
@@ -65,7 +65,7 @@ def test_tp(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_fwhm(seed):
     """ Test the estimation of the Full Width at Half Max. """
-    t = np.linspace(-10.0, 10.0, 1.0e5)
+    t = np.linspace(-10.0, 10.0, int(1.0e5))
     mu = 0.0
     sigma = 1.0
     d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) *\

@@ -6,7 +6,6 @@ import numpy as np
 from joblib import Parallel, delayed, Memory
 from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
-import nibabel as nib
 from nilearn import input_data, image
 
 from .learn_u_z_multi import (_update_u, _update_z,
