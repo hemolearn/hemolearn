@@ -1,21 +1,19 @@
 language: python
 
 python:
-  - "2.7"
   - "3.5"
 
 install:
   # for testing
-  - pip install nose
-  - pip install coverage
-  - pip install codecov
-  # pybold dependencies
-  - pip install 'numba>=0.41.0' 'joblib>=0.11' 'numpy>=1.14.0' 'scipy>=1.0.0' 'pyWavelets>=0.5.2' 'matplotlib>=2.1.2'
+  - pip install pytest pytest-cov
+  - pip install coverage codecov
+  # seven dependencies
+  - pip install 'numba>=0.41.0' 'joblib>=0.11' 'numpy>=1.14.0' 'scipy>=1.0.0' 'matplotlib>=2.1.2' 'nibabel>=2.3.0' 'nilearn>=0.5.2' 'scikit-learn>=0.19.2' 'threadpoolctl>=1.0.0' 'prox_tv'
 
 script:
   # run tests
   - python setup.py install
-  - nosetests --with-coverage
+  - pytest --cov=./
 
 after_success:
   - codecov
