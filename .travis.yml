@@ -3,11 +3,11 @@ python: "3.5"
 
 install:
       # Install deps
-    - pip install numpy
+    - pip install 'numba>=0.41.0' 'joblib>=0.11' 'numpy>=1.14.0' 'scipy>=1.0.0' 'matplotlib>=2.1.2' 'nibabel>=2.3.0' 'nilearn>=0.5.2' 'scikit-learn>=0.19.2' 'threadpoolctl>=1.0.0' 'prox_tv'
       # Install seven
     - pip install -e .
       # Install test deps
-    - pip install pytest pytest-cov coverage coveralls flake8
+    - pip install pytest pytest-cov coverage codecov flake8
 
 script:
     - set -e
