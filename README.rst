@@ -17,10 +17,10 @@
 Seven
 ======
 
-Seven is a Python module for Sparse Low-Rank Deconvolution Analysis (SLRDA) of
-the fMRI signal (BOLD). It allows to estimate the Haemodynamic Response Function
-(HRF) in each voxels of the brain along a with a decomposition of the neural
-activity.
+Seven is a Python module to estimate the Haemodynamic Response Function (HRF)
+in brain from resting-state or task fMRI data (BOLD signal). It relies on a
+Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
+neurovascular coupling from the the neural activity.
 
 
 Important links
@@ -33,21 +33,21 @@ Dependencies
 
 The required dependencies to use the software are:
 
-* Numba
-* Joblib
-* Numpy
-* Scipy
-* Matplotlib
-* Nibabel
-* Nilearn
-* Sklearn
-* Threadpoolctl
-* Prox_tv'
+* Numba >= 0.41.0
+* Joblib >= 0.11
+* Numpy >= 1.14.0
+* Scipy >= 1.0.0
+* Matplotlib >= 2.1.2
+* Nibabel >= 2.3.0
+* Nilearn >= 0.5.2
+* Sklearn >= 0.19.2
+* Threadpoolctl >= 1.0.0
+* Prox_tv
 
 License
 =======
-All material is Free Software: BSD license (3 clause).
 
+All material is Free Software: BSD license (3 clause).
 
 Installation
 ============
