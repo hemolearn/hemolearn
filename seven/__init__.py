@@ -3,16 +3,12 @@
 # License: BSD (3-clause)
 
 import numpy as np
-from joblib import Parallel, delayed, Memory
 from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
-from nilearn import input_data, image
+from nilearn import input_data
 
-from .learn_u_z_multi import (_update_u, _update_z,
-                              cached_multi_runs_learn_u_z_multi)
-from .hrf_model import spm_hrf
+from .learn_u_z_multi import cached_multi_runs_learn_u_z_multi
 from .atlas import fetch_atlas, split_atlas
-from .checks import check_lbda
 
 
 class SLRDM(TransformerMixin):
@@ -99,7 +95,7 @@ class SLRDM(TransformerMixin):
 
             if self.n_jobs > 1:
                 print("Running {} fits in parallel on {} "
-                     "CPU".format(self.nb_fit_try, self.n_jobs))
+                      "CPU".format(self.nb_fit_try, self.n_jobs))
             else:
                 print("Running {} fits in series".format(self.nb_fit_try))
 

@@ -20,7 +20,7 @@ def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
     plt.figure("Cost function (%)", figsize=figsize, constrained_layout=True)
     pobj -= (np.min(pobj) - min_obj)
     pobj /= pobj[0]
-    plt.plot(np.cumsum(times) +  t_start, pobj, lw=3.0)
+    plt.plot(np.cumsum(times) + t_start, pobj, lw=3.0)
     plt.title("Evolution of\nglobal cost-function")
     plt.xlabel('Time [s]')
     plt.ylabel('cost function [%]')

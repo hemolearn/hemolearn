@@ -26,10 +26,10 @@ def test_check_random_state():
 @pytest.mark.repeat(3)
 def test_check_len_hrf():
     """ Test the check HRF length. """
-    l = 30
-    assert len(check_len_hrf(np.empty(l - 1), l)) == l
-    assert len(check_len_hrf(np.empty(l + 1), l)) == l
-    assert len(check_len_hrf(np.empty(l), l)) == l
+    length = 30
+    assert len(check_len_hrf(np.empty(length - 1), length)) == length
+    assert len(check_len_hrf(np.empty(length + 1), length)) == length
+    assert len(check_len_hrf(np.empty(length), length)) == length
 
 
 @pytest.mark.repeat(3)

@@ -28,7 +28,7 @@ def _grad_z(z, uvtuv, uvtX=None):
 
 def _grad_u_k(u, B, C, k, rois_idx):
     """ u gradient. """
-    _, n_voxels = C[0, :, :].shape[0], B[0, :, :].shape[1]
+    _, n_voxels = B[0, :, :].shape
     grad = np.empty(n_voxels)
     for m in range(rois_idx.shape[0]):
         indices = get_indices_from_roi(m, rois_idx)
@@ -64,7 +64,8 @@ def construct_X_hat_from_H(H, z, u, rois_idx):
     return X_hat
 
 
-def _obj(X, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True, lbda=None):
+def _obj(X, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
+         lbda=None):
     """ Main objective function. """
     u = _prox_positive_L2_ball_multi(u) if valid else u
 

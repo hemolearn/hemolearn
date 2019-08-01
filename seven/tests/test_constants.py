@@ -50,7 +50,7 @@ def test_precomputed_uvtuv(seed):
 def test_precompute_B_C(seed):
     """ Test the computation of B and C for update u. """
     kwargs = _set_up_test(seed)
-    X, z, H,v = kwargs['X'], kwargs['z'], kwargs['H'], kwargs['v']
+    X, z, H, v = kwargs['X'], kwargs['z'], kwargs['H'], kwargs['v']
     rois_idx = kwargs['rois_idx']
     n_hrf_rois, _ = rois_idx.shape
 

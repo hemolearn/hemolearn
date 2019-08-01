@@ -6,14 +6,12 @@ import pytest
 import numpy as np
 from scipy.optimize import approx_fprime
 
-from seven.hrf_model import spm_hrf, spm_hrf_3_basis
-from seven.atlas import split_atlas
-from seven.constants import _precompute_B_C, _precompute_uvtuv
-from seven.checks import check_random_state
+from seven.hrf_model import spm_hrf_3_basis
+from seven.constants import _precompute_uvtuv
 from seven.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
                              _obj, construct_X_hat_from_v,
                              construct_X_hat_from_H)
-from seven.convolution import adjconv_uH, make_toeplitz
+from seven.convolution import adjconv_uH
 from seven.utils import _set_up_test
 
 
@@ -22,9 +20,7 @@ from seven.utils import _set_up_test
 def test_construct_X_hat(seed):
     """ Test the X construction functions. """
     kwargs = _set_up_test(seed)
-    n_atoms, n_voxels = kwargs['n_atoms'], kwargs['n_voxels']
-    X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
-    v, H = kwargs['v'], kwargs['H']
+    u, z, v, H = kwargs['u'], kwargs['z'], kwargs['v'], kwargs['H']
     rois_idx = kwargs['rois_idx']
     X_hat = construct_X_hat_from_v(v, z, u, rois_idx)
     X_hat_ = construct_X_hat_from_H(H, z, u, rois_idx)
@@ -36,7 +32,6 @@ def test_construct_X_hat(seed):
 def test_loss(seed):
     """ Test the loss function. """
     kwargs = _set_up_test(seed)
-    n_atoms, n_voxels = kwargs['n_atoms'], kwargs['n_voxels']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     v, H = kwargs['v'], kwargs['H']
     rois_idx = kwargs['rois_idx']
@@ -115,7 +110,6 @@ def test_grad_z(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_grad_v_hrf_d_basis(seed):
     """ Test the gradient of v (model: hrf 3 basis). """
-    rng = check_random_state(seed)
     kwargs = _set_up_test(seed)
     t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']

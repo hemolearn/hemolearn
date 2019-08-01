@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from seven.checks import check_random_state
 from seven.estim_v import _estim_v_scaled_hrf, _estim_v_d_basis
-from seven.hrf_model import spm_scaled_hrf, spm_hrf_2_basis, spm_hrf_3_basis
+from seven.hrf_model import spm_scaled_hrf, spm_hrf_3_basis
 from seven.atlas import split_atlas
 from seven.loss_grad import construct_X_hat_from_v
 
@@ -22,9 +22,7 @@ def test_estim_v_scaled_hrf(seed):
     n_voxels = 1000
     n_times_valid = 100
     n_times_atom = 30
-    n_times = n_times_valid + n_times_atom - 1
     indices = np.arange(n_voxels)
-    n_hrf_rois = 2
     rois_1 = indices[int(n_voxels/2):]
     rois_2 = indices[:int(n_voxels/2)]
     hrf_rois = {1: rois_1, 2: rois_2}
@@ -56,7 +54,6 @@ def test_estim_v_3_basis(seed):
     n_voxels = 1000
     n_times_valid = 100
     n_times_atom = 30
-    n_times = n_times_valid + n_times_atom - 1
     indices = np.arange(n_voxels)
     n_hrf_rois = 2
     rois_1 = indices[int(n_voxels/2):]

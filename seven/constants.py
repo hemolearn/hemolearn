@@ -9,7 +9,7 @@ from .atlas import get_indices_from_roi
 
 
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.int64[:, :]),
-            nopython=True, cache=True, fastmath=True)
+           nopython=True, cache=True, fastmath=True)
 def _precompute_uvtuv(u, v, rois_idx):
     """ Pre-compute uvtuv.
 
@@ -25,7 +25,6 @@ def _precompute_uvtuv(u, v, rois_idx):
     """
     n_atoms, n_voxels = u.shape
     _, n_times_atom = v.shape
-    utu = u.dot(u.T)
     vtv = np.empty((n_voxels, 2 * n_times_atom - 1))
     for m in range(rois_idx.shape[0]):
         indices = get_indices_from_roi(m, rois_idx)

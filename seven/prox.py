@@ -27,6 +27,7 @@ def _prox_positive_L2_ball(u_k):
         u_k /= norm_u_k
     return u_k
 
+
 _prox_positive_L2_ball(np.random.randn(5))
 
 

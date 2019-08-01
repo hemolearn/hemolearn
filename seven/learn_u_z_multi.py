@@ -47,15 +47,15 @@ def _update_v(a, constants):
         msg = "'t_r' is missing in 'constants' for '_update_v' step."
         assert ('t_r' in constants), msg
         msg = ("'n_times_atom' is missing in 'constants' for "
-                "'_update_v' step.")
+               "'_update_v' step.")
         assert ('n_times_atom' in constants), msg
         t_r, n_times_atom = constants['t_r'], constants['n_times_atom']
         return _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom)
 
     else:
         raise ValueError("hrf_model should be in ['3_basis_hrf', "
-                            "'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
-                            "got {}".format(hrf_model))
+                         "'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
+                         "got {}".format(hrf_model))
 
 
 def _update_u(u0, constants):
@@ -155,7 +155,8 @@ def learn_u_z_multi(
 
     else:
         raise ValueError("hrf_model should be in ['3_basis_hrf', '2_basis_hrf'"
-                         ", 'scaled_hrf', 'fir_hrf'], got {}".format(hrf_model))
+                         ", 'scaled_hrf', 'fir_hrf'], "
+                         "got {}".format(hrf_model))
     v_init = v_hat[0, :]
 
     # H initialization
@@ -171,11 +172,11 @@ def learn_u_z_multi(
         u_hat = rng.randn(n_atoms, n_voxels)
     else:
         raise ValueError("u_init should be in ['random', ]"
-                        ", got {}".format(u_init))
+                         ", got {}".format(u_init))
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"
-                        "to True if get_obj is True")
+                         "to True if get_obj is True")
 
     # temporal regularization parameter
     lbda = check_lbda(lbda, lbda_strategy, X, u_hat, H_hat, rois_idx)
@@ -199,7 +200,7 @@ def learn_u_z_multi(
             # use Toeplitz matrices for obj. func. computation (Numpy speed-up)
             for m in range(n_hrf_rois):
                 H_hat[m, ...] = make_toeplitz(v_hat[m],
-                                            n_times_valid=n_times_valid)
+                                              n_times_valid=n_times_valid)
 
             # Update z
             constants['a'] = a_hat
@@ -219,15 +220,17 @@ def learn_u_z_multi(
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update z done in {:.1f} s : "
-                            "cost = {:.6f}".format(
-                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     ltime[-1],
+                                                     lobj[-1] / lobj[0]))
                     else:
-                        print("[{}/{}] Update z done: cost = {:.6f}".format(
-                                        ii + 1, max_iter, lobj[-1] / lobj[0]))
+                        print("[{}/{}] Update z done: "
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     lobj[-1] / lobj[0]))
 
             # check if some z_k vanished
             msg = ("Temporal component vanished, may be 'lbda' is too high, "
-                "please try to reduce its value.")
+                   "please try to reduce its value.")
             check_if_vanished(z_hat, msg)
 
             # Update u
@@ -247,11 +250,13 @@ def learn_u_z_multi(
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update u done in {:.1f} s : "
-                            "cost = {:.6f}".format(
-                           ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     ltime[-1],
+                                                     lobj[-1] / lobj[0]))
                     else:
-                        print("[{}/{}] Update u done: cost = {:.6f}".format(
-                                        ii + 1, max_iter, lobj[-1] / lobj[0]))
+                        print("[{}/{}] Update u done: "
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     lobj[-1] / lobj[0]))
 
             # Update v
             constants['u'] = u_hat
@@ -269,11 +274,13 @@ def learn_u_z_multi(
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update v done in {:.1f} s : "
-                            "cost = {:.6f}".format(
-                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     ltime[-1],
+                                                     lobj[-1] / lobj[0]))
                     else:
-                        print("[{}/{}] Update v done: cost = {:.6f}".format(
-                                       ii + 1, max_iter, lobj[-1] / lobj[0]))
+                        print("[{}/{}] Update v done: "
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     lobj[-1] / lobj[0]))
 
             if get_time == 1:
                 ltime.append(time.process_time() - t0)
@@ -284,18 +291,20 @@ def learn_u_z_multi(
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Iteration done in {:.1f} s : "
-                            "cost = {:.6f}".format(
-                            ii + 1, max_iter, ltime[-1], lobj[-1] / lobj[0]))
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     ltime[-1],
+                                                     lobj[-1] / lobj[0]))
                     else:
-                        print("[{}/{}] Iteration done: cost = {:.6f}".format(
-                                       ii + 1, max_iter, lobj[-1] / lobj[0]))
+                        print("[{}/{}] Iteration done: "
+                              "cost = {:.6f}".format(ii + 1, max_iter,
+                                                     lobj[-1] / lobj[0]))
 
             if ii > 2 and get_obj:
                 try:
                     check_obj(lobj, ii + 1, max_iter,
-                            early_stopping=early_stopping,
-                            raise_on_increase=raise_on_increase, eps=eps,
-                            level=1)
+                              early_stopping=early_stopping,
+                              raise_on_increase=raise_on_increase, eps=eps,
+                              level=1)
                 except EarlyStopping as e:
                     if verbose > 1:
                         print(str(e))
@@ -323,12 +332,12 @@ def multi_runs_learn_u_z_multi(
         eps=1.0e-5, raise_on_increase=True, verbose=0, n_jobs=1, nb_fit_try=1):
     """ Multiple runs version of paralell_learn_u_z_multi. """
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
-                    n_atoms=n_atoms, n_times_atom=n_times_atom,
-                    lbda_strategy=lbda_strategy, lbda=lbda,
-                    max_iter=max_iter, get_obj=get_obj, get_time=get_time,
-                    u_init=u_init, random_seed=random_seed,
-                    early_stopping=early_stopping, eps=eps,
-                    raise_on_increase=raise_on_increase, verbose=verbose)
+                  n_atoms=n_atoms, n_times_atom=n_times_atom,
+                  lbda_strategy=lbda_strategy, lbda=lbda,
+                  max_iter=max_iter, get_obj=get_obj, get_time=get_time,
+                  u_init=u_init, random_seed=random_seed,
+                  early_stopping=early_stopping, eps=eps,
+                  raise_on_increase=raise_on_increase, verbose=verbose)
 
     results = Parallel(n_jobs=n_jobs)(
                 delayed(learn_u_z_multi)(**params)

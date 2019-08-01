@@ -31,7 +31,7 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
 
         def h(delta):
             return spm_scaled_hrf(delta=delta, t_r=t_r,
-                                    n_times_atom=n_times_atom)
+                                  n_times_atom=n_times_atom)
 
         def cost(delta):
             H = make_toeplitz(h(delta), n_times_valid)
@@ -41,8 +41,8 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
         bounds = [(MIN_DELTA + 1.0e-1, MAX_DELTA - 1.0e-1)]
 
         _a_hat, _, _ = fmin_l_bfgs_b(func=cost, x0=a0, bounds=bounds,
-                                    approx_grad=True, maxiter=1000,
-                                    pgtol=1.0e-10)
+                                     approx_grad=True, maxiter=1000,
+                                     pgtol=1.0e-10)
 
         a[m] = _a_hat
         v[m, :] = h(_a_hat)
@@ -83,7 +83,7 @@ def _estim_v_d_basis(a, X, h, z, u, rois_idx):
         step_size = 0.9 / lipschitz_est(AtA_, a0.shape)
 
         params = dict(x0=a0, grad=grad, prox=prox, step_size=step_size,
-                        momentum='fista', restarting=None, max_iter=1000)
+                      momentum='fista', restarting=None, max_iter=1000)
         a_m_hat = proximal_descent(**params)
 
         a[m, :] = a_m_hat

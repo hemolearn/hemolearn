@@ -26,15 +26,15 @@ def check_obj(lobj, ii, max_iter, early_stopping=True, raise_on_increase=True,
 
 
 def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
-                      raise_on_increase=True, eps=np.finfo(np.float64).eps):
+                       raise_on_increase=True, eps=np.finfo(np.float64).eps):
     """ Check after each iteration. """
     eps_ = (lobj[-2] - lobj[-1]) / lobj[-2]
 
     # check increasing cost-function
     if raise_on_increase and eps_ < eps:
         raise RuntimeError("[{}/{}] Iteration relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_))
+                           "global cost-function of "
+                           "{:.3e}".format(ii + 1, max_iter, -eps_))
 
     # check early-stopping
     if early_stopping and eps_ <= eps:
@@ -44,7 +44,7 @@ def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
 
 
 def _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
-                      raise_on_increase=True, eps=np.finfo(np.float64).eps):
+                       raise_on_increase=True, eps=np.finfo(np.float64).eps):
     """ Check after each update. """
     eps_z = (lobj[-4] - lobj[-3]) / lobj[-4]
     eps_u = (lobj[-3] - lobj[-2]) / lobj[-3]
@@ -53,16 +53,16 @@ def _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
     # check increasing cost-function
     if raise_on_increase and eps_z < eps:
         raise RuntimeError("[{}/{}] Updating z relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_z))
+                           "global cost-function of "
+                           "{:.3e}".format(ii + 1, max_iter, -eps_z))
     if raise_on_increase and eps_u < eps:
         raise RuntimeError("[{}/{}] Updating u relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_u))
+                           "global cost-function of "
+                           "{:.3e}".format(ii + 1, max_iter, -eps_u))
     if raise_on_increase and eps_v < eps:
         raise RuntimeError("[{}/{}] Updating v relatively increase "
-                            "global cost-function of "
-                            "{:.3e}".format(ii + 1, max_iter, -eps_v))
+                           "global cost-function of "
+                           "{:.3e}".format(ii + 1, max_iter, -eps_v))
 
     # check early-stopping
     if early_stopping and eps_z <= eps and eps_u <= eps and eps_v <= eps:

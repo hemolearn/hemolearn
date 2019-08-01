@@ -39,9 +39,12 @@ def test_lipschitz_est(seed):
     # test by the definition of the Lipschitz constant
     A = rng.randn(10, 10)
     AtA_ = A.T.dot(A)
+
     def AtA(x):
         return AtA_.dot(x)
+
     L = lipschitz_est(AtA, shape)
+
     for _ in range(100):
         x, y = rng.randn(10), rng.randn(10)
         a = np.linalg.norm(AtA(x) - AtA(y))
@@ -56,8 +59,8 @@ def test_tp(seed):
     t = np.linspace(-10.0, 10.0, int(1.0e5))
     mu = 0.0
     sigma = 1.0
-    d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) *\
-                                  np.exp( - (t - mu) ** 2 / (2.0 * sigma ** 2))
+    d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) * \
+        np.exp(- (t - mu) ** 2 / (2.0 * sigma ** 2))
     np.testing.assert_allclose(tp(t, d), 0.0, atol=1.0e-3)
 
 
@@ -68,8 +71,8 @@ def test_fwhm(seed):
     t = np.linspace(-10.0, 10.0, int(1.0e5))
     mu = 0.0
     sigma = 1.0
-    d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) *\
-                                  np.exp( - (t - mu) ** 2 / (2.0 * sigma ** 2))
+    d = 1.0 / (sigma * np.sqrt(2.0 * np.pi)) * \
+        np.exp(- (t - mu) ** 2 / (2.0 * sigma ** 2))
     np.testing.assert_allclose(fwhm(t, d), 2 * np.sqrt(2 * np.log(2)))
 
 

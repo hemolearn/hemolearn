@@ -4,7 +4,6 @@
 
 import pytest
 import numpy as np
-from scipy.optimize import approx_fprime
 
 from seven.convolution import make_toeplitz, adjconv_uv, adjconv_uH
 from seven.checks import check_random_state
@@ -16,7 +15,7 @@ from seven.utils import _set_up_test
 def test_toeplitz(seed):
     """ Test the the making of the Toeplitz function. """
     rng = check_random_state(seed)
-    n_times_atom, n_times_valid= 30, 100
+    n_times_atom, n_times_valid = 30, 100
     z = rng.randn(n_times_valid)
     v = rng.randn(n_times_atom)
     H = make_toeplitz(v, n_times_valid)
