@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from seven.prox import _prox_positive_L2_ball
 from seven.checks import check_random_state
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
@@ -14,7 +14,7 @@ from seven.tests.utils import _set_up
 def test_prox_positive_L2_ball(seed):
     """ Test the positive L2 ball proximal operator. """
     rng = check_random_state(seed)
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     u = kwargs['u']
     u_0 = u[0, :]
     prox_u_0 = _prox_positive_L2_ball(u_0)

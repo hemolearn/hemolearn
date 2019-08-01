@@ -8,7 +8,7 @@ from seven.checks import check_random_state
 from seven.utils import lipschitz_est
 from seven.loss_grad import _obj
 from seven.optim import proximal_descent, cdclinmodel
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
@@ -53,7 +53,7 @@ def test_proximal_descent(seed, momentum, restarting):
 @pytest.mark.parametrize('seed', [None])
 def test_cdclinmodel(seed):
     """ Test the coordinate descente on constraint linear model algo. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     u, C, B = kwargs['u'], kwargs['C'], kwargs['B']
     rois_idx = kwargs['rois_idx']
     X, z, v = kwargs['X'], kwargs['z'], kwargs['v']

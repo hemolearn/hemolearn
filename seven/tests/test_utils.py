@@ -9,7 +9,7 @@ from seven.constants import _precompute_uvtuv
 from seven.atlas import get_indices_from_roi
 from seven.utils import (get_nifti_ext, lipschitz_est, tp, fwhm,
                          _compute_uvtuv_z)
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
@@ -77,7 +77,7 @@ def test_fwhm(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_compute_uvtuv_z(seed):
     """ Test the computation of uvtuv_z. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     z, u, v = kwargs['z'], kwargs['u'], kwargs['v']
     rois_idx, n_voxels = kwargs['rois_idx'], kwargs['n_voxels']
 

@@ -7,7 +7,7 @@ import numpy as np
 from seven.learn_u_z_multi import _update_z
 from seven.checks import (check_random_state, check_len_hrf, check_if_vanished,
                           _get_lambda_max)
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
@@ -51,7 +51,7 @@ def test_check_if_vanished():
 @pytest.mark.parametrize('seed', [None])
 def test_get_lambda_max(seed):
     """ Test the lambda max estimation. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     z, u, H, v = kwargs['z'], kwargs['u'], kwargs['H'], kwargs['v']
     rois_idx, X = kwargs['rois_idx'], kwargs['X']
     lbda_max = _get_lambda_max(X, u, H, rois_idx)

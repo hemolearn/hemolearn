@@ -8,7 +8,7 @@ from scipy.optimize import approx_fprime
 
 from seven.convolution import make_toeplitz, adjconv_uv, adjconv_uH
 from seven.checks import check_random_state
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
@@ -27,7 +27,7 @@ def test_toeplitz(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_adjconv_D(seed):
     """ Test the computation of uvtX and uHtX. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     u, v, rois_idx = kwargs['u'], kwargs['v'], kwargs['rois_idx']
     residual_i, H = kwargs['X'], kwargs['H'],
     uvtX = adjconv_uv(residual_i, u, v, rois_idx)

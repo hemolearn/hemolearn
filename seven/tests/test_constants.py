@@ -10,14 +10,14 @@ from seven.constants import (_precompute_uvtuv, _precompute_d_basis_constant,
 from seven.atlas import get_indices_from_roi
 from seven.hrf_model import spm_hrf_3_basis
 from seven.convolution import make_toeplitz
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
 def test_precomputed_uvtuv(seed):
     """ Test the computation of uvtX. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     u, v, rois_idx = kwargs['u'], kwargs['v'], kwargs['rois_idx']
 
     def _precompute_uvtuv_ref(u, v, rois_idx):
@@ -49,7 +49,7 @@ def test_precomputed_uvtuv(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_precompute_B_C(seed):
     """ Test the computation of B and C for update u. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     X, z, H,v = kwargs['X'], kwargs['z'], kwargs['H'], kwargs['v']
     rois_idx = kwargs['rois_idx']
     n_hrf_rois, _ = rois_idx.shape
@@ -87,7 +87,7 @@ def test_precompute_B_C(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_precompute_d_basis_constant(seed):
     """ Test the computation of AtA and AtX for the 3 HRF basis. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     uz = u.T.dot(z)

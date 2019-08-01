@@ -14,14 +14,14 @@ from seven.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
                              _obj, construct_X_hat_from_v,
                              construct_X_hat_from_H)
 from seven.convolution import adjconv_uH, make_toeplitz
-from seven.tests.utils import _set_up
+from seven.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
 def test_construct_X_hat(seed):
     """ Test the X construction functions. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     n_atoms, n_voxels = kwargs['n_atoms'], kwargs['n_voxels']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     v, H = kwargs['v'], kwargs['H']
@@ -35,7 +35,7 @@ def test_construct_X_hat(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_loss(seed):
     """ Test the loss function. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     n_atoms, n_voxels = kwargs['n_atoms'], kwargs['n_voxels']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     v, H = kwargs['v'], kwargs['H']
@@ -56,7 +56,7 @@ def test_loss(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_grad_u(seed):
     """ Test the gradient of u. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     n_atoms, n_voxels = kwargs['n_atoms'], kwargs['n_voxels']
     X, H, u, z = kwargs['X'], kwargs['H'], kwargs['u'], kwargs['z']
     rois_idx = kwargs['rois_idx']
@@ -86,7 +86,7 @@ def test_grad_u(seed):
 @pytest.mark.parametrize('seed', [None])
 def test_grad_z(seed):
     """ Test the gradient of z. """
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     n_atoms, n_times_valid = kwargs['n_atoms'], kwargs['n_times_valid']
     X, u, z, v,  = kwargs['X'], kwargs['u'], kwargs['z'], kwargs['v']
     H = kwargs['H']
@@ -116,7 +116,7 @@ def test_grad_z(seed):
 def test_grad_v_hrf_d_basis(seed):
     """ Test the gradient of v (model: hrf 3 basis). """
     rng = check_random_state(seed)
-    kwargs = _set_up(seed)
+    kwargs = _set_up_test(seed)
     t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     h = spm_hrf_3_basis(t_r, n_times_atom)
