@@ -17,7 +17,6 @@ from nilearn import datasets
 from nilearn.decomposition import CanICA
 
 from seven.utils import get_unique_dirname
-from seven.atlas import fetch_atlas_basc_12_2015
 from seven.plotting import plotting_spatial_comp
 
 

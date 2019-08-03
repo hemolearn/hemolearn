@@ -1,7 +1,5 @@
-"""Helper for fMRI example."""
-
+"""Helper to fetcht he HCP fMRI data for the examples."""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
-#
 # License: BSD (3-clause)
 
 import os
@@ -18,13 +16,25 @@ EPOCH_DUR_HCP = 12.0
 DUR_RUN_HCP_MOTOR = 3*60 + 34
 N_SCANS_HCP_MOTOR = 284
 TR_HCP_MOTOR = DUR_RUN_HCP_MOTOR / float(N_SCANS_HCP_MOTOR)
+
 DUR_RUN_HCP_REST = 14*60 + 33
 N_SCANS_HCP_REST = 1200
 TR_HCP_REST = DUR_RUN_HCP_REST / float(N_SCANS_HCP_REST)
 
 
 def _get_hcp_rest_fmri_fname(subject_id, anat_data=False):
-    """ Return the tfMRI filename for rest data. """
+    """ Return the tfMRI filename for rest data.
+
+    Parameters
+    ----------
+    subject_id : int, HCP id of the subject to fetch fMRI rest data
+    anat_data : bool, (default=False), whether to fetch the anatomical MRI data
+
+    Return
+    ------
+    fmri_path : str, filepath to the functional MRI data
+    anat_path : str, filepath to the anatomical MRI data
+    """
     data_dir = get_data_dirs()[0]
     path = os.path.join(data_dir, str(subject_id))
     fmri_path = path
@@ -50,7 +60,18 @@ def _get_hcp_rest_fmri_fname(subject_id, anat_data=False):
 
 
 def _get_hcp_motor_task_fmri_fname(subject_id, anat_data=False):
-    """Return the tfMRI filename."""
+    """Return the tfMRI filename.
+
+    Parameters
+    ----------
+    subject_id : int, HCP id of the subject to fetch fMRI rest data
+    anat_data : bool, (default=False), whether to fetch the anatomical MRI data
+
+    Return
+    ------
+    fmri_path : str, filepath to the functional MRI data
+    anat_path : str, filepath to the anatomical MRI data
+    """
     data_dir = get_data_dirs()[0]
     path = os.path.join(data_dir, str(subject_id))
     fmri_path = path
@@ -75,8 +96,24 @@ def _get_hcp_motor_task_fmri_fname(subject_id, anat_data=False):
         return fmri_path
 
 
-def get_paradigm_hcp(subject_id, data_dir=None):
-    """Return onsets, conditions of the HCP task experimental protocol."""
+def get_paradigm_hcp_motor_task(subject_id, data_dir=None):
+    """Return onsets and conditions of the HCP motor task experimental
+    protocol.
+
+    Parameters
+    ----------
+    subject_id : int, HCP id of the subject to fetch fMRI rest data
+    data_dir : str or None, (default=None), dirpath to HCP data, if None the
+        fetcher will look in the HOME directory, if the data is missing it will
+        download it
+
+
+    Return
+    ------
+    conditions : DataFrame, sum-up the task condition of the fMRI acquisition,
+        the columns name are 'onset', 'duration', 'trial_type'
+    timeline : array, temporal axe with temporal resolution of the fMRI data
+    """
     data_dir = get_data_dirs()[0]
     path = os.path.join(data_dir, str(subject_id))
     dirs = ['MNINonLinear', 'Results', 'tfMRI_MOTOR_RL', 'EVs']
@@ -108,28 +145,3 @@ def get_paradigm_hcp(subject_id, data_dir=None):
     df.reset_index(inplace=True, drop=True)
 
     return df, np.linspace(0.0, DUR_RUN_HCP_MOTOR, N_SCANS_HCP_MOTOR)
-
-
-def get_protocol_hcp(subject_id, trial, data_dir=None):
-    """Get the HCP motor task protocol."""
-    paradigm_full, _ = get_paradigm_hcp(subject_id)
-    paradigm = paradigm_full[paradigm_full['trial_type'] == trial]
-
-    onset = []
-    for t, d in zip(paradigm['onset'], paradigm['duration']):
-        onset.extend(list(t + np.arange(int(d / TR_HCP)) * TR_HCP))
-    trial_type = [trial] * len(onset)
-    onset = np.array(onset)
-    trial_type = np.array(trial_type)
-
-    t = np.linspace(0.0, DUR_RUN_HCP_MOTOR, N_SCANS_HCP_MOTOR)
-
-    p_e = np.zeros(N_SCANS_HCP_MOTOR)
-    mask_cond = (paradigm['trial_type'] == trial).values
-    onset_t = paradigm['onset'][mask_cond].values
-    onset_idx = (onset_t / TR_HCP).astype(int)
-    durations = paradigm['duration'][mask_cond].values
-    for i, d in zip(onset_idx, durations):
-        p_e[i:int(i+d)] = 1.0
-
-    return trial_type, onset, p_e, t

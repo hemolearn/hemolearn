@@ -1,5 +1,6 @@
-""" Example to recover the different spontanious tasks involved in the BOLD
-signal on the HCP dataset"""
+""" Example to recover the different neural temporal activities, the associated
+functional networks maps and the HRFs per ROIs in the fMRI data, on the HCP
+dataset resting-state. """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -23,8 +24,7 @@ from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_obj_values, plotting_hrf,
                             plotting_hrf_stats)
 
-from _utils import (fetch_subject_list, _get_hcp_rest_fmri_fname,
-                    get_paradigm_hcp, get_protocol_hcp)
+from _utils import fetch_subject_list, _get_hcp_rest_fmri_fname
 from _utils import TR_HCP_REST as TR
 
 
@@ -40,13 +40,13 @@ func_fname, anat_fname = _get_hcp_rest_fmri_fname(subject_id, anat_data=True)
 X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0)
-seed = 0
+seed = None
 n_atoms = 10
-hrf_atlas = 'basc-036'
+hrf_atlas = 'scale122'
 slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
               hrf_model='scaled_hrf', lbda=5.0e-3, max_iter=100,
-              raise_on_increase=False, random_state=seed, n_jobs=1,
-              nb_fit_try=1, verbose=2)
+              raise_on_increase=False, random_state=seed, n_jobs=3,
+              nb_fit_try=3, verbose=2)
 
 t0 = time.time()
 slrda.fit(X)

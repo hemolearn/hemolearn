@@ -1,5 +1,6 @@
-""" Example to recover the different spontanious tasks involved in the BOLD
-signal on the ADHD"""
+""" Example to recover the different neural temporal activities, the associated
+functional networks maps and the HRFs per ROIs in the fMRI data, on the ADHD
+dataset resting-state. """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -37,13 +38,13 @@ confound_fname = adhd_dataset.confounds[0]
 X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0, confounds=confound_fname)
-seed = 0
+seed = None
 n_atoms = 10
-hrf_atlas = 'basc-036'
+hrf_atlas = 'scale122'
 slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas,
-              hrf_model='3_basis_hrf', lbda=5.0e-3, max_iter=100,
-              raise_on_increase=False, random_state=seed, n_jobs=1,
-              nb_fit_try=1, verbose=2)
+              hrf_model='scaled_hrf', lbda=5.0e-3, max_iter=100,
+              raise_on_increase=False, random_state=seed, n_jobs=3,
+              nb_fit_try=3, verbose=2)
 
 t0 = time.time()
 slrda.fit(X)

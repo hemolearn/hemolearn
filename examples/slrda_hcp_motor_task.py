@@ -1,5 +1,6 @@
-""" Example to recover the different spontanious tasks involved in the BOLD
-signal on the HCP dataset"""
+""" Example to recover the different neural temporal activities, the associated
+functional networks maps and the HRFs per ROIs in the fMRI data, on the HCP
+dataset motor task. """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -24,7 +25,7 @@ from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_hrf_stats)
 
 from _utils import (fetch_subject_list, _get_hcp_motor_task_fmri_fname,
-                    get_paradigm_hcp, get_protocol_hcp)
+                    get_paradigm_hcp_motor_task)
 from _utils import TR_HCP_MOTOR as TR
 
 
@@ -41,9 +42,9 @@ func_fname, anat_fname = _get_hcp_motor_task_fmri_fname(subject_id,
 X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0)
-seed = 0
+seed = None
 n_atoms = 10
-hrf_atlas = 'basc-036'
+hrf_atlas = 'scale036'
 slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
               hrf_model='3_basis_hrf', lbda=1.0e-2, max_iter=100,
               raise_on_increase=False, random_state=seed, n_jobs=1,
@@ -73,7 +74,7 @@ plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
 d = 12.0 * TR
 l_onset_t = []
 conditions = ['lh', 'rh', 'lf', 'rf']
-paradigm_full, _ = get_paradigm_hcp(subject_id)
+paradigm_full, _ = get_paradigm_hcp_motor_task(subject_id)
 for cond in conditions:
     paradigm = paradigm_full[paradigm_full['trial_type'] == cond]
     mask_cond = (paradigm['trial_type'] == cond).values
