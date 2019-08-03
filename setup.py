@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-""" Seven setup routine.
-"""
+""" Seven setup routine. """
 import sys
 import os
 from setuptools import setup, find_packages
@@ -46,7 +45,7 @@ VERSION = _VERSION_GLOBALS['__version__']
 if __name__ == "__main__":
     if is_installing():
         module_check_fn = _VERSION_GLOBALS['_check_module_dependencies']
-        module_check_fn(is_pyta_installing=True)
+        module_check_fn(is_seven_installing=True)
 
     install_requires = \
             ['{0}>={1}'.format(mod, meta['min_version'])
@@ -71,7 +70,7 @@ if __name__ == "__main__":
               'Topic :: Scientific/Engineering',
               'Operating System :: POSIX',
               'Operating System :: Unix',
-              'Programming Language :: Python :: 2.7',
+              'Programming Language :: Python :: 3.5',
           ],
           packages=find_packages(),
           install_requires=install_requires,

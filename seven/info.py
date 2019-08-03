@@ -1,9 +1,5 @@
-# *- encoding: utf-8 -*-
-"""
-pyBOLD version, required package versions, and utilities for checking.
-"""
-from distutils.version import LooseVersion
-
+""" Info module: required package version and utilities for checking to help
+install Seven package. """
 # Author: Hamza Cherkaoui
 # License: new BSD
 
@@ -23,6 +19,8 @@ from distutils.version import LooseVersion
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 
+from distutils.version import LooseVersion
+
 __version__ = '0.0.0'
 
 _SEVEN_INSTALL_MSG = "See {0} for installation information.".format(
@@ -40,21 +38,55 @@ REQUIRED_MODULE_METADATA = (
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
     ('numpy', {
-        'min_version': '1.10.0',
+        'min_version': '1.14.0',
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
     ('scipy', {
-        'min_version': '0.15.0',
+        'min_version': '1.0.0',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('matplotlib', {
+        'min_version': '2.1.2',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('nibabel', {
+        'min_version': '2.3.0',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('nilearn', {
+        'min_version': '0.5.2',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('scikit-learn', {
+        'min_version': '0.19.2',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('threadpoolctl', {
+        'min_version': '1.0.0',
+        'required_at_installation': True,
+        'install_info': _SEVEN_INSTALL_MSG}),
+    ('prox_tv', {
+        'min_version': '0.0.0',
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
     )
 
 
-def _import_module_with_version_check(
-        module_name,
-        minimum_version,
-        install_info=None):
-    """Check that module is installed with a recent enough version
+def _import_module_with_version_check(module_name, minimum_version,
+                                      install_info=None):
+    """Private helper, check that module is installed with a recent enough
+    version.
+
+    Parameters
+    ----------
+    module_name : str, module name
+    minimum_version : str, minimum version required
+    install_info : str or None, (default=None), message to install it if
+        installation failed
+
+    Return
+    ------
+    module : Python module, the imported module
     """
     try:
         module = __import__(module_name)
@@ -85,22 +117,22 @@ def _import_module_with_version_check(
     return module
 
 
-def _check_module_dependencies(is_pyta_installing=False):
+def _check_module_dependencies(is_seven_installing=False):
     """Throw an exception if Seven dependencies are not installed.
 
     Parameters
     ----------
-    is_pyta_installing: boolean
+    is_seven_installing: boolean
         if True, only error on missing packages that cannot be auto-installed.
         if False, error on any missing package.
 
     Throws
-    -------
-    ImportError
+    ------
+    ImportError : if a dependencie is not installed.
     """
 
     for (module_name, module_metadata) in REQUIRED_MODULE_METADATA:
-        if not (is_pyta_installing and
+        if not (is_seven_installing and
                 not module_metadata['required_at_installation']):
             # Skip check only when installing and it's a module that
             # will be auto-installed.
