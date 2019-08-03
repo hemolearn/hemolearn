@@ -4,7 +4,7 @@
 
 import pytest
 import numpy as np
-from seven.learn_u_z_multi import _update_z
+from seven.learn_u_z_v_multi import _update_z
 from seven.checks import (check_random_state, check_len_hrf, check_if_vanished,
                           _get_lambda_max)
 from seven.utils import _set_up_test

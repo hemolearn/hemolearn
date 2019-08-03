@@ -19,7 +19,26 @@ MAX_DELTA = 2.0
 
 
 def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
-    """ Estimation of v based on the time dilatation SPM HRF. """
+    """ Estimation of v based on the time dilatation SPM HRF.
+
+    Parameters
+    ----------
+    a : array, shape (n_hrf_rois, n_param_HRF), initial HRF parameters
+    X : array, shape (n_voxels, n_times), fMRI data
+    z : array, shape (n_atoms, n_times_valid), temporal components
+    u : array, shape (n_atoms, n_voxels), spatial maps
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+
+    Return
+    ------
+    a : array, shape (n_hrf_rois, n_param_HRF), estimated HRF parameters
+    v : array, shape (n_hrf_rois, n_times_atom), estimated HRFs
+    """
     n_hrf_rois, _ = rois_idx.shape
     _, n_times_valid = z.shape
     v = np.empty((n_hrf_rois, n_times_atom))
@@ -51,7 +70,22 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
 
 
 def _estim_v_d_basis(a, X, h, z, u, rois_idx):
-    """ Estimation of v based on the SPM 3 basis model. """
+    """ Estimation of v based on the SPM 3 basis model.
+
+    Parameters
+    ----------
+    a : array, shape (n_hrf_rois, n_param_HRF), initial HRF parameters
+    X : array, shape (n_voxels, n_times), fMRI data
+    h : array, shape (n_atoms_hrf, n_times_atom), HRF basis
+    z : array, shape (n_atoms, n_times_valid), temporal components
+    u : array, shape (n_atoms, n_voxels), spatial maps
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
+
+    Return
+    ------
+    a : array, shape (n_hrf_rois, n_param_HRF), estimated HRF parameters
+    v : array, shape (n_hrf_rois, n_times_atom), estimated HRFs
+    """
     n_atoms_hrf, n_times_atom = h.shape
     n_hrf_rois, _ = rois_idx.shape
     _, n_times = X.shape

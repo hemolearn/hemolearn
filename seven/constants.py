@@ -1,4 +1,5 @@
-""" Usefull constants computation functions. """
+""" Constants module: Usefull constants computation functions for gradient
+descent algorithm. """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -15,13 +16,14 @@ def _precompute_uvtuv(u, v, rois_idx):
 
     Parameters
     ----------
-    u : array, shape (n_atoms, n_voxels)
-    v : array, shape (n_hrf_rois, n_times_atom)
-    rois_idx: array, shape (n_hrf_rois, max indices per rois)
+    u : array, shape (n_atoms, n_voxels), spatial maps
+    v : array, shape (n_hrf_rois, n_times_atom), HRFs
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
 
     Return
     ------
-    uvtuv : array, shape (n_atoms, n_atoms, 2 * n_times_atom - 1)
+    uvtuv : array, shape (n_atoms, n_atoms, 2 * n_times_atom - 1), precomputed
+        operator
     """
     n_atoms, n_voxels = u.shape
     _, n_times_atom = v.shape
@@ -40,7 +42,20 @@ def _precompute_uvtuv(u, v, rois_idx):
 
 
 def _precompute_B_C(X, z, H, rois_idx):
-    """ Compute list of B, C from givem H (and X, z). """
+    """ Compute list of B, C from givem H (and X, z).
+
+    Parameters
+    ----------
+    X : array, shape (n_voxels, n_times), fMRI data
+    z : array, shape (n_atoms, n_times_valid), temporal components
+    H : array, shape (n_hrf_rois, n_times_valid, n_times), Toeplitz matrices
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois),
+
+    Return
+    ------
+    B : array, shape (n_atoms, n_voxels), precomputed operator
+    C : array, shape (n_atoms, n_atoms), precomputed operator
+    """
     n_hrf_rois, _ = rois_idx.shape
     n_voxels, _ = X.shape
     n_atoms, _ = z.shape
@@ -58,7 +73,19 @@ def _precompute_B_C(X, z, H, rois_idx):
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :, :]),
            nopython=True, cache=True, fastmath=True)
 def _precompute_d_basis_constant(X, uz, H):
-    """ Precompute AtA and AtX. """
+    """ Precompute AtA and AtX.
+
+    Parameters
+    ----------
+    X : array, shape (n_voxels, n_times), fMRI data
+    uz : array, shape (n_voxels, n_times_valid), neural activity
+    H : array, shape (n_hrf_rois, n_times_valid, n_times), Toeplitz matrices
+
+    Return
+    ------
+    AtA : array, shape (n_atoms_hrf, n_atoms_hrf), precomputed operator
+    AtX : array, shape (n_atoms_hrf), precomputed operator
+    """
     n_voxels_rois, n_times = X.shape
     n_atoms_hrf, _, _ = H.shape
     A_d = np.empty((n_atoms_hrf, n_voxels_rois * n_times))

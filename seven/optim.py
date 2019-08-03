@@ -15,6 +15,28 @@ def cdclinmodel(
     """ Coordinate descente on constraint linear model:
     grad_u(u) = C.dot(u) - B and prox_u(.) = _prox_positive_L2_ball(.)
     (see prox.py for the definition of _prox_positive_L2_ball)
+
+    Parameters
+    ----------
+    u0 : array, shape (n_atoms, n_voxels), initial spatial maps
+    constants : dict, gather the usefull constant for the estimation of the
+        spatial maps, keys are (C, B)
+    max_iter : int, (default=100), maximum number of iterations to perform the
+        algorithm
+    early_stopping : bool, (default=True), whether to early stop the analysis
+    eps : float, (default=np.finfo(np.float64).eps), stoppping parameter w.r.t
+        evolution of the cost-function
+    obj : func, (default=None), cost-function function
+    benchmark : bool, (default=False), whether or not to save the cost-function
+        and the duration of computatio nof each iteration
+
+    Return
+    ------
+    u : array, shape (n_atoms, n_voxels), the estimated spatial maps
+    pobj : array or None, shape (n_iter,) or (3 * n_iter,), the saved
+        cost-function
+    times : array or None, shape (n_iter,) or(3 * n_iter,), the saved duration
+        per steps
     """
     if benchmark and obj is None:
         raise ValueError("If 'benchmark' is set True 'obj' should be given.")
@@ -67,7 +89,36 @@ def proximal_descent(
             x0, grad, prox, step_size, momentum='fista', restarting=None,
             max_iter=100, early_stopping=True, eps=np.finfo(np.float64).eps,
             obj=None, benchmark=False):
-    """ Proximal descent. """
+    """ Proximal descent algorithm.
+
+    Parameters
+    ----------
+    x0 : array, shape (n_length, ), initial variables
+    grad : func, gradient function
+    prox : func, proximal operator function
+    step_size : float, step-size for the gradient descent
+    momentum : str or None, (default='fista'), momentum to choose, possible
+        choice are ('fista', 'greedy', None)
+    restarting : str or None, (default=None), restarting to chosse, possible
+        choice are ('obj', 'descent', None),  if restarting == 'obj', obj
+        function should be given
+    max_iter : int, (default=100), maximum number of iterations to perform the
+        analysis
+    early_stopping : bool, (default=True), whether to early stop the analysis
+    eps : float, (default=np.finfo(np.float64).eps), stoppping parameter w.r.t
+        evolution of the cost-function
+    obj : func, (default=None), cost-function function
+    benchmark : bool, (default=False), whether or not to save the cost-function
+        and the duration of computatio nof each iteration
+
+    Return
+    ------
+    x : array, shape (n_atoms, n_voxels), the estimated variable
+    pobj : array or None, shape (n_iter,) or (3 * n_iter,), the saved
+        cost-function
+    times : array or None, shape (n_iter,) or(3 * n_iter,), the saved duration
+        per steps
+    """
     if benchmark and obj is None:
         raise ValueError("If 'benchmark' is set True 'obj' should be given.")
 

@@ -1,4 +1,23 @@
-"""Seven package"""
+"""Seven is a Python module to estimate the Haemodynamic Response Function
+(HRF) in brain from resting-state or task fMRI data (BOLD signal). It relies on
+a Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
+neurovascular coupling from the the neural activity.
+
+The advantages of SLRDA are:
+
+* The estimation of the HRF for each voxels of the brain.
+* The decomposition of the neural activity in a set of temporal components and
+its associated spatial map that describe a function network in the brain.
+
+The disadvantages of SLRDA include:
+
+* If the temporal resolution in the fMRI data is too low (TR > 2s) it's likely
+that the analysis will not found major difference between the HRFs. This is due
+to the fact that the common time-to-peak difference between HRFs within the
+same brain varies at maximum of 2 s, if the temporal resolution is greater that
+this, no effect will be estimated.
+
+"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -7,25 +26,65 @@ from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
 from nilearn import input_data
 
-from .learn_u_z_multi import cached_multi_runs_learn_u_z_multi
-from .atlas import fetch_atlas, split_atlas
+from .learn_u_z_v_multi import cached_multi_runs_learn_u_z_v_multi
+from .atlas import fetch_atlas_basc_2015, split_atlas
 
 
 class SLRDM(TransformerMixin):
-    """ BOLD Sparse Low-Rank Semi Blind Deconvolution and Decomposition Model
-        (BSLRSBDDM):
-        - Distangle the neural activation and the haemodynamic
-          contributions in the BOLD signal.
-        - Compressed the neural activation signal in `n_atoms` main
-          funtional networks
+    """ Sparse Low-Rank Deconvolution Analysis (SLRDA) is a method to distangle
+    the neural activation and the haemodynamic contributions in the fMRI data
+    (BOLD signal).
+
+    Parameters
+    ----------
+    n_atoms : int, number of components on which to decompose the neural
+        activity (number of temporal components and its associated spatial
+        maps).
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+    hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
+        choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    lbda_strategy str, (default='ratio'), strategy to fix the temporal
+        regularization parameter, possible choice are ['ratio', 'fixed']
+    lbda : float, (default=0.1), whether the temporal regularization parameter
+        if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
+        lbda_strategy == 'ratio'
+    hrf_atlas : str, (default='basc122'), HRF atlas to use to define the HRF
+        ROIs, possible choice are ['scale007', 'scale012', 'scale036',
+        'scale064', 'scale122']
+    max_iter : int, (default=100), maximum number of iterations to perform the
+        analysis
+    random_state : None, int, random-instance, (default=None), random-instance
+        or random-seed used to initialize the analysis
+    early_stopping : bool, (default=True), whether to early stop the analysis
+    eps : float, (default=1.0e-4), stoppping parameter w.r.t evolution of the
+        cost-function
+    raise_on_increase : bool, (default=True), whether to stop the analysis if
+        the cost-function increases during an iteration. This can be due to the
+        fact that the temporal regularization parameter is set to high
+    memory : str, (default='.cache'), the directory name to cache the analysis
+    nb_fit_try : int, (default=1), number of analysis to do with different
+        initialization
+    n_jobs : int, (default=1), the number of CPUs to use if multiple analysis
+        with different initialization is done
+    verbose : int, (default=0), verbose level, 0 no verbose, 1 low verbose,
+        2 maximum verbose
+
+    Throws
+    ------
+    CostFunctionIncreased : if the cost-function increases during an iteration,
+        of the analysis. This can be due to the fact that the temporal
+        regularization parameter is set to high
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=30, hrf_model='3_basis_hrf',
-                 lbda_strategy='ratio', lbda=0.1, lbda_hrf=1.0,
-                 hrf_atlas='basc-122', max_iter=50, random_state=None,
-                 name="DL", early_stopping=True, eps=1.0e-4,
-                 raise_on_increase=True, memory='.cache', n_jobs=1,
-                 nb_fit_try=1, verbose=0):
+                 lbda_strategy='ratio', lbda=0.1, hrf_atlas='scale064',
+                 max_iter=100, random_state=None, early_stopping=True,
+                 eps=1.0e-4, raise_on_increase=True, memory='.cache',
+                 nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
@@ -33,12 +92,10 @@ class SLRDM(TransformerMixin):
         self.n_times_atom = n_times_atom
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
-        self.lbda_hrf = lbda_hrf
 
         # convergence parameters
         self.max_iter = max_iter
         self.random_state = random_state
-        self.name = name
         self.early_stopping = early_stopping
         self.eps = eps
         self.raise_on_increase = raise_on_increase
@@ -50,7 +107,8 @@ class SLRDM(TransformerMixin):
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
-        self.mask_full_brain, self.atlas_rois = fetch_atlas(hrf_atlas)
+        basc_atlas = fetch_atlas_basc_2015(hrf_atlas)
+        self.mask_full_brain, self.atlas_rois = basc_atlas
         self.hrf_rois = dict()
 
         # fMRI masker
@@ -74,13 +132,25 @@ class SLRDM(TransformerMixin):
         self.lobj_ = None
         self.ltime_ = None
 
-    def fit(self, func_fname):
+    def fit(self, X):
+        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
+        fitting the model.
 
-        if not isinstance(func_fname, str):
+        Parameters
+        ----------
+        X : str, the filename of the fMRI data
+
+        Throws
+        ------
+        CostFunctionIncreased : if the cost-function increases during an
+            iteration, of the analysis. This can be due to the fact that the
+            temporal regularization parameter is set to high
+        """
+        if not isinstance(X, str):
             raise ValueError("fMRI data to be decompose should passed as a "
                              "filename, instead of the raw data")
 
-        X = self.masker_.fit_transform(func_fname).T
+        X = self.masker_.fit_transform(X).T
 
         rois = self.masker_.transform(self.atlas_rois).astype(int).ravel()
         index = np.arange(rois.shape[-1])
@@ -103,15 +173,14 @@ class SLRDM(TransformerMixin):
                       hrf_model=self.hrf_model, n_atoms=self.n_atoms,
                       n_times_atom=self.n_times_atom,
                       lbda_strategy=self.lbda_strategy, lbda=self.lbda,
-                      lbda_hrf=self.lbda_hrf, max_iter=self.max_iter,
-                      get_obj=1, get_time=1, u_init='random',
-                      random_seed=self.random_state, name=self.name,
+                      max_iter=self.max_iter, get_obj=1, get_time=1,
+                      u_init='random', random_seed=self.random_state,
                       early_stopping=self.early_stopping, eps=self.eps,
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,
                       nb_fit_try=self.nb_fit_try)
 
-        res = cached_multi_runs_learn_u_z_multi(**params)
+        res = cached_multi_runs_learn_u_z_v_multi(**params)
 
         self.z_hat_ = res[0]
         self.Dz_hat_ = res[1]
@@ -126,15 +195,43 @@ class SLRDM(TransformerMixin):
         return self
 
     def fit_transform(self, X):
+        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
+        fitting the model (same as fit).
+
+        Parameters
+        ----------
+        X : str, the filename of the fMRI data
+
+        Throws
+        ------
+        CostFunctionIncreased : if the cost-function increases during an
+            iteration, of the analysis. This can be due to the fact that the
+            temporal regularization parameter is set to high
+        """
         self.fit(X)
         return self
 
-    def transform(self, X, confounds=None):
-        self._check_fitted()
-        raise NotImplementedError("tranform method no implemented for now...")
+    def transform(self, X):
+        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
+        fitting the model (same as fit).
+
+        Parameters
+        ----------
+        X : str, the filename of the fMRI data
+
+        Throws
+        ------
+        CostFunctionIncreased : if the cost-function increases during an
+            iteration, of the analysis. This can be due to the fact that the
+            temporal regularization parameter is set to high
+        """
+        self.fit(X)
         return self
 
     def _check_fitted(self):
+        """ Private helper, check if the Sparse Low-Rank Deconvolution Analysis
+        (SLRDA) have been done.
+        """
         if self.u_hat is None:
             raise NotFittedError("Fit must be called before accessing the "
                                  "dictionary")

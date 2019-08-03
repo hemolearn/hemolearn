@@ -496,7 +496,7 @@ def multi_runs_learn_u_z_v_multi(
                   raise_on_increase=raise_on_increase, verbose=verbose)
 
     results = Parallel(n_jobs=n_jobs)(
-                delayed(learn_u_z_multi)(**params)
+                delayed(learn_u_z_v_multi)(**params)
                 for _ in range(nb_fit_try))
 
     l_last_pobj = np.array([res[-2][-1] for res in results])

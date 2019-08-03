@@ -10,17 +10,30 @@ import numpy as np
 import nibabel as nib
 from nilearn import plotting
 
-from .atlas import fetch_atlas
+from .atlas import fetch_atlas_basc_2015
 from .utils import tp, fwhm
 
 
 def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
-                        t_start=1.0e-1, figsize=(3, 3), verbose=False):
-    """ Plot the objective function values. """
+                        figsize=(3, 3), verbose=False):
+    """ Plot, and save as pdf, the objective function values.
+
+    Parameters
+    ----------
+    times : array, shape (current_n_iter,) or(3 * current_n_iter,), the saved
+        cost-function
+    pobj : array, shape (current_n_iter,) or(3 * current_n_iter,), the saved
+        duration per steps
+    plot_dir : str, (default='.'), directory under which the pdf is saved
+    min_obj : float, (default=1.0-6), tolerance for minimum of the
+        cost-function
+    figsize : tuple of int, (default=(3, 3)), size of the produced figure
+    verbose : bool, (default=False), verbosity level
+    """
     plt.figure("Cost function (%)", figsize=figsize, constrained_layout=True)
     pobj -= (np.min(pobj) - min_obj)
     pobj /= pobj[0]
-    plt.plot(np.cumsum(times) + t_start, pobj, lw=3.0)
+    plt.plot(np.cumsum(times), pobj, lw=3.0)
     plt.title("Evolution of\nglobal cost-function")
     plt.xlabel('Time [s]')
     plt.ylabel('cost function [%]')
@@ -33,7 +46,20 @@ def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
 
 def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
                            aux_plots_kwargs=dict(), verbose=False):
-    """ Plot each temporal estimated component. """
+    """ Plot, and save as pdf, each temporal estimated component.
+
+    Parameters
+    ----------
+    z : array, shape (n_atoms, n_times_valid), the temporal components
+    variances : array, shape (n_atoms, ) the order variances for each
+        components
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    plot_dir : str, (default='.'), directory under which the pdf is saved
+    aux_plots : func, to plot a additional features on the figure
+    aux_plots_kwargs : dict, keywords arguments for the aux_plots func
+    verbose : bool, (default=False), verbosity level
+    """
     n_atoms, n_times_valid = z.shape
     plt.figure("Temporal atoms", figsize=(8, 5 * n_atoms))
     _xticks = [0, int(n_times_valid / 2.0), int(n_times_valid)]
@@ -67,7 +93,22 @@ def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
 def plotting_spatial_comp(u, variances, masker, plot_dir='.',
                           perc_voxels_to_retain=0.1, bg_img=None,
                           verbose=False):
-    """ Plot each spatial estimated component. """
+    """ Plot, and save as pdf, each spatial estimated component.
+
+    Parameters
+    ----------
+    u : array, shape (n_atoms, n_voxels), the spatial maps
+    variances : array, shape (n_atoms, ) the order variances for each
+        components
+    masker : Nilearn-Masker like, masker class to perform the inverse Nifti
+        transformation
+    plot_dir : str, (default='.'), directory under which the pdf is saved
+    perc_voxels_to_retain : float, (default=0.1), percentage of voxels to
+        retain when plotting the spatial maps
+    bg_img : Nifti-like or None, (default=None), background image, None means
+        no image
+    verbose : bool, (default=False), verbosity level
+    """
     n_atoms, n_voxels = u.shape
     img_u = []
     for k in range(1, n_atoms + 1):
@@ -97,9 +138,26 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
 
 def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
                  normalized=False, plot_dir='.', verbose=True):
-    """ Plot each HRF for each ROIs. """
+    """ Plot, and save as pdf, each HRF for each ROIs.
+
+    Parameters
+    ----------
+    v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+    roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
+        corresponding to the index of the ROI
+    hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
+        HRF to plot for comparison
+    normalized : bool, (default=False), whether or not to normalized by the
+        l-inf norm each HRFs
+    plot_dir : str, (default='.'), directory under which the pdf is saved
+    verbose : bool, (default=False), verbosity level
+    """
     if isinstance(hrf_rois, str):
-        _, atlas_rois = fetch_atlas(hrf_rois)
+        _, atlas_rois = fetch_atlas_basc_2015(hrf_rois)
     n_rois, n_times_atoms = v.shape
     n_cols = np.int(np.sqrt(n_rois))
     n_raws = n_rois // n_cols
@@ -149,11 +207,30 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
 
 def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
                        stat_type='tp', plot_dir='.', verbose=False):
-    """ Plot each stats HRF for each ROIs. """
+    """ Plot, and save as pdf, each stats HRF for each ROIs.
+
+    Parameters
+    ----------
+    v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+    roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
+        corresponding to the index of the ROI
+    hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
+        HRF to plot for comparison
+    stat_type : str, (default='tp'), statistic to compute on each HRFs possible
+        choice are ('tp', 'fwhm')
+    normalized : bool, (default=False), whether or not to normalized by the
+        l-inf norm each HRFs
+    plot_dir : str, (default='.'), directory under which the pdf is saved
+    verbose : bool, (default=False), verbosity level
+    """
     if stat_type not in ['tp', 'fwhm']:
         raise ValueError("stat_type should be in ['tp', 'fwhm'], "
                          "got {}".format(stat_type))
-    _, atlas_rois = fetch_atlas(hrf_rois)
+    _, atlas_rois = fetch_atlas_basc_2015(hrf_rois)
     raw_atlas_rois = atlas_rois.get_data()
     n_hrf_rois, n_times_atom = v.shape
     t = np.array([n * t_r for n in range(n_times_atom)])

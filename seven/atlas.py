@@ -1,4 +1,4 @@
-"""Atlas fetcher. """
+"""Atlas module, to define the HRF ROIs. """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -12,13 +12,37 @@ from nilearn.datasets import fetch_atlas_basc_multiscale_2015
 @numba.jit((numba.int64, numba.int64[:, :]), nopython=True, cache=True,
            fastmath=True)
 def get_indices_from_roi(m, rois_idx):
-    """ Return the indices of the ROI m of from the atlas rois_idx. """
+    """ Return the indices of the ROI of index m from the given atlas rois_idx.
+
+    Parameters
+    ----------
+    m : int, index of the ROI
+    rois_idx : int array, shape (n_hrf_rois, max_n_voxels_roi) voxels indices
+        for each ROI
+
+    Return
+    ------
+    roi_indices : int array, shape (n_voxels_roi,) indices of voxels of the ROI
+    """
     return np.sort(rois_idx[m, 1:rois_idx[m, 0] + 1])
 
 
 def split_atlas(hrf_rois):
-    """ Return a table of indices for each ROIs, a vector of labels for each
-    ROIs and the number of ROIs from a dict atlas. """
+    """ Split the HRF atlas into a table of indices for each ROIs, a vector of
+    labels for each ROIs and the number of ROIs from a dict atlas.
+
+    Parameters
+    ----------
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+
+    Return
+    ------
+    rois_idx : int array, shape (n_hrf_rois, max_n_voxels_roi) voxels indices
+        for each ROI
+    rois_label : int array, shape (n_hrf_rois,) label for each ROI
+    n_hrf_rois : int, number of ROIs in the HRF atlas
+    """
     n_hrf_rois = len(hrf_rois)
     len_indices = [len(indices) for indices in hrf_rois.values()]
     max_voxels_in_rois = np.max(len_indices)
@@ -32,43 +56,30 @@ def split_atlas(hrf_rois):
     return rois_idx, rois_label, n_hrf_rois
 
 
-def fetch_atlas(hrf_atlas):
-    """ Fetch an anatomical atlas given its label. """
-    if hrf_atlas == 'basc-007':
-        mask_full_brain, atlas_rois = \
-                                fetch_atlas_basc_12_2015(n_scales='scale007')
-    elif hrf_atlas == 'basc-012':
-        mask_full_brain, atlas_rois = \
-                                fetch_atlas_basc_12_2015(n_scales='scale012')
-    elif hrf_atlas == 'basc-036':
-        mask_full_brain, atlas_rois = \
-                                fetch_atlas_basc_12_2015(n_scales='scale036')
-    elif hrf_atlas == 'basc-064':
-        mask_full_brain, atlas_rois = \
-                                fetch_atlas_basc_12_2015(n_scales='scale064')
-    elif hrf_atlas == 'basc-122':
-        mask_full_brain, atlas_rois = \
-                                fetch_atlas_basc_12_2015(n_scales='scale122')
-    else:
-        raise ValueError("hrf_atlas should be in ['basc-007', 'basc-012', "
-                         "'basc-036', 'basc-064', 'basc-122'], "
-                         "got '{}'".format(hrf_atlas))
-    return mask_full_brain, atlas_rois
+def fetch_atlas_basc_2015(n_scales='scale007'):
+    """ Fetch the BASC brain atlas given its resolution.
 
+    Parameters
+    ----------
+    hrf_atlas: str, BASC dataset name possible values are: 'scale007',
+        'scale012', 'scale036', 'scale064', 'scale122'
 
-def fetch_atlas_basc_12_2015(n_scales='scale007'):
-    """ Fetch the BASC 12 rois atlas from 2015."""
-    tmp = fetch_atlas_basc_multiscale_2015(version='sym')
+    Return
+    ------
+    mask_full_brain : Nifti Image, full mask brain
+    atlas_rois : Nifti Image, ROIs atlas
+    """
+    basc_dataset = fetch_atlas_basc_multiscale_2015(version='sym')
     if n_scales == 'scale007':
-        atlas_rois_fname = tmp['scale007']
+        atlas_rois_fname = basc_dataset['scale007']
     elif n_scales == 'scale012':
-        atlas_rois_fname = tmp['scale012']
+        atlas_rois_fname = basc_dataset['scale012']
     elif n_scales == 'scale036':
-        atlas_rois_fname = tmp['scale036']
+        atlas_rois_fname = basc_dataset['scale036']
     elif n_scales == 'scale064':
-        atlas_rois_fname = tmp['scale064']
+        atlas_rois_fname = basc_dataset['scale064']
     elif n_scales == 'scale122':
-        atlas_rois_fname = tmp['scale122']
+        atlas_rois_fname = basc_dataset['scale122']
     else:
         raise ValueError("n_scales should be in ['scale007', 'scale012', "
                          "'scale036', 'scale064', 'scale122'], "

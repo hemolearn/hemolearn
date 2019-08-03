@@ -1,4 +1,5 @@
-"""Hemodynamic Responses Function models"""
+""" Convolution module: gathers functions that define a convolutional operator.
+"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -16,14 +17,14 @@ def adjconv_uv(residual_i, u, v, rois_idx):
 
     Parameters
     ----------
-    residual_i : array, shape (n_voxels, n_times)
-    u : array, shape (n_atoms, n_voxels)
-    v : array, shape (n_hrf_rois, n_times_atom)
-    rois_idx: array, shape (n_hrf_rois, max indices per rois)
+    residual_i : array, shape (n_voxels, n_times) residual term in the gradient
+    u : array, shape (n_atoms, n_voxels) spatial maps
+    v : array, shape (n_hrf_rois, n_times_atom) HRFs
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
 
     Return
     ------
-    uvtX : array, shape (n_atoms, n_times_valid)
+    uvtX : array, shape (n_atoms, n_times_valid) computed operator image
     """
     _, n_times_atom = v.shape
     n_voxels, n_time = residual_i.shape
@@ -40,14 +41,14 @@ def adjconv_uH(residual, u, H, rois_idx):
 
     Parameters
     ----------
-    residual : array, shape (n_voxels, n_times)
-    u : array, shape (n_atoms, n_voxels)
-    H : array, shape (n_hrf_rois, n_times, n_times_valid)
-    rois_idx: array, shape (n_hrf_rois, max indices per rois)
+    residual : array, shape (n_voxels, n_times) residual term in the gradient
+    u : array, shape (n_atoms, n_voxels) spatial maps
+    H : array, shape (n_hrf_rois, n_times_valid, n_times), Toeplitz matrices
+    rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
 
     Return
     ------
-    uvtX : array, shape (n_atoms, n_times_valid)
+    uvtX : array, shape (n_atoms, n_times_valid) computed operator image
     """
     n_hrf_rois, _, n_times_valid = H.shape
     n_voxels, n_time = residual.shape
@@ -60,6 +61,17 @@ def adjconv_uH(residual, u, H, rois_idx):
 
 def make_toeplitz(v, n_times_valid):
     """ Make Toeplitz matrix from given kernel to perform valid
-    convolution. """
+    convolution.
+
+    Parameters
+    ----------
+    v : array, shape (n_times_atom), HRF
+    n_times_valid : int, length of the temporal components
+
+    Return
+    ------
+    H : array, shape (n_times, n_times_valid), Toeplitz matrix, recall that
+        n_times = n_times_valid + n_times_atom -1
+    """
     padd = np.zeros((1, n_times_valid - 1))
     return linalg.toeplitz(np.c_[v[None, :], padd], np.c_[1.0, padd])

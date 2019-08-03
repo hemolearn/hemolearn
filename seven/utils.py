@@ -1,4 +1,4 @@
-"""Utility module"""
+"""Utility module: gather various usefull functions"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -21,12 +21,13 @@ def _compute_uvtuv_z(z, uvtuv):
 
     Parameters
     ----------
-    z : array, shape (n_atoms, n_times_valid)
-    uvtuv : array, shape (n_atoms, n_atoms, 2 * n_times_atom - 1)
+    z : array, shape (n_atoms, n_times_valid) temporal components
+    uvtuv : array, shape (n_atoms, n_atoms, 2 * n_times_atom - 1) precomputed
+        operator
 
     Return
     ------
-    uvtuv_z : array, shape (n_atoms, n_times_valid)
+    uvtuv_z : array, shape (n_atoms, n_times_valid) computed operator image
     """
     n_atoms, n_times_valid = z.shape
     uvtuv_z = np.empty((n_atoms, n_times_valid))
@@ -39,7 +40,21 @@ def _compute_uvtuv_z(z, uvtuv):
 
 
 def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
-    """ Est. the cst Lipschitz of AtA. """
+    """ Estimate the Lipschitz constant of the operator AtA.
+
+    Parameters
+    ----------
+    AtA : func, the operator
+    shape : tuple, the dimension variable space
+    nb_iter : int, default(=30), the maximum number of iteration for the
+        estimation
+    tol : float, default(=1.0e-6), the tolerance to do early stopping
+    verbose : bool, default(=False), the verbose
+
+    Return
+    ------
+    L : float, Lipschitz constant of the operator
+    """
     x_old = np.random.randn(*shape)
     converge = False
     for _ in range(nb_iter):
@@ -54,7 +69,18 @@ def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
 
 
 def fwhm(t, hrf, k=3):
-    """Return the full width at half maximum. """
+    """Return the full width at half maximum of the HRF.
+
+    Parameters
+    ----------
+    t : array, shape (n_times_atom, ), the time
+    hrf : array, shape (n_times_atom, ), HRF
+    k : int, the degree of the bspline use to estimate the FWHM
+
+    Return
+    ------
+    s : float, the full width at half maximum of the HRF
+    """
     half_max = np.amax(hrf) / 2.0
     s = splrep(t, hrf - half_max, k=k)
     roots = sproot(s)
@@ -65,12 +91,31 @@ def fwhm(t, hrf, k=3):
 
 
 def tp(t, hrf):
-    """ Return time to peak oh the signal. """
+    """ Return time to peak oh the signal of the HRF.
+
+    Parameters
+    ----------
+    t : array, shape (n_times_atom, ), the time
+    hrf : array, shape (n_times_atom, ), HRF
+
+    Return
+    ------
+    s : float, time to peak oh the signal of the HRF
+    """
     return t[np.argmax(hrf)]
 
 
 def get_nifti_ext(func_fname):
-    """ Return the extension of the Nifti. """
+    """ Return the extension of the Nifti.
+
+    Parameters
+    ----------
+    func_fname : str, the filename of the fMRI data
+
+    Return
+    ------
+    ext : str, the extension of the fMRI data
+    """
     err_msg = "Filename extension not understood, {extension}"
     fname, ext = os.path.splitext(func_fname)
     if ext == '.gz':
@@ -92,7 +137,69 @@ def fmri_preprocess(
         mask_strategy='background', mask_args=None, sample_mask=None,
         dtype=None, memory_level=1, memory=None, verbose=0,
         confounds=None, suffix='_preproc'):
-    """ Preprocess the fMRI data. """
+    """ Preprocess the fMRI data.
+
+    Parameters
+    ----------
+    func_fname : str, the filename of the fMRI data
+    mask_img : Nifti-like img or None, (default=None),
+    sessions : array or None, (default=None), add a session level to the
+        preprocessing
+    smoothing_fwhm : float or None, (default=None), if smoothing_fwhm is not
+        None, it gives the full-width half maximum in millimeters of the
+        spatial smoothing to apply to the signal.
+    standardize : bool, (default=False), if standardize is True, the
+        time-series are centered and normed: their mean is put to 0 and their
+        variance to 1 in the time dimension.
+    detrend : bool, (defaul==False), whether or not to detrend the BOLD signal
+    low_pass : float or None, (defaul==None), the limit low freq pass band to
+        clean the BOLD signal
+    high_pass : float or None, (default=None), the limit high freq pass band to
+        clean the BOLD signal
+    t_r : float or None, (default=None), Time of Repetition, fMRI acquisition
+        parameter, the temporal resolution
+    target_affine :  3x3 or 4x4 array or None, (default=None), this parameter
+        is passed to nilearn.image.resample_img
+    target_shape : 3-tuple of integers or None, (default=None),this parameter
+        is passed to nilearn.image.resample_img
+    mask_strategy : {‘background’, ‘epi’ or ‘template’},
+        (default='background'), the strategy used to compute the mask: use
+        ‘background’ if your images present a clear homogeneous background,
+        ‘epi’ if they are raw EPI images, or you could use ‘template’ which
+        will extract the gray matter part of your data by resampling the MNI152
+        brain mask for your data’s field of view. Depending on this value, the
+        mask will be computed from nilearn.masking.compute_background_mask,
+        masking.compute_epi_mask or nilearn.masking.compute_gray_matter_mask.
+    mask_args : dict, (default=None), if mask is None, these are additional
+        parameters passed to masking.compute_background_mask or
+        nilearn.masking.compute_epi_mask to fine-tune mask computation. Please
+        see the related documentation for details.
+    sample_mask : Any type compatible with numpy-array indexing,
+        (default=None), any type compatible with numpy-array indexing Masks the
+        niimgs along time/fourth dimension. This complements 3D masking by the
+        mask_img argument. This masking step is applied before data
+        preprocessing at the beginning of NiftiMasker.transform. This is useful
+        to perform data subselection as part of a scikit-learn pipeline.
+    dtype :  {dtype, “auto”} or None, (default=None), data type toward which
+        the data should be converted. If “auto”, the data will be converted to
+        int32 if dtype is discrete and float32 if it is continuous.
+    memory : instance of joblib.Memory or str, (default=None), used to cache
+        the masking process. By default, no caching is done. If a string is
+        given, it is the path to the caching directory.
+    memory_level : int, (default=1), rough estimator of the amount of memory
+        used by caching. Higher value means more memory for caching
+    verbose : int, (default=0), indicate the level of verbosity. By default,
+        nothing is printed
+    confounds : Nifti-like img or None, (default=None), list of confounds (2D
+        arrays or filenames pointing to CSV files). Must be of same length than
+        imgs_list.
+    suffix : str, (default='_preproc'), the suffix of the preprocessed fMRI
+        data filename
+
+    Return
+    ------
+    nfname : str, the filename of the preprocessed fMRI data
+    """
     if not isinstance(func_fname, str):
         raise ValueError("func_fname should be the filename of "
                          "a 4d Nifti file")
@@ -116,7 +223,23 @@ def fmri_preprocess(
 
 def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     """ Sorted the temporal the spatial maps and the associated activation by
-    explained variance."""
+    explained variance.
+
+    Parameters
+    ----------
+    u : array, shape (n_atoms, n_voxels), spatial maps
+    z : array, shape (n_atoms, n_times_valid), temporal components
+    v : array, shape (n_hrf_rois, n_times_atom), HRFs
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+
+    Return
+    ------
+    u : array, shape (n_atoms, n_voxels), the order spatial maps
+    z : array, shape (n_atoms, n_times_valid), the order temporal components
+    variances : array, shape (n_atoms, ) the order variances for each
+        components
+    """
     n_atoms, n_voxels = u.shape
     _, n_times_valid = z.shape
     n_hrf_rois, n_times_atom = v.shape
@@ -133,7 +256,16 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
 
 
 def get_unique_dirname(prefix):
-    """ Return a unique dirname based on the time and the date."""
+    """ Return a unique dirname based on the time and the date.
+
+    Parameters
+    ----------
+    prefix : str, the prefix to add to the directory name
+
+    Return
+    ------
+    dirname : str, the unique directory name
+    """
     msg = "prefix should be a string, got {}".format(prefix)
     assert isinstance(prefix, str), msg
     date = datetime.now()
@@ -144,7 +276,19 @@ def get_unique_dirname(prefix):
 
 
 def _set_up_test(seed):
-    """ General set up function for the tests. """
+    """ General set up function for the tests.
+
+    Parameters
+    ----------
+    seed : None, int, random-instance, (default=None), random-instance
+        or random-seed used to initialize the analysis
+
+    Return
+    ------
+    kwargs : dict, the setting to make unitary tests the keys are (t_r,
+        n_hrf_rois, n_atoms, n_voxels, n_times, n_times_atom, n_times_valid,
+        rois_idx, X, z, u, H, v, B, C)
+    """
     rng = check_random_state(None)
     t_r = 1.0
     n_hrf_rois = 2
@@ -171,12 +315,18 @@ def _set_up_test(seed):
     return kwargs
 
 
-def profile_me(fn):
-    """ Profiling decorator. """
-    def profiled_fn(*args, **kwargs):
-        filename = fn.__name__ + '.profile'
+def profile_me(func):
+    """ Profiling decorator, produce a report <func-name>.profile to be open as
+    `python -m snakeviz  <func-name>.profile`
+
+    Parameters
+    ----------
+    func : func, function to profile
+    """
+    def profiled_func(*args, **kwargs):
+        filename = func.__name__ + '.profile'
         prof = cProfile.Profile()
-        ret = prof.runcall(fn, *args, **kwargs)
+        ret = prof.runcall(func, *args, **kwargs)
         prof.dump_stats(filename)
         return ret
-    return profiled_fn
+    return profiled_func
