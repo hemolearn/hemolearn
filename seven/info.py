@@ -57,10 +57,11 @@ REQUIRED_MODULE_METADATA = (
         'min_version': '0.5.2',
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
-    ('sklearn', {
-        'min_version': '0.19.2',
-        'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+    # XXX need to find a fix for the 'scikit-learn' / 'sklearn' problem
+    # ('scikit-learn', {
+    #     'min_version': '0.19.2',
+    #     'required_at_installation': True,
+    #     'install_info': _SEVEN_INSTALL_MSG}),
     ('threadpoolctl', {
         'min_version': '1.0.0',
         'required_at_installation': True,
