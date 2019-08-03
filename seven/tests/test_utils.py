@@ -3,13 +3,22 @@
 # License: BSD (3-clause)
 
 import pytest
+import time
 import numpy as np
 from seven.checks import check_random_state
 from seven.constants import _precompute_uvtuv
 from seven.atlas import get_indices_from_roi
 from seven.utils import (get_nifti_ext, lipschitz_est, tp, fwhm,
-                         _compute_uvtuv_z)
+                         _compute_uvtuv_z, get_unique_dirname)
 from seven.utils import _set_up_test
+
+
+def test_get_unique_dirname():
+    """ Test the unique directory filename creation. """
+    dirname1 = get_unique_dirname('')
+    time.sleep(1)
+    dirname2 = get_unique_dirname('')
+    assert dirname1 != dirname2
 
 
 @pytest.mark.repeat(3)
