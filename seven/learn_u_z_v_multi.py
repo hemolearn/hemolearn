@@ -20,8 +20,20 @@ from .atlas import split_atlas
 from .convolution import adjconv_uH, make_toeplitz
 
 
-def _update_v(a, constants):
-    """ Update HRF."""
+def _update_v(a0, constants):
+    """ Update the HRFs.
+
+    Parameters
+    ----------
+    a0 : array, shape (n_hrf_rois, n_param_HRF), initial HRF parameters
+    constants : dict, gather the usefull constant for the estimation of the
+        HRF, keys are (z, u, rois_idx, X, hrf_model)
+
+    Return
+    ------
+    a : array, shape (n_hrf_rois, n_param_HRF),  estimated HRF parameters
+    v : array, shape (n_hrf_rois, n_times_atom), estimated HRFs
+    """
     msg = "'z' is missing in 'constants' for '_update_v' step."
     assert ('z' in constants), msg
     msg = "'u' is missing in 'constants' for '_update_v' step."
@@ -41,7 +53,7 @@ def _update_v(a, constants):
         msg = "'h' is missing in 'constants' for '_update_v' step."
         assert ('h' in constants), msg
         h = constants['h']
-        return _estim_v_d_basis(a, X, h, z, u, rois_idx)
+        return _estim_v_d_basis(a0, X, h, z, u, rois_idx)
 
     elif hrf_model == 'scaled_hrf':
         msg = "'t_r' is missing in 'constants' for '_update_v' step."
@@ -50,7 +62,7 @@ def _update_v(a, constants):
                "'_update_v' step.")
         assert ('n_times_atom' in constants), msg
         t_r, n_times_atom = constants['t_r'], constants['n_times_atom']
-        return _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom)
+        return _estim_v_scaled_hrf(a0, X, z, u, rois_idx, t_r, n_times_atom)
 
     else:
         raise ValueError("hrf_model should be in ['3_basis_hrf', "
@@ -59,7 +71,18 @@ def _update_v(a, constants):
 
 
 def _update_u(u0, constants):
-    """ Update spatial maps."""
+    """ Update the spatial maps.
+
+    Parameters
+    ----------
+    u0 : array, shape (n_atoms, n_voxels), initial spatial maps
+    constants : dict, gather the usefull constant for the estimation of the
+        spatial maps, keys are (C, B)
+
+    Return
+    ------
+    u : array, shape (n_atoms, n_voxels), estimated spatial maps
+    """
     msg = "'C' is missing in 'constants' for '_update_u' step."
     assert ('C' in constants), msg
     msg = "'B' is missing in 'constants' for '_update_u' step."
@@ -72,7 +95,18 @@ def _update_u(u0, constants):
 
 
 def _update_z(z0, constants):
-    """ Update temporal components."""
+    """ Update the temporal components.
+
+    Parameters
+    ----------
+    z0 : array, shape (n_atoms, n_voxels), initial temporal components
+    constants : dict, gather the usefull constant for the estimation of the
+        temporal components, keys are (v, H, u, rois_idx, X, lbda)
+
+    Return
+    ------
+    z : array, shape (n_atoms, n_voxels), estimated temporal components
+    """
     msg = "'v' is missing in 'constants' for '_update_z' step."
     assert ('v' in constants), msg
     msg = "'H' is missing in 'constants' for '_update_z' step."
@@ -113,12 +147,73 @@ def _update_z(z0, constants):
     return z_hat
 
 
-def learn_u_z_multi(
+def learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, max_iter=50,
-        get_obj=0, get_time=0, u_init='random', random_seed=None,
-        early_stopping=True, eps=1.0e-5, raise_on_increase=True, verbose=0):
+        lbda_strategy='ratio', lbda=0.1, max_iter=100, get_obj=0, get_time=0,
+        random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
+
+    Parameters
+    ----------
+    X : array, shape (n_voxels, n_times), fMRI data
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+    hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
+        choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    n_atoms : int, number of components on which to decompose the neural
+        activity (number of temporal components and its associated spatial
+        maps).
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+    lbda_strategy str, (default='ratio'), strategy to fix the temporal
+        regularization parameter, possible choice are ['ratio', 'fixed']
+    lbda : float, (default=0.1), whether the temporal regularization parameter
+        if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
+        lbda_strategy == 'ratio'
+    max_iter : int, (default=100), maximum number of iterations to perform the
+        analysis
+    get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to
+        compute it at each iteration, 2 to compute it at each estimation step
+        (z, u, v)
+    get_time : int, the level of computation-duration saving 0 to not compute
+        it, 1 to compute it at each iteration, 2 to compute it at each
+        estimation step
+    random_seed : None, int, random-instance, (default=None), random-instance
+        or random-seed used to initialize the analysis
+    early_stopping : bool, (default=True), whether to early stop the analysis
+    eps : float, (default=1.0e-4), stoppping parameter w.r.t evolution of the
+        cost-function
+    raise_on_increase : bool, (default=True), whether to stop the analysis if
+        the cost-function increases during an iteration. This can be due to the
+        fact that the temporal regularization parameter is set to high
+    verbose : int, (default=0), verbose level, 0 no verbose, 1 low verbose,
+        2 maximum verbose
+
+    Return
+    ------
+    z : array, shape (n_atoms, n_times_valid), the estimated temporal
+        components
+    Dz : array, shape (n_atoms, n_times_valid), the estimated first order
+        derivation temporal components
+    u : array, shape (n_atoms, n_voxels), the estimated spatial maps
+    a : array, shape (n_hrf_rois, n_param_HRF), the estimated HRF parameters
+    v : array, shape (n_hrf_rois, n_times_atom), the estimated HRFs
+    v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
+    lbda : float, the temporal regularization parameter used
+    lobj : array or None, shape (n_iter,) or (3 * n_iter,), the saved
+        cost-function
+    ltime : array or None, shape (n_iter,) or(3 * n_iter,), the saved duration
+        per steps
+
+    Throws
+    ------
+    CostFunctionIncreased : if the cost-function increases during an iteration,
+        of the analysis. This can be due to the fact that the temporal
+        regularization parameter is set to high
     """
     X = X.astype(np.float64)
 
@@ -164,15 +259,9 @@ def learn_u_z_multi(
     for m in range(n_hrf_rois):
         H_hat[m, :, :] = make_toeplitz(v_hat[m], n_times_valid=n_times_valid)
 
-    # z initialization
+    # u, z initialization
     z_hat = np.zeros((n_atoms, n_times_valid))
-
-    # u initialization
-    if u_init == 'random':
-        u_hat = rng.randn(n_atoms, n_voxels)
-    else:
-        raise ValueError("u_init should be in ['random', ]"
-                         ", got {}".format(u_init))
+    u_hat = rng.randn(n_atoms, n_voxels)
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"
@@ -325,12 +414,79 @@ def learn_u_z_multi(
         return z_hat, Dz_hat, u_hat, a_hat, v_hat, v_init, lbda, None, None
 
 
-def multi_runs_learn_u_z_multi(
+def multi_runs_learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
         lbda_strategy='ratio', lbda=0.1, max_iter=50, get_obj=False,
         get_time=False, u_init='random', random_seed=None, early_stopping=True,
-        eps=1.0e-5, raise_on_increase=True, verbose=0, n_jobs=1, nb_fit_try=1):
-    """ Multiple runs version of paralell_learn_u_z_multi. """
+        eps=1.0e-5, raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
+    """ Multiple initialization parallel running version of
+    `learn_u_z_v_multi`.
+
+    Parameters
+    ----------
+    X : array, shape (n_voxels, n_times), fMRI data
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
+        atlas HRF
+    hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
+        choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    n_atoms : int, number of components on which to decompose the neural
+        activity (number of temporal components and its associated spatial
+        maps).
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+    lbda_strategy str, (default='ratio'), strategy to fix the temporal
+        regularization parameter, possible choice are ['ratio', 'fixed']
+    lbda : float, (default=0.1), whether the temporal regularization parameter
+        if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
+        lbda_strategy == 'ratio'
+    max_iter : int, (default=100), maximum number of iterations to perform the
+        analysis
+    get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to
+        compute it at each iteration, 2 to compute it at each estimation step
+        (z, u, v)
+    get_time : int, the level of computation-duration saving 0 to not compute
+        it, 1 to compute it at each iteration, 2 to compute it at each
+        estimation step
+    random_seed : None, int, random-instance, (default=None), random-instance
+        or random-seed used to initialize the analysis
+    early_stopping : bool, (default=True), whether to early stop the analysis
+    eps : float, (default=1.0e-4), stoppping parameter w.r.t evolution of the
+        cost-function
+    raise_on_increase : bool, (default=True), whether to stop the analysis if
+        the cost-function increases during an iteration. This can be due to the
+        fact that the temporal regularization parameter is set to high
+    nb_fit_try : int, (default=1), number of analysis to do with different
+        initialization
+    n_jobs : int, (default=1), the number of CPUs to use if multiple analysis
+        with different initialization is done
+    verbose : int, (default=0), verbose level, 0 no verbose, 1 low verbose,
+        2 maximum verbose
+
+    Return
+    ------
+    z : array, shape (n_atoms, n_times_valid), the estimated temporal
+        components
+    Dz : array, shape (n_atoms, n_times_valid), the estimated first order
+        derivation temporal components
+    u : array, shape (n_atoms, n_voxels), the estimated spatial maps
+    a : array, shape (n_hrf_rois, n_param_HRF), the estimated HRF parameters
+    v : array, shape (n_hrf_rois, n_times_atom), the estimated HRFs
+    v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
+    lbda : float, the temporal regularization parameter used
+    lobj : array or None, shape (n_iter,) or (3 * n_iter,), the saved
+        cost-function
+    ltime : array or None, shape (n_iter,) or(3 * n_iter,), the saved duration
+        per steps
+
+    Throws
+    ------
+    CostFunctionIncreased : if the cost-function increases during an iteration,
+        of the analysis. This can be due to the fact that the temporal
+        regularization parameter is set to high
+    """
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
                   lbda_strategy=lbda_strategy, lbda=lbda,
@@ -352,5 +508,5 @@ def multi_runs_learn_u_z_multi(
     return results[best_run]
 
 
-cached_multi_runs_learn_u_z_multi = \
-                             Memory('.cache').cache(multi_runs_learn_u_z_multi)
+cached_multi_runs_learn_u_z_v_multi = \
+                        Memory('.cache').cache(multi_runs_learn_u_z_v_multi)
