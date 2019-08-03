@@ -57,7 +57,7 @@ REQUIRED_MODULE_METADATA = (
         'min_version': '0.5.2',
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
-    ('scikit-learn', {
+    ('sklearn', {
         'min_version': '0.19.2',
         'required_at_installation': True,
         'install_info': _SEVEN_INSTALL_MSG}),
