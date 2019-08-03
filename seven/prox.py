@@ -32,9 +32,6 @@ def _prox_positive_L2_ball(u_k):
     return u_k
 
 
-_prox_positive_L2_ball(np.random.randn(5))
-
-
 def _prox_positive_L2_ball_multi(u):
     """ _prox_positive_L2_ball_multi,
     Full computation of prox-op for: I{ u_kj > 0 and ||u_k||_2^2 =< 1.0} for

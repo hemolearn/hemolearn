@@ -28,6 +28,10 @@ from nilearn import input_data
 
 from .learn_u_z_v_multi import cached_multi_runs_learn_u_z_v_multi
 from .atlas import fetch_atlas_basc_2015, split_atlas
+from .build_numba import build_numba_functions_of_seven
+
+
+build_numba_functions_of_seven()
 
 
 class SLRDM(TransformerMixin):
