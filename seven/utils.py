@@ -136,7 +136,7 @@ def fmri_preprocess(
         t_r=None, target_affine=None, target_shape=None,
         mask_strategy='background', mask_args=None, sample_mask=None,
         dtype=None, memory_level=1, memory=None, verbose=0,
-        confounds=None, suffix='_preproc'):
+        confounds=None, preproc_fname=None):
     """ Preprocess the fMRI data.
 
     Parameters
@@ -193,8 +193,9 @@ def fmri_preprocess(
     confounds : Nifti-like img or None, (default=None), list of confounds (2D
         arrays or filenames pointing to CSV files). Must be of same length than
         imgs_list.
-    suffix : str, (default='_preproc'), the suffix of the preprocessed fMRI
-        data filename
+    preproc_fname : str or None, (default=None), the full filename of the
+        preprocessed fMRI data filename, if not given simple '_preproc' suffix
+        is add to the original filename
 
     Return
     ------
@@ -214,11 +215,12 @@ def fmri_preprocess(
 
     preproc_X = masker.fit_transform(func_fname, confounds=confounds)
     preproc_X_img = masker.inverse_transform(preproc_X)
-    fname, ext = get_nifti_ext(func_fname)
-    nfname = fname + suffix + ext
-    preproc_X_img.to_filename(nfname)
+    if preproc_fname is None:
+        fname, ext = get_nifti_ext(func_fname)
+        preproc_fname = fname + '_preproc' + ext
+    preproc_X_img.to_filename(preproc_fname)
 
-    return nfname
+    return preproc_fname
 
 
 def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
