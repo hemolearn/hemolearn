@@ -11,7 +11,7 @@ from nilearn.datasets import fetch_atlas_basc_multiscale_2015
 
 @numba.jit((numba.int64, numba.int64[:, :]), nopython=True, cache=True,
            fastmath=True)
-def get_indices_from_roi(m, rois_idx):
+def get_indices_from_roi(m, rois_idx):  # pragma: no cover
     """ Return the indices of the ROI of index m from the given atlas rois_idx.
 
     Parameters

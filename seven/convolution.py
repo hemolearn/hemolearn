@@ -11,7 +11,7 @@ from .atlas import get_indices_from_roi
 
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :],
             numba.int64[:, :]), nopython=True, cache=True, fastmath=True)
-def adjconv_uv(residual_i, u, v, rois_idx):
+def adjconv_uv(residual_i, u, v, rois_idx):  # pragma: no cover
     """ Pre-compute the convolution residual_i with the transpose for each
     atom k.
 

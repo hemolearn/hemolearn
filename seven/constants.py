@@ -11,7 +11,7 @@ from .atlas import get_indices_from_roi
 
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.int64[:, :]),
            nopython=True, cache=True, fastmath=True)
-def _precompute_uvtuv(u, v, rois_idx):
+def _precompute_uvtuv(u, v, rois_idx):  # pragma: no cover
     """ Pre-compute uvtuv.
 
     Parameters
@@ -72,7 +72,7 @@ def _precompute_B_C(X, z, H, rois_idx):
 
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :, :]),
            nopython=True, cache=True, fastmath=True)
-def _precompute_d_basis_constant(X, uz, H):
+def _precompute_d_basis_constant(X, uz, H):  # pragma: no cover
     """ Precompute AtA and AtX.
 
     Parameters

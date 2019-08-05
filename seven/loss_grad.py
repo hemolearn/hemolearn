@@ -75,7 +75,7 @@ def _grad_u_k(u, B, C, k, rois_idx):
 
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.float64[:, :],
             numba.int64[:, :]), nopython=True, cache=True, fastmath=True)
-def construct_X_hat_from_v(v, z, u, rois_idx):
+def construct_X_hat_from_v(v, z, u, rois_idx):  # pragma: no cover
     """Return X_hat from v, z, u.
 
     Parameters
@@ -101,7 +101,7 @@ def construct_X_hat_from_v(v, z, u, rois_idx):
 
 @numba.jit((numba.float64[:, :, :], numba.float64[:, :], numba.float64[:, :],
             numba.int64[:, :]), nopython=True, cache=True, fastmath=True)
-def construct_X_hat_from_H(H, z, u, rois_idx):
+def construct_X_hat_from_H(H, z, u, rois_idx):  # pragma: no cover
     """Return X_hat from H, z, u.
 
     Parameters

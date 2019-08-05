@@ -8,7 +8,7 @@ from prox_tv import tv1_1d
 
 
 @numba.jit((numba.float64[:],), nopython=True, cache=True, fastmath=True)
-def _prox_positive_L2_ball(u_k):
+def _prox_positive_L2_ball(u_k):  # pragma: no cover
     """_prox_positive_L2_ball,
     Full computation of prox-op for: I{ u_kj > 0 and ||u_k||_2^2 =< 1.0}.
 
