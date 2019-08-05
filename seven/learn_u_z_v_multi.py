@@ -417,8 +417,8 @@ def learn_u_z_v_multi(
 def multi_runs_learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
         lbda_strategy='ratio', lbda=0.1, max_iter=50, get_obj=False,
-        get_time=False, u_init='random', random_seed=None, early_stopping=True,
-        eps=1.0e-5, raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
+        get_time=False, random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
     `learn_u_z_v_multi`.
 
@@ -491,9 +491,9 @@ def multi_runs_learn_u_z_v_multi(
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
                   lbda_strategy=lbda_strategy, lbda=lbda,
                   max_iter=max_iter, get_obj=get_obj, get_time=get_time,
-                  u_init=u_init, random_seed=random_seed,
-                  early_stopping=early_stopping, eps=eps,
-                  raise_on_increase=raise_on_increase, verbose=verbose)
+                  random_seed=random_seed, early_stopping=early_stopping,
+                  eps=eps, raise_on_increase=raise_on_increase,
+                  verbose=verbose)
 
     results = Parallel(n_jobs=n_jobs)(
                 delayed(learn_u_z_v_multi)(**params)

@@ -178,7 +178,7 @@ class SLRDM(TransformerMixin):
                       n_times_atom=self.n_times_atom,
                       lbda_strategy=self.lbda_strategy, lbda=self.lbda,
                       max_iter=self.max_iter, get_obj=1, get_time=1,
-                      u_init='random', random_seed=self.random_state,
+                      random_seed=self.random_state,
                       early_stopping=self.early_stopping, eps=self.eps,
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,
