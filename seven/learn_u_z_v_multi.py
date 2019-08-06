@@ -4,7 +4,7 @@
 
 import time
 import numpy as np
-from joblib import Memory, Parallel, delayed
+from joblib import Parallel, delayed
 from threadpoolctl import threadpool_limits
 
 from .checks import (check_lbda, check_if_vanished, check_obj,
@@ -506,7 +506,3 @@ def multi_runs_learn_u_z_v_multi(
         print("[Decomposition] Best fitting: {}".format(best_run + 1))
 
     return results[best_run]
-
-
-cached_multi_runs_learn_u_z_v_multi = \
-                        Memory('.cache').cache(multi_runs_learn_u_z_v_multi)

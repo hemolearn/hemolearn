@@ -22,11 +22,12 @@ this, no effect will be estimated.
 # License: BSD (3-clause)
 
 import numpy as np
+from joblib import Memory
 from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
 from nilearn import input_data
 
-from .learn_u_z_v_multi import cached_multi_runs_learn_u_z_v_multi
+from .learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
 from .atlas import fetch_atlas_basc_2015, split_atlas
 from .build_numba import build_numba_functions_of_seven
 
@@ -87,7 +88,7 @@ class SLRDM(TransformerMixin):
     def __init__(self, n_atoms, t_r, n_times_atom=30, hrf_model='3_basis_hrf',
                  lbda_strategy='ratio', lbda=0.1, hrf_atlas='scale064',
                  max_iter=100, random_state=None, early_stopping=True,
-                 eps=1.0e-4, raise_on_increase=True, memory='.cache',
+                 eps=1.0e-4, raise_on_increase=True, cache_dir='.cache',
                  nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
@@ -107,7 +108,7 @@ class SLRDM(TransformerMixin):
         # technical parameters
         self.verbose = verbose
         self.n_jobs = n_jobs
-        self.memory = memory
+        self.cache_dir = cache_dir
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
@@ -116,9 +117,9 @@ class SLRDM(TransformerMixin):
         self.hrf_rois = dict()
 
         # fMRI masker
-        self.masker_ = input_data.NiftiMasker(mask_img=self.mask_full_brain,
-                                              t_r=self.t_r, memory=self.memory,
-                                              memory_level=1, verbose=0)
+        self.masker_ = input_data.NiftiMasker(
+                            mask_img=self.mask_full_brain, t_r=self.t_r,
+                            memory=self.cache_dir, memory_level=1, verbose=0)
 
         # model parameters
         self.z_hat_ = None
@@ -184,7 +185,9 @@ class SLRDM(TransformerMixin):
                       verbose=self.verbose, n_jobs=self.n_jobs,
                       nb_fit_try=self.nb_fit_try)
 
-        res = cached_multi_runs_learn_u_z_v_multi(**params)
+        decompose = Memory(self.cache_dir).cache(multi_runs_learn_u_z_v_multi)
+
+        res = decompose(**params)
 
         self.z_hat_ = res[0]
         self.Dz_hat_ = res[1]
