@@ -43,7 +43,7 @@ n_atoms = 10
 hrf_atlas = 'scale122'
 slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas,
               hrf_model='scaled_hrf', lbda=5.0e-3, max_iter=100,
-              raise_on_increase=False, random_state=seed, n_jobs=3,
+              raise_on_increase=True, random_state=seed, n_jobs=3,
               nb_fit_try=3, verbose=2)
 
 t0 = time.time()
