@@ -9,6 +9,12 @@ coverage:
         threshold: 0.01
     patch: false
     changes: false
+
 comment:
   layout: "header, diff, sunburst, uncovered"
+
 behavior: default
+
+ignore:
+  - "info.py"
+  - "tests/*"
