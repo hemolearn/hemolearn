@@ -17,7 +17,7 @@ import pickle
 import matplotlib.pyplot as plt
 from nilearn import datasets
 
-from seven import SLRDM
+from seven import SLRDA
 from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,
                          get_unique_dirname)
 from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
@@ -45,7 +45,7 @@ X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
 seed = None
 n_atoms = 10
 hrf_atlas = 'scale036'
-slrda = SLRDM(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
+slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
               hrf_model='3_basis_hrf', lbda=1.0e-2, max_iter=100,
               raise_on_increase=True, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)

@@ -35,7 +35,7 @@ from .build_numba import build_numba_functions_of_seven
 build_numba_functions_of_seven()
 
 
-class SLRDM(TransformerMixin):
+class SLRDA(TransformerMixin):
     """ Sparse Low-Rank Deconvolution Analysis (SLRDA) is a method to distangle
     the neural activation and the haemodynamic contributions in the fMRI data
     (BOLD signal).
