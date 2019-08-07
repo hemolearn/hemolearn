@@ -393,7 +393,7 @@ def learn_u_z_v_multi(
                     check_obj(lobj, ii + 1, max_iter,
                               early_stopping=early_stopping,
                               raise_on_increase=raise_on_increase, eps=eps,
-                              level=1)
+                              level=get_obj)
                 except EarlyStopping as e:
                     if verbose > 1:
                         print(str(e))
