@@ -24,8 +24,8 @@ from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_obj_values, plotting_hrf,
                             plotting_hrf_stats)
 
-from _utils import fetch_subject_list, _get_hcp_rest_fmri_fname
-from _utils import TR_HCP_REST as TR
+from utils import fetch_subject_list, _get_hcp_rest_fmri_fname
+from utils import TR_HCP_REST as TR
 
 
 dirname = get_unique_dirname("results_slrda_hcp_rest_#")

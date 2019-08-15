@@ -24,9 +24,9 @@ from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_obj_values, plotting_hrf,
                             plotting_hrf_stats)
 
-from _utils import (fetch_subject_list, _get_hcp_motor_task_fmri_fname,
+from utils import (fetch_subject_list, _get_hcp_motor_task_fmri_fname,
                     get_paradigm_hcp_motor_task)
-from _utils import TR_HCP_MOTOR as TR
+from utils import TR_HCP_MOTOR as TR
 
 
 dirname = get_unique_dirname("results_slrda_hcp_motor_task_#")
