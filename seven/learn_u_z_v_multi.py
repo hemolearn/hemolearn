@@ -391,13 +391,13 @@ def learn_u_z_v_multi(
                     if verbose > 1:
                         if get_time:
                             print("[{}/{}] Update v done in {:.1f} s : "
-                                "cost = {:.6f}".format(ii + 1, max_iter,
-                                                        ltime[-1],
-                                                        lobj[-1] / lobj[0]))
+                                  "cost = {:.6f}".format(ii + 1, max_iter,
+                                                         ltime[-1],
+                                                         lobj[-1] / lobj[0]))
                         else:
                             print("[{}/{}] Update v done: "
-                                "cost = {:.6f}".format(ii + 1, max_iter,
-                                                        lobj[-1] / lobj[0]))
+                                  "cost = {:.6f}".format(ii + 1, max_iter,
+                                                         lobj[-1] / lobj[0]))
 
             if get_time == 1:
                 ltime.append(time.process_time() - t0)

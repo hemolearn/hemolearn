@@ -9,13 +9,11 @@ is_travis = ('TRAVIS' in os.environ)
 if is_travis:
     import matplotlib
     matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 import time
 import shutil
 import pickle
 import matplotlib.pyplot as plt
-from nilearn import datasets
 
 from seven import SLRDA
 from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,
@@ -25,7 +23,7 @@ from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_hrf_stats)
 
 from utils import (fetch_subject_list, _get_hcp_motor_task_fmri_fname,
-                    get_paradigm_hcp_motor_task)
+                   get_paradigm_hcp_motor_task)
 from utils import TR_HCP_MOTOR as TR
 
 
@@ -68,9 +66,6 @@ print("Pickling results under '{0}'".format(filename))
 with open(filename, "wb") as pfile:
     pickle.dump(res, pfile)
 
-plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
-                      perc_voxels_to_retain=0.1, bg_img=anat_fname,
-                      verbose=True)
 d = 12.0 * TR
 l_onset_t = []
 conditions = ['lh', 'rh', 'lf', 'rf']
@@ -79,11 +74,19 @@ for cond in conditions:
     paradigm = paradigm_full[paradigm_full['trial_type'] == cond]
     mask_cond = (paradigm['trial_type'] == cond).values
     l_onset_t.extend(list(paradigm['onset'][mask_cond].values / TR))
+
+
 def plot_paradigm():
     for t in l_onset_t:
         plt.axvspan(t, t+d, facecolor='gray', alpha=0.2)
+
+
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname,
                        aux_plots=plot_paradigm, verbose=True)
+
+plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
+                      perc_voxels_to_retain=0.1, bg_img=anat_fname,
+                      verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
 plotting_hrf(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
              hrf_ref=hrf_ref, normalized=True, plot_dir=dirname, verbose=True)

@@ -141,8 +141,10 @@ def _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
                            "{:.3e}".format(ii + 1, max_iter, -eps_v))
 
     # check early-stopping
-    if (early_stopping and np.abs(eps_z) <= eps and np.abs(eps_u) <= eps
-        and np.abs(eps_v) <= eps):
+    eps_check = (np.abs(eps_z) <= eps)
+    eps_check = eps_check and (np.abs(eps_u) <= eps)
+    eps_check = eps_check and (np.abs(eps_v) <= eps)
+    if (early_stopping and eps_check):
         msg = ("[{}/{}] Early-stopping (!) with: z-eps={:.3e}, "
                "u-eps={:.3e}, v-eps={:.3e}".format(ii + 1, max_iter, eps_z,
                                                    eps_u, eps_v))

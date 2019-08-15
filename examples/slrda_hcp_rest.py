@@ -9,13 +9,10 @@ is_travis = ('TRAVIS' in os.environ)
 if is_travis:
     import matplotlib
     matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 import time
 import shutil
 import pickle
-import matplotlib.pyplot as plt
-from nilearn import datasets
 
 from seven import SLRDA
 from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,

@@ -9,7 +9,6 @@ is_travis = ('TRAVIS' in os.environ)
 if is_travis:
     import matplotlib
     matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 import time
 import shutil
