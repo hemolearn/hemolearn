@@ -9,6 +9,7 @@ from seven.utils import lipschitz_est
 from seven.loss_grad import _obj
 from seven.optim import proximal_descent, cdclinmodel
 from seven.utils import _set_up_test
+from seven.prox import _prox_positive_l2_ball
 
 
 @pytest.mark.repeat(3)
@@ -57,11 +58,16 @@ def test_cdclinmodel(seed):
     u, C, B = kwargs['u'], kwargs['C'], kwargs['B']
     rois_idx = kwargs['rois_idx']
     X, z, v = kwargs['X'], kwargs['z'], kwargs['v']
-    constants = dict(C=C, B=B, rois_idx=rois_idx)
+
+    def _prox(u_k):
+        return _prox_positive_l2_ball(u_k, 1.0)
+
+    constants = dict(C=C, B=B, rois_idx=rois_idx, prox_u=_prox)
 
     def obj(u):
-        return _obj(X=X, u=u, z=z, rois_idx=rois_idx, v=v, valid=False,
-                    return_reg=False, lbda=None)
+        return _obj(X=X, prox=_prox_positive_l2_ball, u=u, z=z,
+                    rois_idx=rois_idx, v=v, valid=False, return_reg=False,
+                    lbda=None)
 
     u_hat, pobj, _ = cdclinmodel(u, constants=constants, obj=obj,
                                  benchmark=True, max_iter=50)

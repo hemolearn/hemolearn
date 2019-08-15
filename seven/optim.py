@@ -6,7 +6,6 @@ import time
 import numpy as np
 
 from .loss_grad import _grad_u_k
-from .prox import _prox_positive_L2_ball
 
 
 def cdclinmodel(
@@ -49,6 +48,7 @@ def cdclinmodel(
 
     C = constants['C']
     B = constants['B']
+    prox = constants['prox_u']
     rois_idx = constants['rois_idx']
     n_hrf_rois = len(rois_idx)
 
@@ -62,7 +62,7 @@ def cdclinmodel(
 
         for k in range(n_atoms):
             u[k, :] -= step_size[k] * _grad_u_k(u, B, C, k, rois_idx)
-            u[k, :] = _prox_positive_L2_ball(u[k, :])
+            u[k, :] = prox(u[k, :])  # XXX
 
         if benchmark:
             t1 = time.process_time()

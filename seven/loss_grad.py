@@ -6,7 +6,6 @@ import numpy as np
 import numba
 
 from .utils import _compute_uvtuv_z
-from .prox import _prox_positive_L2_ball_multi
 from .atlas import get_indices_from_roi
 
 
@@ -124,13 +123,14 @@ def construct_X_hat_from_H(H, z, u, rois_idx):  # pragma: no cover
     return X_hat
 
 
-def _obj(X, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
+def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
          lbda=None):
     """ Main objective function.
 
     Parameters
     ----------
     X : array, shape (n_voxels, n_times), fMRI data
+    prox : func, proximal function on the spatial maps
     z : array, shape (n_atoms, n_times_valid), temporal components
     u : array, shape (n_atoms, n_voxels), spatial maps
     rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
@@ -147,7 +147,7 @@ def _obj(X, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
     ------
     cost-function : float, the global cost-function value
     """
-    u = _prox_positive_L2_ball_multi(u) if valid else u
+    u = np.r_[[prox(u_k) for u_k in u]] if valid else u
 
     if v is not None:
         X_hat = construct_X_hat_from_v(v, z, u, rois_idx)

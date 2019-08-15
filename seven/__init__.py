@@ -52,6 +52,8 @@ class SLRDA(TransformerMixin):
         response function, duration = n_times_atom * t_r
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    deactivate_v_learning : bool, (default=False), option to force the
+        estimated HRF to to the initial value.
     lbda_strategy str, (default='ratio'), strategy to fix the temporal
         regularization parameter, possible choice are ['ratio', 'fixed']
     lbda : float, (default=0.1), whether the temporal regularization parameter
@@ -88,7 +90,8 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=30, hrf_model='3_basis_hrf',
-                 lbda_strategy='ratio', lbda=0.1, hrf_atlas='scale064',
+                 lbda_strategy='ratio', lbda=0.1, prox_u='l2-positive-ball',
+                 hrf_atlas='scale064', deactivate_v_learning=False,
                  max_iter=100, random_state=None, early_stopping=True,
                  eps=1.0e-4, raise_on_increase=True, cache_dir='.cache',
                  nb_fit_try=1, n_jobs=1, verbose=0):
@@ -96,9 +99,11 @@ class SLRDA(TransformerMixin):
         self.t_r = t_r
         self.n_atoms = n_atoms
         self.hrf_model = hrf_model
+        self.deactivate_v_learning = deactivate_v_learning
         self.n_times_atom = n_times_atom
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
+        self.prox_u = prox_u
 
         # convergence parameters
         self.max_iter = max_iter
@@ -177,11 +182,12 @@ class SLRDA(TransformerMixin):
                 print("Running {} fits in series".format(self.nb_fit_try))
 
         params = dict(X=X, t_r=self.t_r, hrf_rois=self.hrf_rois,
-                      hrf_model=self.hrf_model, n_atoms=self.n_atoms,
-                      n_times_atom=self.n_times_atom,
+                      hrf_model=self.hrf_model,
+                      deactivate_v_learning=self.deactivate_v_learning,
+                      n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
                       lbda_strategy=self.lbda_strategy, lbda=self.lbda,
-                      max_iter=self.max_iter, get_obj=1, get_time=1,
-                      random_seed=self.random_state,
+                      prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
+                      get_time=1, random_seed=self.random_state,
                       early_stopping=self.early_stopping, eps=self.eps,
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,

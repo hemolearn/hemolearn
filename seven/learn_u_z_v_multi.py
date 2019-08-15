@@ -18,6 +18,7 @@ from .hrf_model import spm_scaled_hrf, spm_hrf_3_basis, spm_hrf_2_basis
 from .estim_v import _estim_v_d_basis, _estim_v_scaled_hrf
 from .atlas import split_atlas
 from .convolution import adjconv_uH, make_toeplitz
+from .prox import _prox_l1_simplex, _prox_positive_l2_ball
 
 
 def _update_v(a0, constants):
@@ -87,6 +88,8 @@ def _update_u(u0, constants):
     assert ('C' in constants), msg
     msg = "'B' is missing in 'constants' for '_update_u' step."
     assert ('B' in constants), msg
+    msg = "'prox_u' is missing in 'constants' for '_update_u' step."
+    assert ('prox_u' in constants), msg
 
     params = dict(u0=u0, max_iter=100, constants=constants)
     u_hat = cdclinmodel(**params)
@@ -148,8 +151,9 @@ def _update_z(z0, constants):
 
 
 def learn_u_z_v_multi(
-        X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, max_iter=100, get_obj=0, get_time=0,
+        X, t_r, hrf_rois, hrf_model='3_basis_hrf', deactivate_v_learning=False,
+        n_atoms=10, n_times_atom=30, lbda_strategy='ratio', lbda=0.1,
+        prox_u='l2-positive-ball', max_iter=100, get_obj=0, get_time=0,
         random_seed=None, early_stopping=True, eps=1.0e-5,
         raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
@@ -163,6 +167,8 @@ def learn_u_z_v_multi(
         atlas HRF
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    deactivate_v_learning : bool, (default=False), option to force the
+        estimated HRF to to the initial value.
     n_atoms : int, number of components on which to decompose the neural
         activity (number of temporal components and its associated spatial
         maps).
@@ -174,6 +180,9 @@ def learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    prox_u : str, (default='l2-positive-ball'), constraint to impose on the
+        spatial maps possible choice are ['l2-positive-ball',
+        'l1-positive-simplex']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to
@@ -270,11 +279,25 @@ def learn_u_z_v_multi(
     # temporal regularization parameter
     lbda = check_lbda(lbda, lbda_strategy, X, u_hat, H_hat, rois_idx)
 
+    # spatial regularization parameter
+    if prox_u == 'l2-positive-ball':
+        def _prox(u_k):
+            return _prox_positive_l2_ball(u_k, step_size=1.0)
+        prox_u_func = _prox
+    elif prox_u == 'l1-positive-simplex':
+        def _prox(u_k):
+            return _prox_l1_simplex(u_k, eta=10.0)
+        prox_u_func = _prox
+    else:
+        raise ValueError("prox_u should be in ['l2-positive-ball', "
+                         "'l1-positive-simplex'], got {}".format(prox_u))
+
     constants['lbda'] = lbda
+    constants['prox_u'] = prox_u_func
 
     if get_obj:
-        lobj = [_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
-                     rois_idx=rois_idx, valid=True)]
+        lobj = [_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat, z=z_hat,
+                     H=H_hat, rois_idx=rois_idx, valid=True)]
     if get_time:
         ltime = [0.0]
 
@@ -304,8 +327,9 @@ def learn_u_z_v_multi(
                 ltime.append(time.process_time() - t0)
 
             if get_obj == 2:
-                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
-                            rois_idx=rois_idx, valid=True))
+                lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
+                                 z=z_hat, H=H_hat, rois_idx=rois_idx,
+                                 valid=True))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update z done in {:.1f} s : "
@@ -334,8 +358,9 @@ def learn_u_z_v_multi(
                 ltime.append(time.process_time() - t0)
 
             if get_obj == 2:
-                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
-                            rois_idx=rois_idx, valid=True))
+                lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
+                                 z=z_hat, H=H_hat, rois_idx=rois_idx,
+                                 valid=True))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update u done in {:.1f} s : "
@@ -347,36 +372,40 @@ def learn_u_z_v_multi(
                               "cost = {:.6f}".format(ii + 1, max_iter,
                                                      lobj[-1] / lobj[0]))
 
-            # Update v
-            constants['u'] = u_hat
-            constants['z'] = z_hat
+            if not deactivate_v_learning:
 
-            if get_time == 2:
-                t0 = time.process_time()
-            a_hat, v_hat = _update_v(a_hat, constants)  # update
-            if get_time == 2:
-                ltime.append(time.process_time() - t0)
+                # Update v
+                constants['u'] = u_hat
+                constants['z'] = z_hat
 
-            if get_obj == 2:
-                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
-                            rois_idx=rois_idx, valid=True))
-                if verbose > 1:
-                    if get_time:
-                        print("[{}/{}] Update v done in {:.1f} s : "
-                              "cost = {:.6f}".format(ii + 1, max_iter,
-                                                     ltime[-1],
-                                                     lobj[-1] / lobj[0]))
-                    else:
-                        print("[{}/{}] Update v done: "
-                              "cost = {:.6f}".format(ii + 1, max_iter,
-                                                     lobj[-1] / lobj[0]))
+                if get_time == 2:
+                    t0 = time.process_time()
+                a_hat, v_hat = _update_v(a_hat, constants)  # update
+                if get_time == 2:
+                    ltime.append(time.process_time() - t0)
+
+                if get_obj == 2:
+                    lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
+                                     z=z_hat, H=H_hat, rois_idx=rois_idx,
+                                     valid=True))
+                    if verbose > 1:
+                        if get_time:
+                            print("[{}/{}] Update v done in {:.1f} s : "
+                                "cost = {:.6f}".format(ii + 1, max_iter,
+                                                        ltime[-1],
+                                                        lobj[-1] / lobj[0]))
+                        else:
+                            print("[{}/{}] Update v done: "
+                                "cost = {:.6f}".format(ii + 1, max_iter,
+                                                        lobj[-1] / lobj[0]))
 
             if get_time == 1:
                 ltime.append(time.process_time() - t0)
 
             if get_obj == 1:
-                lobj.append(_obj(X=X, lbda=lbda, u=u_hat, z=z_hat, H=H_hat,
-                            rois_idx=rois_idx, valid=True))
+                lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
+                                 z=z_hat, H=H_hat, rois_idx=rois_idx,
+                                 valid=True))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Iteration done in {:.1f} s : "
@@ -415,10 +444,12 @@ def learn_u_z_v_multi(
 
 
 def multi_runs_learn_u_z_v_multi(
-        X, t_r, hrf_rois, hrf_model='3_basis_hrf', n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, max_iter=50, get_obj=False,
-        get_time=False, random_seed=None, early_stopping=True, eps=1.0e-5,
-        raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
+        X, t_r, hrf_rois, hrf_model='3_basis_hrf',
+        deactivate_v_learning=False, n_atoms=10, n_times_atom=30,
+        lbda_strategy='ratio', lbda=0.1, prox_u='l2-positive-ball',
+        max_iter=100, get_obj=False, get_time=False, random_seed=None,
+        early_stopping=True, eps=1.0e-5, raise_on_increase=True, n_jobs=1,
+        nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
     `learn_u_z_v_multi`.
 
@@ -431,6 +462,8 @@ def multi_runs_learn_u_z_v_multi(
         atlas HRF
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    deactivate_v_learning : bool, (default=False), option to force the
+        estimated HRF to to the initial value.
     n_atoms : int, number of components on which to decompose the neural
         activity (number of temporal components and its associated spatial
         maps).
@@ -442,6 +475,9 @@ def multi_runs_learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    prox_u : str, (default='l2-positive-ball'), constraint to impose on the
+        spatial maps possible choice are ['l2-positive-ball',
+        'l1-positive-simplex']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to
@@ -488,8 +524,9 @@ def multi_runs_learn_u_z_v_multi(
         regularization parameter is set to high
     """
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
+                  deactivate_v_learning=deactivate_v_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
-                  lbda_strategy=lbda_strategy, lbda=lbda,
+                  lbda_strategy=lbda_strategy, lbda=lbda, prox_u=prox_u,
                   max_iter=max_iter, get_obj=get_obj, get_time=get_time,
                   random_seed=random_seed, early_stopping=early_stopping,
                   eps=eps, raise_on_increase=raise_on_increase,

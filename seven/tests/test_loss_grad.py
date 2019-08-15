@@ -8,6 +8,7 @@ from scipy.optimize import approx_fprime
 
 from seven.hrf_model import spm_hrf_3_basis
 from seven.constants import _precompute_uvtuv
+from seven.prox import _prox_positive_l2_ball
 from seven.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
                              _obj, construct_X_hat_from_v,
                              construct_X_hat_from_H)
@@ -41,8 +42,8 @@ def test_loss(seed):
         return 0.5 * res.dot(res)
 
     loss_ref_ = loss_ref(X, u, z, v, rois_idx)
-    loss_test_ = _obj(X, u, z, rois_idx, H=H, valid=False,
-                      return_reg=False, lbda=None)
+    loss_test_ = _obj(X, _prox_positive_l2_ball, u, z, rois_idx, H=H,
+                      valid=False, return_reg=False, lbda=None)
 
     np.testing.assert_allclose(loss_ref_, loss_test_)
 
@@ -61,8 +62,8 @@ def test_grad_u(seed):
     def finite_grad_one_hrfs_(u):
         def f(u):
             u = u.reshape((n_atoms, n_voxels))
-            return _obj(X, u, z, rois_idx, H=H, valid=False,
-                        return_reg=False, lbda=None)
+            return _obj(X, _prox_positive_l2_ball, u, z, rois_idx, H=H,
+                        valid=False, return_reg=False, lbda=None)
         grad_ = approx_fprime(xk=u.ravel(), f=f, epsilon=1.0e-6)
         return grad_.reshape((n_atoms, n_voxels))
 
@@ -93,8 +94,8 @@ def test_grad_z(seed):
     def finite_grad_z(z):
         def f(z):
             z = z.reshape((n_atoms, n_times_valid))
-            return _obj(X, u, z, rois_idx, H=H, valid=False,
-                        return_reg=False, lbda=None)
+            return _obj(X, _prox_positive_l2_ball, u, z, rois_idx, H=H,
+                        valid=False, return_reg=False, lbda=None)
         grad_ = approx_fprime(xk=z.ravel(), f=f, epsilon=1.0e-6)
         return grad_.reshape((n_atoms, n_times_valid))
 

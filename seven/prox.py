@@ -7,8 +7,36 @@ import numba
 from prox_tv import tv1_1d
 
 
-@numba.jit((numba.float64[:],), nopython=True, cache=True, fastmath=True)
-def _prox_positive_L2_ball(u_k):  # pragma: no cover
+@numba.jit((numba.float64[:], numba.float64,), nopython=True, cache=True,
+           fastmath=True)
+def _prox_l1_simplex(u_i, eta):  # pragma: no cover
+    """ _prox_l1_simplex
+    prox-op for: I{ u_ij > 0 and sum_j u_ij = eta}(u_i)
+
+    Parameters
+    ----------
+    u : array, shape (n_voxels,), the spatial map
+    step_size : float, the step-size for the gradient descent
+
+    Return
+    ------
+    prox_u : array, shape (n_voxels,), the valid approximated
+        the spatial map
+    """
+    s = np.sort(u_i)[::-1]
+    c = (np.cumsum(s) - eta) / np.arange(1, len(u_i)+1)
+    if len([s > c]) > 0:
+        m = np.arange(len(u_i))[s > c].max()
+        return u_i - np.minimum(u_i, c[m])
+    else:
+        p_u_i = np.zeros_like(u_i)
+        p_u_i[np.argmax(u_i)] = np.max(u_i)
+        return p_u_i
+
+
+@numba.jit((numba.float64[:], numba.float64,), nopython=True, cache=True,
+            fastmath=True)
+def _prox_positive_l2_ball(u_k, step_size):  # pragma: no cover
     """_prox_positive_L2_ball,
     Full computation of prox-op for: I{ u_kj > 0 and ||u_k||_2^2 =< 1.0}.
 
@@ -30,22 +58,6 @@ def _prox_positive_L2_ball(u_k):  # pragma: no cover
     if norm_u_k > 1.0:
         u_k /= norm_u_k
     return u_k
-
-
-def _prox_positive_L2_ball_multi(u):
-    """ _prox_positive_L2_ball_multi,
-    Full computation of prox-op for: I{ u_kj > 0 and ||u_k||_2^2 =< 1.0} for
-    each spatial map u_k.
-
-    Parameters
-    ----------
-    u : array, shape (n_atoms, n_voxels), spatial maps
-
-    Return
-    ------
-    prox_u_k : array, shape (n_atoms, n_voxels), the valid spatial maps
-    """
-    return np.r_[[_prox_positive_L2_ball(u_k) for u_k in u]]
 
 
 def _prox_tv_multi(z, lbda, step_size):
