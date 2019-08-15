@@ -16,5 +16,6 @@ comment:
 behavior: default
 
 ignore:
+  - "plotting.py"
   - "info.py"
   - "tests/*"
