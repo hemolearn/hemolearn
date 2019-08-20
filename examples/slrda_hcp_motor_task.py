@@ -41,12 +41,13 @@ X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0)
 seed = None
-n_atoms = 10
-hrf_atlas = 'scale036'
+n_atoms = 40
+hrf_atlas = 'scale122'
 slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
-              hrf_model='3_basis_hrf', lbda=1.0e-2, max_iter=100,
-              raise_on_increase=True, random_state=seed, n_jobs=1,
-              nb_fit_try=1, verbose=2)
+              hrf_model='scaled_hrf', lbda=5.0e-3, max_iter=100,
+              deactivate_v_learning=False, prox_u='l2-positive-ball',
+              raise_on_increase=True, random_state=seed, n_jobs=2,
+              nb_fit_try=2, verbose=2)
 
 t0 = time.time()
 slrda.fit(X)
@@ -80,10 +81,10 @@ def plot_paradigm():
     for t in l_onset_t:
         plt.axvspan(t, t+d, facecolor='gray', alpha=0.2)
 
-
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname,
                        aux_plots=plot_paradigm, verbose=True)
-
+plotting_temporal_comp(z_hat, variances, TR, onset=True, plot_dir=dirname,
+                       aux_plots=plot_paradigm, verbose=True)
 plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
                       perc_voxels_to_retain=0.1, bg_img=anat_fname,
                       verbose=True)

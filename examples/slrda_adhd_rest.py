@@ -38,11 +38,11 @@ X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0, confounds=confound_fname)
 seed = None
-n_atoms = 10
+n_atoms = 30
 hrf_atlas = 'scale007'
 slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas,
               deactivate_v_learning=True, prox_u='l1-positive-simplex',
-              hrf_model='3_basis_hrf', lbda=1.0e-3, max_iter=50,
+              hrf_model='3_basis_hrf', lbda=1.0e-3, max_iter=40,
               raise_on_increase=True, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)
 
