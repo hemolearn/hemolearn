@@ -44,8 +44,9 @@ def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
     plt.savefig(filename, dpi=150)
 
 
-def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
-                           aux_plots_kwargs=dict(), verbose=False):
+def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
+                           aux_plots=None, aux_plots_kwargs=dict(),
+                           verbose=False):
     """ Plot, and save as pdf, each temporal estimated component.
 
     Parameters
@@ -55,13 +56,18 @@ def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
         components
     t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
         resolution
+    onset : bool, (default=False), whether or not to plot the first order
+        derivative of z
     plot_dir : str, (default='.'), directory under which the pdf is saved
     aux_plots : func, to plot a additional features on the figure
     aux_plots_kwargs : dict, keywords arguments for the aux_plots func
     verbose : bool, (default=False), verbosity level
     """
     n_atoms, n_times_valid = z.shape
-    plt.figure("Temporal atoms", figsize=(8, 5 * n_atoms))
+    if onset:
+        plt.figure("Onset Temporal atoms", figsize=(8, 5 * n_atoms))
+    else:
+        plt.figure("Temporal atoms", figsize=(8, 5 * n_atoms))
     _xticks = [0, int(n_times_valid / 2.0), int(n_times_valid)]
     _xticks_labels = [
         0,
@@ -72,7 +78,12 @@ def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
         expl_var = variances[k - 1]
         z_k = z[k - 1].T
         plt.subplot(n_atoms, 1, k)
-        plt.plot(z_k, lw=5.0)
+        if onset:
+            plt.stem(np.diff(z_k))
+            plot_title = "Dz.pdf"
+        else:
+            plt.plot(z_k, lw=5.0)
+            plot_title = "z.pdf"
         plt.axhline(0.0, color='black', lw=3.0)
         if aux_plots is not None:
             aux_plots(**aux_plots_kwargs)
@@ -84,7 +95,7 @@ def plotting_temporal_comp(z, variances, t_r, plot_dir='.', aux_plots=None,
         plt.yticks([np.min(z_k), 0, np.max(z_k)], fontsize=20)
         plt.grid()
     plt.tight_layout()
-    filename = os.path.join(plot_dir, "z.pdf")
+    filename = os.path.join(plot_dir, plot_title)
     if verbose:
         print("Saving plot under '{0}'".format(filename))
     plt.savefig(filename, dpi=150)
