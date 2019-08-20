@@ -72,9 +72,9 @@ class SLRDA(TransformerMixin):
     raise_on_increase : bool, (default=True), whether to stop the analysis if
         the cost-function increases during an iteration. This can be due to the
         fact that the temporal regularization parameter is set to high
-    cache_dir : str or bool or None, (default='.cache'), the directory name to
-        cache the analysis, if None or True the decomposition is cached with
-        the default directory name, if False no cachng is done
+    cache_dir : str or None, (default='.cache'), the directory name to
+        cache the analysis, if None the decomposition is not cached, if a
+        string is given or let to default, caching is done
     nb_fit_try : int, (default=1), number of analysis to do with different
         initialization
     n_jobs : int, (default=1), the number of CPUs to use if multiple analysis
@@ -192,9 +192,6 @@ class SLRDA(TransformerMixin):
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,
                       nb_fit_try=self.nb_fit_try)
-
-        if self.cache_dir or self.cache_dir is None:
-            self.cache_dir = '.cache'
 
         if isinstance(self.cache_dir, str):
             decompose = Memory(self.cache_dir).cache(
