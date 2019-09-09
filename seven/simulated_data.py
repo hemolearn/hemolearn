@@ -6,7 +6,6 @@ import numpy as np
 
 from .checks import check_random_state
 from .hrf_model import spm_hrf
-from .convolution import make_toeplitz
 from .loss_grad import construct_X_hat_from_v
 from .utils import add_gaussian_noise
 from .atlas import split_atlas
@@ -41,8 +40,8 @@ def _2_blocks_signal(n_times_valid=300, n=10, rng=np.random):
     return z_0, z_1
 
 
-def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30, snr=1.0,
-                   eta=10.0, random_seed=None):
+def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
+                   snr=1.0, eta=10.0, random_seed=None):
     """ Generate simulated BOLD data with its temporal components z and the
     corresponding maps u.
     """

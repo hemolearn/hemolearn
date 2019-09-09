@@ -254,7 +254,7 @@ def add_gaussian_noise(signal, snr, random_state=None, verbose=True):
     # check the resulting SNR
     l2_signal = np.sum(np.square(signal))
     l2_noise = np.sum(np.square(noise))
-    true_snr = 10.0 * np.log10((l2_signal/ l2_noise))
+    true_snr = 10.0 * np.log10((l2_signal / l2_noise))
     assert np.abs(snr - true_snr) < 1.0e-5
 
     return noisy_signal, noise
