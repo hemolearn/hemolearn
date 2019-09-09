@@ -85,12 +85,12 @@ def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
         raise CostFunctionIncreased(
                            "[{}/{}] Iteration relatively increase "
                            "global cost-function of "
-                           "{:.3e}".format(ii + 1, max_iter, -eps_))
+                           "{:.3e}".format(ii, max_iter, -eps_))
 
     # check early-stopping
     if early_stopping and np.abs(eps_) <= eps:
         msg = ("[{}/{}] Early-stopping (!) with: "
-               "eps={:.3e}".format(ii + 1, max_iter, eps_))
+               "eps={:.3e}".format(ii, max_iter, eps_))
         raise EarlyStopping(msg)
 
 
