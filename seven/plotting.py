@@ -76,7 +76,7 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
         ]
     for k in range(1, n_atoms + 1):
         expl_var = variances[k - 1]
-        z_k = z[k - 1].T
+        z_k = z[k - 1, :].T
         plt.subplot(n_atoms, 1, k)
         if onset:
             plt.stem(np.diff(z_k))
@@ -254,16 +254,21 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         v_ = v[m, :]
         if stat_type == 'tp':
             stat_ = tp(t, v_)
+            stat_name = 'TtP'
         elif stat_type == 'fwhm':
             stat_ = fwhm(t, v_)
+            stat_name = 'FWHM'
         if hrf_ref is not None:
             stat_ -= ref_stat
+            title = "{0}(-{0}-reference) map (s)".format(stat_name)
+        else:
+            title = "{} map (s)".format(stat_name)
         label = roi_label_from_hrf_idx[m]
         raw_atlas_rois[raw_atlas_rois == label] = stat_
     stats_map = nib.Nifti1Image(raw_atlas_rois, atlas_rois.affine,
                                 atlas_rois.header)
-    plotting.plot_stat_map(stats_map, title="{} map".format(stat_type),
-                           colorbar=True)
+    plotting.plot_stat_map(stats_map, title=title, colorbar=True,
+                           symmetric_cbar=False)
     fname = os.path.join(plot_dir, "v_{}.pdf".format(stat_type))
     plt.savefig(fname, dpi=150)
     if verbose:
