@@ -223,6 +223,43 @@ def fmri_preprocess(
     return preproc_fname
 
 
+def add_gaussian_noise(signal, snr, random_state=None, verbose=True):
+    """ Add a Gaussian noise to inout signal to output a noisy signal with the
+    targeted SNR.
+
+    Parameters
+    ----------
+    signal : array, the given signal on which add a Guassian noise.
+    snr : float, the expected SNR for the output signal.
+    random_state :  int or None (default=None),
+        Whether to impose a seed on the random generation or not (for
+        reproductability).
+
+    Return
+    ------
+    noisy_signal : array, the noisy produced signal.
+    noise : array, the additif produced noise.
+    """
+    # draw the noise
+    rng = check_random_state(random_state)
+    s_shape = signal.shape
+    noise = rng.randn(*s_shape)
+    # adjuste the standard deviation of the noise
+    true_snr_num = np.linalg.norm(signal)
+    true_snr_deno = np.linalg.norm(noise)
+    true_snr = true_snr_num / (true_snr_deno + np.finfo(np.float).eps)
+    std_dev = (1.0 / np.sqrt(10**(snr/10.0))) * true_snr
+    noise = std_dev * noise
+    noisy_signal = signal + noise
+    # check the resulting SNR
+    l2_signal = np.sum(np.square(signal))
+    l2_noise = np.sum(np.square(noise))
+    true_snr = 10.0 * np.log10((l2_signal/ l2_noise))
+    assert np.abs(snr - true_snr) < 1.0e-5
+
+    return noisy_signal, noise
+
+
 def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     """ Sorted the temporal the spatial maps and the associated activation by
     explained variance.
