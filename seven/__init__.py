@@ -1,4 +1,4 @@
-"""Seven is a Python module to estimate the Haemodynamic Response Function
+""" Seven is a Python module to estimate the Haemodynamic Response Function
 (HRF) in brain from resting-state or task fMRI data (BOLD signal). It relies on
 a Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
 neurovascular coupling from the the neural activity.
@@ -16,7 +16,6 @@ that the analysis will not found major difference between the HRFs. This is due
 to the fact that the common time-to-peak difference between HRFs within the
 same brain varies at maximum of 2 s, if the temporal resolution is greater that
 this, no effect will be estimated.
-
 """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)

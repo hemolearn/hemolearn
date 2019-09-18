@@ -271,7 +271,6 @@ def learn_u_z_v_multi(
     # u, z initialization
     z_hat = np.zeros((n_atoms, n_times_valid))
     u_hat = rng.randn(n_atoms, n_voxels)
-    u_hat[u_hat < 0.0] = 0.0
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"

@@ -15,6 +15,7 @@ import shutil
 import pickle
 
 from seven import SLRDA
+from seven.hrf_model import spm_hrf
 from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,
                          get_unique_dirname)
 from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
@@ -38,12 +39,12 @@ X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0)
 seed = None
-n_atoms = 40
+n_atoms = 30
 hrf_atlas = 'scale122'
 slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=60,
-              hrf_model='scaled_hrf', lbda=5.0e-3, max_iter=100,
-              deactivate_v_learning=False, prox_u='l2-positive-ball',
-              raise_on_increase=True, random_state=seed, n_jobs=3,
+              hrf_model='scaled_hrf', lbda=1.0e-3, max_iter=150,
+              deactivate_v_learning=False, prox_u='l1-positive-simplex',
+              raise_on_increase=False, random_state=seed, n_jobs=3,
               nb_fit_try=3, verbose=2)
 
 t0 = time.time()
@@ -71,9 +72,10 @@ plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname, verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
 plotting_hrf(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
              hrf_ref=hrf_ref, normalized=True, plot_dir=dirname, verbose=True)
+hrf_ref = spm_hrf(TR, 60)
 plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='tp', plot_dir=dirname,
+                   hrf_ref=hrf_ref, stat_type='tp', plot_dir=dirname,
                    verbose=True)
 plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='fwhm', plot_dir=dirname,
+                   hrf_ref=hrf_ref, stat_type='fwhm', plot_dir=dirname,
                    verbose=True)
