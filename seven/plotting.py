@@ -82,9 +82,9 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
             plt.stem(np.diff(z_k))
             plot_title = "Dz.pdf"
         else:
-            plt.plot(z_k, lw=5.0)
+            plt.plot(z_k, lw=2.0)
             plot_title = "z.pdf"
-        plt.axhline(0.0, color='black', lw=3.0)
+        plt.axhline(0.0, color='black', lw=2.0)
         if aux_plots is not None:
             aux_plots(**aux_plots_kwargs)
         plt.title("Atom-{} (explained variance = {:.2e})".format(k, expl_var),
@@ -102,8 +102,8 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
 
 
 def plotting_spatial_comp(u, variances, masker, plot_dir='.',
-                          perc_voxels_to_retain=0.1, bg_img=None,
-                          verbose=False):
+                          display_mode=None, perc_voxels_to_retain=0.1,
+                          bg_img=None, verbose=False):
     """ Plot, and save as pdf, each spatial estimated component.
 
     Parameters
@@ -114,12 +114,23 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
     masker : Nilearn-Masker like, masker class to perform the inverse Nifti
         transformation
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    display_mode : None or str, coords to cut the plotting, possible value are
+        None to have x, y, z or 'x', 'y', 'z' for a single cut
     perc_voxels_to_retain : float, (default=0.1), percentage of voxels to
         retain when plotting the spatial maps
     bg_img : Nifti-like or None, (default=None), background image, None means
         no image
     verbose : bool, (default=False), verbosity level
     """
+    if display_mode in ['x', 'y', 'z']:
+        cut_coords = 1
+        colorbar = False
+        compress_plot = True
+    else:
+        cut_coords = None
+        colorbar = True
+        compress_plot = False
+
     n_atoms, n_voxels = u.shape
     img_u = []
     for k in range(1, n_atoms + 1):
@@ -127,21 +138,34 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
         last_retained_voxel_idx = int(perc_voxels_to_retain * n_voxels)
         th = np.sort(u_k)[-last_retained_voxel_idx]
         expl_var = variances[k - 1]
-        title = "Map-{} (explained variance = {:.2e})".format(k, expl_var)
+        if compress_plot:
+            title = "Map-{}".format(k)
+        else:
+            title = "Map-{} (explained variance = {:.2e})".format(k, expl_var)
         img_u_k = masker.inverse_transform(u_k)
         img_u.append(img_u_k)
         if bg_img is not None:
-            plotting.plot_stat_map(img_u_k, title=title, colorbar=True,
-                                   threshold=th, bg_img=bg_img)
+            plotting.plot_stat_map(img_u_k, title=title, colorbar=colorbar,
+                                   display_mode=display_mode,
+                                   cut_coords=cut_coords, threshold=th,
+                                   bg_img=bg_img)
         else:
-            plotting.plot_stat_map(img_u_k, title=title, colorbar=True,
-                                   threshold=th)
+            plotting.plot_stat_map(img_u_k, title=title, colorbar=colorbar,
+                                   display_mode=display_mode,
+                                   cut_coords=cut_coords, threshold=th)
         img_u_k.to_filename(os.path.join(plot_dir, "u_{0:03d}.nii".format(k)))
         plt.savefig(os.path.join(plot_dir, "u_{0:03d}.pdf".format(k)), dpi=150)
     pdf_files = os.path.join(plot_dir, 'u_*.pdf')
     pdf_file = os.path.join(plot_dir, 'u.pdf')
-    subprocess.call("pdftk {} cat output {}".format(pdf_files, pdf_file),
-                    shell=True)
+    if compress_plot:
+        cmd_cat = ("pdfjam --suffix nup --nup 8x5 --no-landscape {} "
+                   "--outfile {}".format(pdf_files, pdf_file))
+        subprocess.call(cmd_cat, shell=True)
+        cmd_crop = "pdfcrop {0} {0}".format(pdf_file)
+        subprocess.call(cmd_crop, shell=True)
+    else:
+        cmd = "pdftk {} cat output {}".format(pdf_files, pdf_file)
+        subprocess.call(cmd, shell=True)
     subprocess.call("rm -f {}".format(pdf_files), shell=True)
     if verbose:
         print("Saving plot under '{0}'".format(pdf_file))

@@ -67,7 +67,7 @@ with open(filename, "wb") as pfile:
 
 plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
                       perc_voxels_to_retain=0.1, bg_img=anat_fname,
-                      verbose=True)
+                      display_mode='z', verbose=True)
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname, verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
 plotting_hrf(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
