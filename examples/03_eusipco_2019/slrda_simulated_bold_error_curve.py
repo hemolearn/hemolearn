@@ -5,11 +5,6 @@ fMRI data. """
 # License: BSD (3-clause)
 
 import os
-is_travis = ('TRAVIS' in os.environ)
-if is_travis:
-    import matplotlib
-    matplotlib.use('Agg')
-
 import time
 import shutil
 import pickle
@@ -17,10 +12,9 @@ import numpy as np
 from scipy.stats.stats import pearsonr
 import matplotlib.pyplot as plt
 
-from seven.simulated_data import simulated_data
-from seven.hrf_model import spm_scaled_hrf
-from seven.utils import get_unique_dirname
-from seven.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
+from hemolearn.simulated_data import simulated_data
+from hemolearn.utils import get_unique_dirname
+from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
 
 
 dirname = get_unique_dirname("results_slrda_simu_curve_#")
@@ -57,10 +51,12 @@ for snr in l_snr:
                         noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                         deactivate_v_learning=True,
                         prox_u='l1-positive-simplex',
-                        hrf_model='scaled_hrf', lbda_strategy='ratio',
-                        lbda=lbda, max_iter=30, get_obj=True, get_time=True,
-                        raise_on_increase=False, random_seed=None,
-                        n_jobs=4, nb_fit_try=4, verbose=0)
+                        n_times_atom=n_times_atom, hrf_model='scaled_hrf',
+                        lbda_strategy='ratio', lbda=lbda,
+                        u_init_type='gaussian_noise', max_iter=30,
+                        get_obj=True, get_time=True, raise_on_increase=False,
+                        random_seed=None, n_jobs=4, nb_fit_try=4, verbose=0)
+
             except AssertionError as e:
                 # lbda is too big...
                 continue

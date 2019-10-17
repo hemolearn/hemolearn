@@ -10,12 +10,12 @@ import shutil
 import pickle
 from nilearn import datasets
 
-from seven import SLRDA
-from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,
-                         get_unique_dirname)
-from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
-                            plotting_obj_values, plotting_hrf,
-                            plotting_hrf_stats)
+from hemolearn import SLRDA
+from hemolearn.utils import (fmri_preprocess, get_unique_dirname,
+                             sort_atoms_by_explained_variances)
+from hemolearn.plotting import (plotting_spatial_comp, plotting_temporal_comp,
+                                plotting_obj_values, plotting_hrf,
+                                plotting_hrf_stats)
 
 
 dirname = get_unique_dirname("results_slrda_adhd_#")
@@ -36,7 +36,7 @@ seed = None
 n_atoms = 10
 hrf_atlas = 'scale122'
 slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=20,
-              hrf_model='scaled_hrf', lbda=0.4, max_iter=100, eps=1.0e-3,
+              hrf_model='scaled_hrf', lbda=0.6, max_iter=100, eps=1.0e-3,
               deactivate_v_learning=False, prox_u='l1-positive-simplex',
               raise_on_increase=False, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)

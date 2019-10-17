@@ -13,7 +13,7 @@
 
 # ignore specific usual dir
 dist/
-seven.egg-info
+hemolearn.egg-info
 .DS_Store
 .cache
 build

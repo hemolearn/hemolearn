@@ -45,7 +45,7 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
         X_roi = X[indices, :]
         u_roi = u[:, indices]
         uz_roi = u_roi.T.dot(z)
-        a0 = np.array([a[m],])
+        a0 = np.array([a[m], ])
 
         sum_ztz, sum_ztz_y = _precompute_sum_ztz_sum_ztz_y(uz_roi, X_roi,
                                                            n_times_atom,
@@ -53,18 +53,20 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
         sum_ztz_, sum_ztz_y_ = _precompute_sum_ztz_sum_ztz_y(uz_roi, X_roi,
                                                              n_times_atom,
                                                              factor=2.0)
+
         def grad(a_):
             _grad = _grad_v_scaled_hrf(a_, t_r, n_times_atom, sum_ztz,
                                        sum_ztz_y)
-            return np.array([_grad,])
+            return np.array([_grad, ])
 
         def f(a_):
             cost = _loss_v(a_, u_roi, z, X_roi, t_r, n_times_atom, sum_ztz_,
                            sum_ztz_y_)
             return cost
 
-        _a_hat, _, _ = optimize.fmin_l_bfgs_b(func=f, x0=a0, fprime=grad,
-                                              bounds=[(MIN_DELTA, MAX_DELTA),])
+        _a_hat, _, _ = optimize.fmin_l_bfgs_b(
+                                        func=f, x0=a0, fprime=grad,
+                                        bounds=[(MIN_DELTA, MAX_DELTA), ])
 
         a[m] = _a_hat
         v[m, :] = scaled_hrf(_a_hat, t_r, n_times_atom)

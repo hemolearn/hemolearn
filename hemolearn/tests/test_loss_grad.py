@@ -6,17 +6,18 @@ import pytest
 import numpy as np
 from scipy.optimize import approx_fprime
 
-from seven.hrf_model import hrf_3_basis
-from seven.constants import _precompute_uvtuv, _precompute_sum_ztz_sum_ztz_y
-from seven.prox import _prox_positive_l2_ball
-from seven.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
-                             _obj, construct_X_hat_from_v,
-                             construct_X_hat_from_H, _grad_v_scaled_hrf,
-                             _loss_v)
-from seven.convolution import adjconv_uH
-from seven.hrf_model import scaled_hrf, MIN_DELTA, MAX_DELTA
-from seven.utils import _set_up_test
-from seven.checks import check_random_state
+from hemolearn.hrf_model import hrf_3_basis
+from hemolearn.constants import (_precompute_uvtuv,
+                                 _precompute_sum_ztz_sum_ztz_y)
+from hemolearn.prox import _prox_positive_l2_ball
+from hemolearn.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
+                                 _obj, construct_X_hat_from_v,
+                                 construct_X_hat_from_H, _grad_v_scaled_hrf,
+                                 _loss_v)
+from hemolearn.convolution import adjconv_uH
+from hemolearn.hrf_model import scaled_hrf, MIN_DELTA, MAX_DELTA
+from hemolearn.utils import _set_up_test
+from hemolearn.checks import check_random_state
 
 
 @pytest.mark.repeat(3)

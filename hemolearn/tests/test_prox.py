@@ -4,9 +4,9 @@
 
 import pytest
 import numpy as np
-from seven.prox import _prox_positive_l2_ball, _prox_l1_simplex
-from seven.checks import check_random_state
-from seven.utils import _set_up_test
+from hemolearn.prox import _prox_positive_l2_ball, _prox_l1_simplex
+from hemolearn.checks import check_random_state
+from hemolearn.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)

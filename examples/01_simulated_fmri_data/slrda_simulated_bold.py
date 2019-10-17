@@ -5,11 +5,6 @@ fMRI data. """
 # License: BSD (3-clause)
 
 import os
-is_travis = ('TRAVIS' in os.environ)
-if is_travis:
-    import matplotlib
-    matplotlib.use('Agg')
-
 import subprocess
 import time
 import shutil
@@ -17,11 +12,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from seven.simulated_data import simulated_data
-from seven.hrf_model import spm_scaled_hrf
-from seven.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
-from seven.utils import get_unique_dirname
-from seven.plotting import plotting_obj_values
+from hemolearn.simulated_data import simulated_data
+from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
+from hemolearn.utils import get_unique_dirname
+from hemolearn.plotting import plotting_obj_values
 
 
 dirname = get_unique_dirname("results_slrda_simu_#")
@@ -32,7 +26,7 @@ print("archiving '{0}' under '{1}'".format(__file__, dirname))
 shutil.copyfile(__file__, os.path.join(dirname, __file__))
 
 TR = 1.0
-n_voxels, n_atoms, n_times_valid, n_times_atom, snr = 100, 2, 100, 30, 1.0
+n_voxels, n_atoms, n_times_valid, n_times_atom, snr = 100, 2, 200, 30, 1.0
 noisy_X, _, u, v, z, hrf_rois = simulated_data(n_voxels=n_voxels,
                                                n_times_valid=n_times_valid,
                                                n_times_atom=n_times_atom,
@@ -42,23 +36,27 @@ t0 = time.time()
 results = multi_runs_learn_u_z_v_multi(
                     noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                     deactivate_v_learning=True, prox_u='l1-positive-simplex',
-                    hrf_model='scaled_hrf', lbda_strategy='ratio',
-                    lbda=0.4, max_iter=30, get_obj=True, get_time=True,
-                    raise_on_increase=False, random_seed=None,
+                    n_times_atom=n_times_atom, hrf_model='scaled_hrf',
+                    lbda_strategy='ratio', lbda=0.4,
+                    u_init_type='gaussian_noise', max_iter=30, get_obj=True,
+                    get_time=True, raise_on_increase=False, random_seed=None,
                     n_jobs=4, nb_fit_try=4, verbose=1)
 z_hat, _, u_hat, a_hat, v_hat, v_init, lbda, pobj, times = results
 delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
 print("Fitting done in {}".format(delta_t))
 
-u_0 = u[0, :]
-u_1 = u[1, :]
+u_0_true = u[0, :]
+u_1_true = u[1, :]
+z_0_true = z[0, :].T.ravel()
+z_1_true = z[1, :].T.ravel()
+
 u_0_hat = u_hat[0, :]
 u_1_hat = u_hat[1, :]
-z_0_hat = z_hat[0, :].T
-z_1_hat = z_hat[1, :].T
+z_0_hat = z_hat[0, :].T.ravel()
+z_1_hat = z_hat[1, :].T.ravel()
 
-prod_scal_0 = np.dot(z_0_hat.flat, z[0, :].T.flat)
-prod_scal_1 = np.dot(z_0_hat.flat, z[1, :].T.flat)
+prod_scal_0 = np.dot(z_0_hat, z_0_true)
+prod_scal_1 = np.dot(z_0_hat, z_1_true)
 if prod_scal_0 < prod_scal_1:
     tmp = z_0_hat
     z_0_hat = z_1_hat
@@ -77,8 +75,8 @@ with open(filename, "wb") as pfile:
 plt.figure("Temporal atoms", figsize=(12, 5))
 plt.subplot(121)
 plt.plot(z_0_hat, lw=2.0, label="Est. atom")
-plt.plot(z[0, :].T, linestyle='--', lw=2.0, label="True atom")
-x_0 = noisy_X[np.where(u_0 > 0)[0], :]
+plt.plot(z_0_true, linestyle='--', lw=2.0, label="True atom")
+x_0 = noisy_X[np.where(u_0_true > 0)[0], :]
 x_0 /= np.repeat(np.max(np.abs(x_0), axis=1)[:, None], noisy_X.shape[1], 1)
 t = np.arange(noisy_X.shape[1])
 mean_0 = np.mean(x_0, axis=0)
@@ -94,8 +92,8 @@ plt.legend(ncol=2, loc='lower center', fontsize=17, framealpha=0.3)
 plt.title("First atom", fontsize=20)
 plt.subplot(122)
 plt.plot(z_1_hat, lw=2.0, label="Est. atom")
-plt.plot(z[1, :].T, linestyle='--', lw=2.0, label="True atom")
-x_1 = noisy_X[np.where(u_1 > 0)[0], :]
+plt.plot(z_1_true, linestyle='--', lw=2.0, label="True atom")
+x_1 = noisy_X[np.where(u_1_true > 0)[0], :]
 x_1 /= np.repeat(np.max(np.abs(x_1), axis=1)[:, None], noisy_X.shape[1], 1)
 mean_1 = np.mean(x_1, axis=0)
 std_1 = np.std(x_1, axis=0)
@@ -119,8 +117,10 @@ print("Saving plot under '{0}'".format(filename))
 # u
 fig, axes = plt.subplots(nrows=1, ncols=4)
 len_square = int(np.sqrt(n_voxels))
-l_u = [u_0.reshape(len_square, len_square), u_0_hat.reshape(len_square, len_square),
-       u_1.reshape(len_square, len_square), u_1_hat.reshape(len_square, len_square)]
+l_u = [u_0_true.reshape(len_square, len_square),
+       u_0_hat.reshape(len_square, len_square),
+       u_1_true.reshape(len_square, len_square),
+       u_1_hat.reshape(len_square, len_square)]
 l_max_u = [np.max(u) for u in l_u]
 max_u = np.max(l_max_u)
 amax_u = np.argmax(l_max_u)

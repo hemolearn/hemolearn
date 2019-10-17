@@ -33,7 +33,7 @@ def _precompute_sum_ztz_sum_ztz_y(uz_roi, X_roi, n_times_atom, factor):
         uz_roi_padded[_indices] = uz_roi[j, :]
         sum_ztz += np.convolve(uz_roi[j, :][::-1], uz_roi_padded, 'valid')
         # In case we try to recover the cost-function from the gradient,
-        # the formula needs a '2 *' before 'the X_roi[j, :]', thus the factor
+        # the formula needs a '2 *' before 'the X_roi[j, :]', thus the factor
         # option (equal to 1.0 in case of gradient compuation)
         sum_ztz_y += np.convolve(uz_roi[j, :][::-1], factor * X_roi[j, :],
                                  'valid')

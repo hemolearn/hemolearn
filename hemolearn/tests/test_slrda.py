@@ -4,7 +4,7 @@
 
 import pytest
 from nilearn import datasets
-from seven import SLRDA
+from hemolearn import SLRDA
 
 
 def test_slrda():

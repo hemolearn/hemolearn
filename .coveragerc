@@ -2,7 +2,7 @@
 branch = True
 parallel = True
 source =
-    seven
+    hemolearn
 omit =
     plotting.py
     info.py

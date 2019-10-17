@@ -6,18 +6,18 @@
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35: https://badge.fury.io/py/scikit-learn
 
-.. |Travis| image:: https://travis-ci.com/CherkaouiHamza/seven.svg?branch=master
-.. _Travis: https://travis-ci.com/CherkaouiHamza/seven
+.. |Travis| image:: https://travis-ci.com/CherkaouiHamza/hemolearn.svg?branch=master
+.. _Travis: https://travis-ci.com/CherkaouiHamza/hemolearn
 
 
-.. |Codecov| image:: https://codecov.io/gh/CherkaouiHamza/seven/branch/master/graph/badge.svg
-.. _Codecov: https://codecov.io/gh/CherkaouiHamza/seven
+.. |Codecov| image:: https://codecov.io/gh/CherkaouiHamza/hemolearn/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/CherkaouiHamza/hemolearn
 
 
-Seven
-======
+HemoLearn
+=========
 
-Seven is a Python module to estimate the Haemodynamic Response Function (HRF)
+HemoLearn is a Python module to estimate the Haemodynamic Response Function (HRF)
 in brain from resting-state or task fMRI data (BOLD signal). It relies on a
 Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
 neurovascular coupling from the the neural activity.
@@ -26,7 +26,7 @@ neurovascular coupling from the the neural activity.
 Important links
 ===============
 
-- Official source code repo: https://github.com/CherkaouiHamza/seven
+- Official source code repo: https://github.com/CherkaouiHamza/hemolearn
 
 Dependencies
 ============
@@ -52,11 +52,11 @@ All material is Free Software: BSD license (3 clause).
 Installation
 ============
 
-In order to perform the installation, run the following command from the seven directory::
+In order to perform the installation, run the following command from the hemolearn directory::
 
     python3 setup.py install --user
 
-To run all the tests, run the following command from the seven directory::
+To run all the tests, run the following command from the hemolearn directory::
 
     pytest
 
@@ -71,8 +71,8 @@ GIT
 
 You can check the latest sources with the command::
 
-    git clone git://github.com/CherkaouiHamza/seven
+    git clone git://github.com/CherkaouiHamza/hemolearn
 
 or if you have write privileges::
 
-    git clone git@github.com:CherkaouiHamza/seven
+    git clone git@github.com:CherkaouiHamza/hemolearn

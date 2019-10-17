@@ -4,12 +4,12 @@
 
 import pytest
 import numpy as np
-from seven.checks import check_random_state
-from seven.utils import lipschitz_est
-from seven.loss_grad import _obj
-from seven.optim import proximal_descent, cdclinmodel
-from seven.utils import _set_up_test
-from seven.prox import _prox_positive_l2_ball
+from hemolearn.checks import check_random_state
+from hemolearn.utils import lipschitz_est
+from hemolearn.loss_grad import _obj
+from hemolearn.optim import proximal_descent, cdclinmodel
+from hemolearn.utils import _set_up_test
+from hemolearn.prox import _prox_positive_l2_ball
 
 
 @pytest.mark.repeat(3)

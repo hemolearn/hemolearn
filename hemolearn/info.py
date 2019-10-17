@@ -1,5 +1,5 @@
 """ Info module: required package version and utilities for checking to help
-install Seven package. """
+install HemoLearn package. """
 # Author: Hamza Cherkaoui
 # License: new BSD
 
@@ -23,8 +23,8 @@ from distutils.version import LooseVersion
 
 __version__ = '0.0.0'
 
-_SEVEN_INSTALL_MSG = "See {0} for installation information.".format(
-                    'https://github.com/CherkaouiHamza/seven')
+_HEMOLEARN_INSTALL_MSG = "See {0} for installation information.".format(
+                    'https://github.com/CherkaouiHamza/hemolearn')
 
 # This is a tuple to preserve order, so that dependencies are checked
 #   in some meaningful order (more => less 'core').
@@ -32,44 +32,44 @@ REQUIRED_MODULE_METADATA = (
     ('numba', {
         'min_version': '0.41.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('joblib', {
         'min_version': '0.10',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('numpy', {
         'min_version': '1.14.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('scipy', {
         'min_version': '1.0.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('matplotlib', {
         'min_version': '2.1.2',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('nibabel', {
         'min_version': '2.3.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('nilearn', {
         'min_version': '0.5.2',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     # XXX need to find a fix for the 'scikit-learn' / 'sklearn' problem
     # ('scikit-learn', {
     #     'min_version': '0.19.2',
     #     'required_at_installation': True,
-    #     'install_info': _SEVEN_INSTALL_MSG}),
+    #     'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('threadpoolctl', {
         'min_version': '1.0.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('prox_tv', {
         'min_version': '0.0.0',
         'required_at_installation': True,
-        'install_info': _SEVEN_INSTALL_MSG}),
+        'install_info': _HEMOLEARN_INSTALL_MSG}),
     )
 
 
@@ -94,7 +94,7 @@ def _import_module_with_version_check(module_name, minimum_version,
     except ImportError as exc:
         user_friendly_info = ('Module "{0}" could not be found. {1}').format(
             module_name,
-            install_info or 'Please install it properly to use Seven.')
+            install_info or 'Please install it properly to use HemoLearn.')
         exc.args += (user_friendly_info,)
         raise
 
@@ -107,7 +107,7 @@ def _import_module_with_version_check(module_name, minimum_version,
     if version_too_old:
         message = (
             'A {module_name} version of at least {minimum_version} '
-            'is required to use Seven. {module_version} was found. '
+            'is required to use HemoLearn. {module_version} was found. '
             'Please upgrade {module_name}').format(
                 module_name=module_name,
                 minimum_version=minimum_version,
@@ -118,12 +118,12 @@ def _import_module_with_version_check(module_name, minimum_version,
     return module
 
 
-def _check_module_dependencies(is_seven_installing=False):
-    """Throw an exception if Seven dependencies are not installed.
+def _check_module_dependencies(is_hemolearn_installing=False):
+    """Throw an exception if HemoLearn dependencies are not installed.
 
     Parameters
     ----------
-    is_seven_installing: boolean
+    is_hemolearn_installing: boolean
         if True, only error on missing packages that cannot be auto-installed.
         if False, error on any missing package.
 
@@ -133,7 +133,7 @@ def _check_module_dependencies(is_seven_installing=False):
     """
 
     for (module_name, module_metadata) in REQUIRED_MODULE_METADATA:
-        if not (is_seven_installing and
+        if not (is_hemolearn_installing and
                 not module_metadata['required_at_installation']):
             # Skip check only when installing and it's a module that
             # will be auto-installed.

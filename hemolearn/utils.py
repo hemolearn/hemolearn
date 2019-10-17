@@ -83,7 +83,7 @@ def fwhm(t_r, hrf):
     peaks_in_idx, _ = find_peaks(hrf)
     fwhm_in_idx, _, _, _ = peak_widths(hrf, peaks_in_idx, rel_height=0.5)
     fwhm_in_idx = fwhm_in_idx[0]  # catch the first (and only) peak
-    return t_r * int(fwhm_in_idx) # in seconds
+    return t_r * int(fwhm_in_idx)  # in seconds
 
 
 def tp(t_r, hrf):
@@ -100,7 +100,7 @@ def tp(t_r, hrf):
     """
     n_times_atom = len(hrf)
     t = np.linspace(0.0, t_r * n_times_atom, n_times_atom)
-    return t[np.argmax(hrf)] # in seconds
+    return t[np.argmax(hrf)]  # in seconds
 
 
 def get_nifti_ext(func_fname):

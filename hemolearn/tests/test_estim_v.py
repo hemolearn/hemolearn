@@ -4,15 +4,13 @@
 
 import pytest
 import numpy as np
-from seven.checks import check_random_state
-from seven.estim_v import _estim_v_scaled_hrf, _estim_v_d_basis
-from seven.hrf_model import scaled_hrf, hrf_3_basis, MIN_DELTA, MAX_DELTA
-from seven.atlas import split_atlas
-from seven.loss_grad import construct_X_hat_from_v
+from hemolearn.checks import check_random_state
+from hemolearn.estim_v import _estim_v_scaled_hrf, _estim_v_d_basis
+from hemolearn.hrf_model import scaled_hrf, hrf_3_basis, MIN_DELTA, MAX_DELTA
+from hemolearn.atlas import split_atlas
+from hemolearn.loss_grad import construct_X_hat_from_v
 
 
-msg = "no garantie of recovery in any case: test disabled for now"
-#@pytest.mark.skip(reason=msg)
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
 def test_estim_v_scaled_hrf(seed):
@@ -45,7 +43,6 @@ def test_estim_v_scaled_hrf(seed):
     np.testing.assert_allclose(a_true, a_hat, atol=1e-1)
     np.testing.assert_allclose(v_true, v_hat, atol=1e-1)
 
-test_estim_v_scaled_hrf(None)
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])

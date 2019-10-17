@@ -5,20 +5,15 @@ dataset resting-state. """
 # License: BSD (3-clause)
 
 import os
-is_travis = ('TRAVIS' in os.environ)
-if is_travis:
-    import matplotlib
-    matplotlib.use('Agg')
-
 import time
 import shutil
 import pickle
 from nilearn import datasets
 
-from seven import SLRDA
-from seven.utils import (fmri_preprocess, sort_atoms_by_explained_variances,
-                         get_unique_dirname)
-from seven.plotting import (plotting_spatial_comp, plotting_temporal_comp,
+from hemolearn import SLRDA
+from hemolearn.utils import (fmri_preprocess, get_unique_dirname,
+                             sort_atoms_by_explained_variances)
+from hemolearn.plotting import (plotting_spatial_comp, plotting_temporal_comp,
                             plotting_obj_values, plotting_hrf,
                             plotting_hrf_stats)
 
@@ -38,12 +33,12 @@ X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                     detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
                     memory='.cache', verbose=0, confounds=confound_fname)
 seed = None
-n_atoms = 30
+n_atoms = 20
 hrf_atlas = 'scale007'
-slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas,
+slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=20,
+              hrf_model='scaled_hrf', lbda=0.6, max_iter=100, eps=1.0e-3,
               deactivate_v_learning=True, prox_u='l1-positive-simplex',
-              hrf_model='3_basis_hrf', lbda=1.0e-3, max_iter=40,
-              raise_on_increase=True, random_state=seed, n_jobs=1,
+              raise_on_increase=False, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)
 
 t0 = time.time()
@@ -68,11 +63,4 @@ plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
                       perc_voxels_to_retain=0.1, verbose=True)
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname, verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
-plotting_hrf(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-             hrf_ref=hrf_ref, normalized=True, plot_dir=dirname, verbose=True)
-plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='tp', plot_dir=dirname,
-                   verbose=True)
-plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='fwhm', plot_dir=dirname,
-                   verbose=True)
+

@@ -1,4 +1,4 @@
-""" Seven is a Python module to estimate the Haemodynamic Response Function
+""" HemoLearn is a Python module to estimate the Haemodynamic Response Function
 (HRF) in brain from resting-state or task fMRI data (BOLD signal). It relies on
 a Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
 neurovascular coupling from the the neural activity.
@@ -28,10 +28,10 @@ from nilearn import input_data
 
 from .learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
 from .atlas import fetch_atlas_basc_2015, split_atlas
-from .build_numba import build_numba_functions_of_seven
+from .build_numba import build_numba_functions_of_hemolearn
 
 
-build_numba_functions_of_seven()
+build_numba_functions_of_hemolearn()
 
 
 class SLRDA(TransformerMixin):

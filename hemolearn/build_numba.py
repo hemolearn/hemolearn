@@ -1,4 +1,4 @@
-"""Numba build module: compile each Numba functions of Seven package"""
+"""Numba build module: compile each Numba functions of HemoLearn package"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
@@ -10,8 +10,8 @@ from .loss_grad import construct_X_hat_from_v, construct_X_hat_from_H
 from .utils import _set_up_test
 
 
-def build_numba_functions_of_seven():
-    """ Build each Numba functions of Seven package.
+def build_numba_functions_of_hemolearn():
+    """ Build each Numba functions of HemoLearn package.
     """
     kwargs = _set_up_test(0)
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']

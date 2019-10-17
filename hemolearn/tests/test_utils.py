@@ -5,12 +5,12 @@
 import pytest
 import time
 import numpy as np
-from seven.checks import check_random_state
-from seven.constants import _precompute_uvtuv
-from seven.atlas import get_indices_from_roi
-from seven.utils import (get_nifti_ext, lipschitz_est, tp, fwhm,
-                         _compute_uvtuv_z, get_unique_dirname)
-from seven.utils import _set_up_test
+from hemolearn.checks import check_random_state
+from hemolearn.constants import _precompute_uvtuv
+from hemolearn.atlas import get_indices_from_roi
+from hemolearn.utils import (get_nifti_ext, lipschitz_est, tp, fwhm,
+                             _compute_uvtuv_z, get_unique_dirname)
+from hemolearn.utils import _set_up_test
 
 
 def test_get_unique_dirname():

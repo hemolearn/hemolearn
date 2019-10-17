@@ -5,9 +5,9 @@
 import pytest
 import numpy as np
 
-from seven.convolution import make_toeplitz, adjconv_uv, adjconv_uH
-from seven.checks import check_random_state
-from seven.utils import _set_up_test
+from hemolearn.convolution import make_toeplitz, adjconv_uv, adjconv_uH
+from hemolearn.checks import check_random_state
+from hemolearn.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)

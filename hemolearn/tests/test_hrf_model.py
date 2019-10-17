@@ -5,9 +5,9 @@
 import pytest
 import numpy as np
 from scipy.stats import gamma
-from seven.checks import check_random_state
-from seven.hrf_model import (delta_derivative_double_gamma_hrf, _gamma_pdf,
-                             scaled_hrf, MIN_DELTA, MAX_DELTA)
+from hemolearn.checks import check_random_state
+from hemolearn.hrf_model import (delta_derivative_double_gamma_hrf, _gamma_pdf,
+                                 scaled_hrf, MIN_DELTA, MAX_DELTA)
 
 
 @pytest.mark.repeat(3)

@@ -5,12 +5,12 @@
 import pytest
 import numpy as np
 
-from seven.constants import (_precompute_uvtuv, _precompute_d_basis_constant,
-                             _precompute_B_C)
-from seven.atlas import get_indices_from_roi
-from seven.hrf_model import hrf_3_basis
-from seven.convolution import make_toeplitz
-from seven.utils import _set_up_test
+from hemolearn.constants import (_precompute_uvtuv,
+                                 _precompute_d_basis_constant, _precompute_B_C)
+from hemolearn.atlas import get_indices_from_roi
+from hemolearn.hrf_model import hrf_3_basis
+from hemolearn.convolution import make_toeplitz
+from hemolearn.utils import _set_up_test
 
 
 @pytest.mark.repeat(3)
