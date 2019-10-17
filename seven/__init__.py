@@ -58,6 +58,11 @@ class SLRDA(TransformerMixin):
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    u_init_type : str, (default='ica'), strategy to init u, possible value are
+        ['gaussian_noise', 'ica', 'patch']
+    prox_u : str, (default='l2-positive-ball'), constraint to impose on the
+        spatial maps possible choice are ['l2-positive-ball',
+        'l1-positive-simplex']
     hrf_atlas : str, (default='basc122'), HRF atlas to use to define the HRF
         ROIs, possible choice are ['scale007', 'scale012', 'scale036',
         'scale064', 'scale122']
@@ -88,12 +93,12 @@ class SLRDA(TransformerMixin):
         regularization parameter is set to high
     """
 
-    def __init__(self, n_atoms, t_r, n_times_atom=30, hrf_model='3_basis_hrf',
-                 lbda_strategy='ratio', lbda=0.1, prox_u='l2-positive-ball',
-                 hrf_atlas='scale064', deactivate_v_learning=False,
-                 max_iter=100, random_state=None, early_stopping=True,
-                 eps=1.0e-4, raise_on_increase=True, cache_dir='.cache',
-                 nb_fit_try=1, n_jobs=1, verbose=0):
+    def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
+                 lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
+                 prox_u='l1-positive-simplex', hrf_atlas='scale122',
+                 deactivate_v_learning=False, max_iter=100, random_state=None,
+                 early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+                 cache_dir='.cache', nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
@@ -102,6 +107,7 @@ class SLRDA(TransformerMixin):
         self.n_times_atom = n_times_atom
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
+        self.u_init_type = u_init_type
         self.prox_u = prox_u
 
         # convergence parameters
@@ -158,16 +164,17 @@ class SLRDA(TransformerMixin):
             temporal regularization parameter is set to high
         """
         if not isinstance(X, str):
-            raise ValueError("fMRI data to be decompose should passed as a "
-                             "filename, instead of the raw data")
+            raise ValueError("fMRI data should passed as a "
+                             "filename (string), got {}".format(type(X)))
 
+        # load the fMRI data into a matrix
         X = self.masker_.fit_transform(X).T
 
+        # transformation of the atlas format
         rois = self.masker_.transform(self.atlas_rois).astype(int).ravel()
         index = np.arange(rois.shape[-1])
         for roi_label in np.unique(rois):
             self.hrf_rois[roi_label] = index[roi_label == rois]
-
         _, rois_label, _ = split_atlas(self.hrf_rois)
         self.roi_label_from_hrf_idx = rois_label
 
@@ -185,8 +192,9 @@ class SLRDA(TransformerMixin):
                       deactivate_v_learning=self.deactivate_v_learning,
                       n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
                       lbda_strategy=self.lbda_strategy, lbda=self.lbda,
-                      prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
-                      get_time=1, random_seed=self.random_state,
+                      u_init_type=self.u_init_type, prox_u=self.prox_u,
+                      max_iter=self.max_iter, get_obj=1, get_time=1,
+                      random_seed=self.random_state,
                       early_stopping=self.early_stopping, eps=self.eps,
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,
@@ -198,6 +206,7 @@ class SLRDA(TransformerMixin):
         else:
             decompose = multi_runs_learn_u_z_v_multi
 
+        # SLRDA decomposition
         res = decompose(**params)
 
         self.z_hat_ = res[0]
