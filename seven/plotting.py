@@ -102,7 +102,7 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
 
 
 def plotting_spatial_comp(u, variances, masker, plot_dir='.',
-                          display_mode=None, perc_voxels_to_retain=0.1,
+                          display_mode='ortho', perc_voxels_to_retain=0.1,
                           bg_img=None, verbose=False):
     """ Plot, and save as pdf, each spatial estimated component.
 
@@ -127,6 +127,7 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
         colorbar = False
         compress_plot = True
     else:
+        display_mode = 'ortho'
         cut_coords = None
         colorbar = True
         compress_plot = False
@@ -203,7 +204,6 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     fig, axis = plt.subplots(n_raws, n_cols, sharex=True, sharey=True,
                              figsize=(n_cols * 2, n_raws * 2))
     axis = axis.ravel()
-    t = np.array([t_r * n for n in range(n_times_atoms)])
     _xticks = [0, int(n_times_atoms / 2.0), int(n_times_atoms)]
     _xticks_labels = [0, np.round(t_r * int(n_times_atoms / 2.0), 2),
                       np.round(t_r * int(n_times_atoms), 2)]
@@ -214,8 +214,8 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         if normalized:
             v_ /= np.max(np.abs(v[i, :]))
         axis[i].plot(v_, lw=3.0, c=color_)
-        text_ = "TP={0:.2f}s\nFWHM={1:.2f}s".format(tp(t, v[i, :]),
-                                                    fwhm(t, v[i, :]))
+        text_ = "TP={0:.2f}s\nFWHM={1:.2f}s".format(tp(t_r, v[i, :]),
+                                                    fwhm(t_r, v[i, :]))
         axis[i].text(x_text, y_text, text_)
         if normalized:
             hrf_ref /= np.max(np.abs(hrf_ref))
@@ -241,7 +241,8 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
 
 
 def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
-                       stat_type='tp', plot_dir='.', verbose=False):
+                       stat_type='tp', cut_coords=None, plot_dir='.',
+                       verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -259,6 +260,7 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         choice are ('tp', 'fwhm')
     normalized : bool, (default=False), whether or not to normalized by the
         l-inf norm each HRFs
+    cut_coords : tuple or None, MNI coordinate to perform display
     plot_dir : str, (default='.'), directory under which the pdf is saved
     verbose : bool, (default=False), verbosity level
     """
@@ -268,19 +270,18 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     _, atlas_rois = fetch_atlas_basc_2015(hrf_rois)
     raw_atlas_rois = atlas_rois.get_data()
     n_hrf_rois, n_times_atom = v.shape
-    t = np.array([n * t_r for n in range(n_times_atom)])
     if hrf_ref is not None:
         if stat_type == 'tp':
-            ref_stat = tp(t, hrf_ref)
+            ref_stat = tp(t_r, hrf_ref)
         elif stat_type == 'fwhm':
-            ref_stat = fwhm(t, hrf_ref)
+            ref_stat = fwhm(t_r, hrf_ref)
     for m in range(n_hrf_rois):
         v_ = v[m, :]
         if stat_type == 'tp':
-            stat_ = tp(t, v_)
+            stat_ = tp(t_r, v_)
             stat_name = 'TtP'
         elif stat_type == 'fwhm':
-            stat_ = fwhm(t, v_)
+            stat_ = fwhm(t_r, v_)
             stat_name = 'FWHM'
         if hrf_ref is not None:
             stat_ -= ref_stat
@@ -292,7 +293,7 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     stats_map = nib.Nifti1Image(raw_atlas_rois, atlas_rois.affine,
                                 atlas_rois.header)
     plotting.plot_stat_map(stats_map, title=title, colorbar=True,
-                           symmetric_cbar=False)
+                           cut_coords=cut_coords, symmetric_cbar=False)
     fname = os.path.join(plot_dir, "v_{}.pdf".format(stat_type))
     plt.savefig(fname, dpi=150)
     if verbose:
