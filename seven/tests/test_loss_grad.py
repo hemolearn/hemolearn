@@ -6,14 +6,17 @@ import pytest
 import numpy as np
 from scipy.optimize import approx_fprime
 
-from seven.hrf_model import spm_hrf_3_basis
-from seven.constants import _precompute_uvtuv
+from seven.hrf_model import hrf_3_basis
+from seven.constants import _precompute_uvtuv, _precompute_sum_ztz_sum_ztz_y
 from seven.prox import _prox_positive_l2_ball
 from seven.loss_grad import (_grad_u_k, _grad_z, _grad_v_hrf_d_basis,
                              _obj, construct_X_hat_from_v,
-                             construct_X_hat_from_H)
+                             construct_X_hat_from_H, _grad_v_scaled_hrf,
+                             _loss_v)
 from seven.convolution import adjconv_uH
+from seven.hrf_model import scaled_hrf, MIN_DELTA, MAX_DELTA
 from seven.utils import _set_up_test
+from seven.checks import check_random_state
 
 
 @pytest.mark.repeat(3)
@@ -30,7 +33,7 @@ def test_construct_X_hat(seed):
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
-def test_loss(seed):
+def test_global_loss(seed):
     """ Test the loss function. """
     kwargs = _set_up_test(seed)
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
@@ -44,6 +47,35 @@ def test_loss(seed):
     loss_ref_ = loss_ref(X, u, z, v, rois_idx)
     loss_test_ = _obj(X, _prox_positive_l2_ball, u, z, rois_idx, H=H,
                       valid=False, return_reg=False, lbda=None)
+
+    np.testing.assert_allclose(loss_ref_, loss_test_)
+
+
+@pytest.mark.repeat(3)
+@pytest.mark.parametrize('seed', [None])
+def test_v_loss(seed):
+    """ Test the loss function. """
+    rng = check_random_state(seed)
+    kwargs = _set_up_test(seed)
+    X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
+    t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
+    uz = u.T.dot(z)
+    eps = 1.0e-6
+    a = rng.uniform(MIN_DELTA + eps, MAX_DELTA - eps, 1)
+
+    def loss_ref(a):
+        n_atoms, _ = z.shape
+        v = scaled_hrf(a, t_r, n_times_atom)
+        X_hat = np.zeros_like(X)
+        for k in range(n_atoms):
+            X_hat += np.outer(u[k, :], np.convolve(v, z[k, :]))
+        residual = (X_hat - X).ravel()
+        return 0.5 * residual.dot(residual)
+
+    loss_ref_ = loss_ref(a)
+    sum_ztz, sum_ztz_y = _precompute_sum_ztz_sum_ztz_y(uz, X, n_times_atom,
+                                                       factor=2.0)
+    loss_test_ = _loss_v(a, u, z, X, t_r, n_times_atom, sum_ztz, sum_ztz_y)
 
     np.testing.assert_allclose(loss_ref_, loss_test_)
 
@@ -109,12 +141,40 @@ def test_grad_z(seed):
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
+def test_grad_v_scaled_hrf(seed):
+    """ Test the gradient of v (model: scaled hrf). """
+    rng = check_random_state(seed)
+    kwargs = _set_up_test(seed)
+    t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
+    X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
+    uz = u.T.dot(z)
+    epsilon = 1.0e-6
+    a = rng.uniform(MIN_DELTA + epsilon, MAX_DELTA - epsilon, 1)
+
+    # Finite grad v
+    def finite_grad_v(a):
+        def f(a):
+            return _loss_v(a, u, z, X, t_r, n_times_atom)
+        return (f(a + epsilon) - f(a)) / epsilon
+
+    grad_ref = finite_grad_v(a)
+
+    # Closed form grad v
+    sum_ztz, sum_ztz_y = _precompute_sum_ztz_sum_ztz_y(uz, X, n_times_atom,
+                                                       factor=1.0)
+    grad_ = _grad_v_scaled_hrf(a, t_r, n_times_atom, sum_ztz, sum_ztz_y)
+
+    np.testing.assert_allclose(grad_ref, grad_, rtol=1e-2)
+
+
+@pytest.mark.repeat(3)
+@pytest.mark.parametrize('seed', [None])
 def test_grad_v_hrf_d_basis(seed):
     """ Test the gradient of v (model: hrf 3 basis). """
     kwargs = _set_up_test(seed)
     t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
-    h = spm_hrf_3_basis(t_r, n_times_atom)
+    h = hrf_3_basis(t_r, n_times_atom)
     uz = u.T.dot(z)
     n_voxels_rois, n_times_valid = uz.shape
     n_atoms_hrf, _ = h.shape

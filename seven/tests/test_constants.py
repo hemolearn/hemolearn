@@ -8,7 +8,7 @@ import numpy as np
 from seven.constants import (_precompute_uvtuv, _precompute_d_basis_constant,
                              _precompute_B_C)
 from seven.atlas import get_indices_from_roi
-from seven.hrf_model import spm_hrf_3_basis
+from seven.hrf_model import hrf_3_basis
 from seven.convolution import make_toeplitz
 from seven.utils import _set_up_test
 
@@ -91,7 +91,7 @@ def test_precompute_d_basis_constant(seed):
     t_r, n_times_atom = kwargs['t_r'], kwargs['n_times_atom']
     X, u, z = kwargs['X'], kwargs['u'], kwargs['z']
     uz = u.T.dot(z)
-    h = spm_hrf_3_basis(t_r, n_times_atom)
+    h = hrf_3_basis(t_r, n_times_atom)
     _, n_times_valid = z.shape
     n_voxels_rois, n_times = X.shape
     n_atoms_hrf, _ = h.shape

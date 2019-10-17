@@ -6,35 +6,38 @@ import pytest
 import numpy as np
 from seven.checks import check_random_state
 from seven.estim_v import _estim_v_scaled_hrf, _estim_v_d_basis
-from seven.hrf_model import spm_scaled_hrf, spm_hrf_3_basis
+from seven.hrf_model import scaled_hrf, hrf_3_basis, MIN_DELTA, MAX_DELTA
 from seven.atlas import split_atlas
 from seven.loss_grad import construct_X_hat_from_v
 
 
+msg = "no garantie of recovery in any case: test disabled for now"
+#@pytest.mark.skip(reason=msg)
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
 def test_estim_v_scaled_hrf(seed):
     """ Test the estimation of the HRF with the scaled HRF model without noise
     in the observed data. """
     rng = check_random_state(seed)
+    eps = 1.0e-3
     t_r = 1.0
     n_atoms = 2
-    n_voxels = 1000
-    n_times_valid = 100
-    n_times_atom = 30
+    n_times_valid = 500
+    n_times_atom = 60
+    n_voxels_in_rois = 200
+    n_hrf_rois = 5
+    n_voxels = n_voxels_in_rois * n_hrf_rois
     indices = np.arange(n_voxels)
-    rois_1 = indices[int(n_voxels/2):]
-    rois_2 = indices[:int(n_voxels/2)]
-    hrf_rois = {1: rois_1, 2: rois_2}
-
+    rois_s = np.split(indices, n_hrf_rois)
+    hrf_rois = dict(zip(range(1, n_hrf_rois + 1), rois_s))
     u = rng.randn(n_atoms, n_voxels)
     z = rng.randn(n_atoms, n_times_valid)
     rois_idx, _, _ = split_atlas(hrf_rois)
-    a_true = rng.uniform(0.5, 2.0, 2)
-    v_true = np.c_[[spm_scaled_hrf(a_, t_r, n_times_atom) for a_ in a_true]]
+    a_true = rng.uniform(MIN_DELTA + eps, MAX_DELTA - eps, n_hrf_rois)
+    v_true = np.c_[[scaled_hrf(a_, t_r, n_times_atom) for a_ in a_true]]
     X = construct_X_hat_from_v(v_true, z, u, rois_idx)
 
-    a_init = rng.uniform(0.5, 2.0, 2)
+    a_init = rng.uniform(MIN_DELTA + eps, MAX_DELTA - eps, n_hrf_rois)
     a_hat, v_hat = _estim_v_scaled_hrf(a_init, X, z, u, rois_idx, t_r,
                                        n_times_atom)
 
@@ -42,6 +45,7 @@ def test_estim_v_scaled_hrf(seed):
     np.testing.assert_allclose(a_true, a_hat, atol=1e-1)
     np.testing.assert_allclose(v_true, v_hat, atol=1e-1)
 
+test_estim_v_scaled_hrf(None)
 
 @pytest.mark.repeat(3)
 @pytest.mark.parametrize('seed', [None])
@@ -63,7 +67,7 @@ def test_estim_v_3_basis(seed):
     u = rng.randn(n_atoms, n_voxels)
     z = rng.randn(n_atoms, n_times_valid)
     rois_idx, _, _ = split_atlas(hrf_rois)
-    h = spm_hrf_3_basis(t_r, n_times_atom)
+    h = hrf_3_basis(t_r, n_times_atom)
     a_true = np.c_[[[1.0, 0.8, 0.5], [1.0, 0.5, 0.0]]]
     v_true = np.c_[[a_.dot(h) for a_ in a_true]]
     X = construct_X_hat_from_v(v_true, z, u, rois_idx)
