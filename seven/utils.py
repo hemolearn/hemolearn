@@ -6,10 +6,10 @@ import os
 import cProfile
 from datetime import datetime
 import numpy as np
-from scipy.interpolate import splrep, sproot
+from scipy.signal import peak_widths, find_peaks
 from nilearn import input_data
 
-from .hrf_model import spm_hrf
+from .hrf_model import scaled_hrf
 from .atlas import split_atlas
 from .constants import _precompute_B_C
 from .checks import check_random_state
@@ -68,29 +68,25 @@ def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
     return np.linalg.norm(x_new)
 
 
-def fwhm(t, hrf, k=3):
+def fwhm(t_r, hrf):
     """Return the full width at half maximum of the HRF.
 
     Parameters
     ----------
     t : array, shape (n_times_atom, ), the time
     hrf : array, shape (n_times_atom, ), HRF
-    k : int, the degree of the bspline use to estimate the FWHM
 
     Return
     ------
     s : float, the full width at half maximum of the HRF
     """
-    half_max = np.amax(hrf) / 2.0
-    s = splrep(t, hrf - half_max, k=k)
-    roots = sproot(s)
-    try:
-        return np.abs(roots[1] - roots[0])
-    except IndexError:
-        return -1
+    peaks_in_idx, _ = find_peaks(hrf)
+    fwhm_in_idx, _, _, _ = peak_widths(hrf, peaks_in_idx, rel_height=0.5)
+    fwhm_in_idx = fwhm_in_idx[0]  # catch the first (and only) peak
+    return t_r * int(fwhm_in_idx) # in seconds
 
 
-def tp(t, hrf):
+def tp(t_r, hrf):
     """ Return time to peak oh the signal of the HRF.
 
     Parameters
@@ -102,7 +98,9 @@ def tp(t, hrf):
     ------
     s : float, time to peak oh the signal of the HRF
     """
-    return t[np.argmax(hrf)]
+    n_times_atom = len(hrf)
+    t = np.linspace(0.0, t_r * n_times_atom, n_times_atom)
+    return t[np.argmax(hrf)] # in seconds
 
 
 def get_nifti_ext(func_fname):
@@ -341,7 +339,7 @@ def _set_up_test(seed):
     X = rng.randn(n_voxels, n_times)
     u = rng.randn(n_atoms, n_voxels)
     z = rng.randn(n_atoms, n_times_valid)
-    v = np.r_[[spm_hrf(t_r=t_r, n_times_atom=n_times_atom)
+    v = np.r_[[scaled_hrf(delta=1.0, t_r=t_r, n_times_atom=n_times_atom)
                for _ in range(n_hrf_rois)]]
     H = np.empty((n_hrf_rois, n_times, n_times_valid))
     for m in range(n_hrf_rois):
