@@ -4,10 +4,12 @@ parallel = True
 source =
     hemolearn
 omit =
-    plotting.py
-    info.py
-    tests/*
     setup.py
+    hemolearn/info.py
+    hemolearn/atlas.py
+    hemolearn/simulated_data.py
+    hemolearn/plotting.py
+    hemolearn/tests/*
 
 [report]
 exclude_lines =

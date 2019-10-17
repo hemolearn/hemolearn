@@ -128,7 +128,7 @@ def get_nifti_ext(func_fname):
         raise ValueError(err_msg.format(extension=ext))
 
 
-def fmri_preprocess(
+def fmri_preprocess(  # pragma: no cover
         func_fname, mask_img=None, sessions=None, smoothing_fwhm=None,
         standardize=False, detrend=False, low_pass=None, high_pass=None,
         t_r=None, target_affine=None, target_shape=None,
