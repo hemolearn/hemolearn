@@ -7,6 +7,67 @@ import numba
 
 from .utils import _compute_uvtuv_z
 from .atlas import get_indices_from_roi
+from .hrf_model import delta_derivative_double_gamma_hrf, scaled_hrf
+
+
+def _loss_v(a, u, z, X, t_r, n_times_atom, sum_ztz=None, sum_ztz_y=None):
+    """ Loss fonction (simple quadratic data fidelity term) for scaled HRF
+    estimation.
+
+    Parameters
+    ----------
+    a : array, shape (n_hrf_rois, n_param_HRF), init. HRF parameters
+    u : array, shape (n_atoms, n_voxels), spatial maps
+    z : array, shape (n_atoms, n_times_valid), temporal components
+    X : array, shape (n_voxels, n_times), fMRI data
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+
+    Return
+    ------
+    loss : float, the cost-function evaluated on a
+    """
+    if (sum_ztz is not None) and (sum_ztz_y is not None):
+        X_ravel = X.ravel()
+        v = scaled_hrf(a, t_r, n_times_atom)
+        _grad = np.convolve(v, sum_ztz, 'valid') - sum_ztz_y
+        cost = 0.5 * v.dot(_grad) + 0.5 * X_ravel.dot(X_ravel)
+    else:
+        n_atoms, _ = z.shape
+        v = scaled_hrf(a, t_r, n_times_atom)
+        X_hat = np.zeros_like(X)
+        for k in range(n_atoms):
+            X_hat += np.outer(u[k, :], np.convolve(v, z[k, :]))
+        residual = (X_hat - X).ravel()
+        cost = 0.5 * residual.dot(residual)
+    return cost
+
+
+def _grad_v_scaled_hrf(a, t_r, n_times_atom, sum_ztz, sum_ztz_y=None):
+    """ v d-basis HRF gradient.
+
+    Parameters
+    ----------
+    a : array, shape (n_hrf_rois, n_param_HRF), init. HRF parameters
+    t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
+        resolution
+    n_times_atom : int, (default=30), number of points on which represent the
+        Haemodynamic Response Function (HRF), this leads to the duration of the
+        response function, duration = n_times_atom * t_r
+
+    Return
+    ------
+    grad : float, HRFs gradient
+    """
+    v = scaled_hrf(a, t_r, n_times_atom)
+    delta_d_v = delta_derivative_double_gamma_hrf(a, t_r, n_times_atom)
+    residual = np.convolve(v, sum_ztz, 'valid')
+    if sum_ztz_y is not None:
+        residual -= sum_ztz_y
+    return delta_d_v.dot(residual)
 
 
 def _grad_v_hrf_d_basis(a, AtA, AtX=None):

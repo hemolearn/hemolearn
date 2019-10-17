@@ -2,10 +2,13 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
+import gc
 import time
 import numpy as np
 from joblib import Parallel, delayed
 from threadpoolctl import threadpool_limits
+
+from sklearn.decomposition import FastICA
 
 from .checks import (check_lbda, check_if_vanished, check_obj,
                      EarlyStopping, check_random_state)
@@ -14,7 +17,7 @@ from .constants import _precompute_uvtuv, _precompute_B_C
 from .optim import cdclinmodel, proximal_descent
 from .loss_grad import _grad_z, _obj
 from .prox import _prox_tv_multi
-from .hrf_model import spm_scaled_hrf, spm_hrf_3_basis, spm_hrf_2_basis
+from .hrf_model import scaled_hrf, hrf_3_basis, hrf_2_basis
 from .estim_v import _estim_v_d_basis, _estim_v_scaled_hrf
 from .atlas import split_atlas
 from .convolution import adjconv_uH, make_toeplitz
@@ -151,11 +154,11 @@ def _update_z(z0, constants):
 
 
 def learn_u_z_v_multi(
-        X, t_r, hrf_rois, hrf_model='3_basis_hrf', deactivate_v_learning=False,
-        n_atoms=10, n_times_atom=30, lbda_strategy='ratio', lbda=0.1,
-        prox_u='l2-positive-ball', max_iter=100, get_obj=0, get_time=0,
-        random_seed=None, early_stopping=True, eps=1.0e-5,
-        raise_on_increase=True, verbose=0):
+        X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
+        n_atoms=10, n_times_atom=60, lbda_strategy='ratio', lbda=0.1,
+        u_init_type='ica', prox_u='l1-positive-simplex', max_iter=100,
+        get_obj=0, get_time=0, random_seed=None, early_stopping=True,
+        eps=1.0e-5, raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
 
     Parameters
@@ -180,6 +183,8 @@ def learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    u_init_type : str, (default='ica'), strategy to init u, possible value are
+        ['gaussian_noise', 'ica', 'patch']
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
@@ -231,6 +236,10 @@ def learn_u_z_v_multi(
     n_voxels, n_times = X.shape
     n_times_valid = n_times - n_times_atom + 1
 
+    if n_times_valid < 2 * n_times_atom - 1:
+        raise ValueError("'n_times_atom' is too hight w.r.t the duration of "
+                         "the acquisition, please reduce it.")
+
     # split atlas
     rois_idx, _, n_hrf_rois = split_atlas(hrf_rois)
 
@@ -238,13 +247,13 @@ def learn_u_z_v_multi(
 
     # v initialization
     if hrf_model == '3_basis_hrf':
-        h = spm_hrf_3_basis(t_r, n_times_atom)
+        h = hrf_3_basis(t_r, n_times_atom)
         a_hat = np.c_[[np.array([1.0, 0.0, 0.0]) for _ in range(n_hrf_rois)]]
         v_hat = np.c_[[a_.dot(h) for a_ in a_hat]]
         constants['h'] = h
 
     elif hrf_model == '2_basis_hrf':
-        h = spm_hrf_2_basis(t_r, n_times_atom)
+        h = hrf_2_basis(t_r, n_times_atom)
         a_hat = np.c_[[np.array([1.0, 0.0]) for _ in range(n_hrf_rois)]]
         v_hat = np.c_[[a_.dot(h) for a_ in a_hat]]
         constants['h'] = h
@@ -252,7 +261,7 @@ def learn_u_z_v_multi(
     elif hrf_model == 'scaled_hrf':
         delta = 1.0
         a_hat = delta * np.ones(n_hrf_rois)
-        v_ = spm_scaled_hrf(delta=delta, t_r=t_r, n_times_atom=n_times_atom)
+        v_ = scaled_hrf(delta=delta, t_r=t_r, n_times_atom=n_times_atom)
         v_hat = np.c_[[v_ for a_ in a_hat]]
         constants['t_r'] = t_r
         constants['n_times_atom'] = n_times_atom
@@ -268,9 +277,36 @@ def learn_u_z_v_multi(
     for m in range(n_hrf_rois):
         H_hat[m, :, :] = make_toeplitz(v_hat[m], n_times_valid=n_times_valid)
 
-    # u, z initialization
+    # z initialization
     z_hat = np.zeros((n_atoms, n_times_valid))
-    u_hat = rng.randn(n_atoms, n_voxels)
+
+    # u initialization
+    if u_init_type == 'gaussian_noise':
+        u_hat = rng.randn(n_atoms, n_voxels)
+        for k in range(n_atoms):
+            u_hat[k, :] = _prox_l1_simplex(u_hat[k, :], eta=10.0)
+
+    elif u_init_type == 'ica':
+        ica = FastICA(n_components=n_atoms, algorithm='deflation', max_iter=50)
+        ica.fit(X.T)
+        u_hat = np.copy(ica.components_)
+        del ica  # heavy object
+        gc.collect()
+        for k in range(n_atoms):
+            u_hat[k, :] = _prox_l1_simplex(u_hat[k, :], eta=10.0)
+
+    elif u_init_type == 'patch':
+        u_hat = np.empty((n_atoms, n_voxels))
+        for k in range(n_atoms):
+            idx_start = rng.randint(0, n_times - n_times_atom)
+            idx_stop = idx_start + n_times_atom
+            u_k_init = X[:, idx_start:idx_stop].dot(v_hat[0, :])
+            u_hat[k, :] = _prox_l1_simplex(u_k_init, eta=10.0)
+
+    else:
+        raise ValueError("u_init_type should be in ['gaussian_noise', "
+                         "'gaussian_noise', 'patch'],"
+                         " got {}".format(u_init_type))
 
     if (raise_on_increase or early_stopping) and not get_obj:
         raise ValueError("raise_on_increase or early_stopping can only be set"
@@ -302,7 +338,7 @@ def learn_u_z_v_multi(
         ltime = [0.0]
 
     # main loop
-    with threadpool_limits(limits=1, user_api='blas'):
+    with threadpool_limits(limits=1):
 
         for ii in range(max_iter):
 
@@ -444,12 +480,12 @@ def learn_u_z_v_multi(
 
 
 def multi_runs_learn_u_z_v_multi(
-        X, t_r, hrf_rois, hrf_model='3_basis_hrf',
-        deactivate_v_learning=False, n_atoms=10, n_times_atom=30,
-        lbda_strategy='ratio', lbda=0.1, prox_u='l2-positive-ball',
-        max_iter=100, get_obj=False, get_time=False, random_seed=None,
-        early_stopping=True, eps=1.0e-5, raise_on_increase=True, n_jobs=1,
-        nb_fit_try=1, verbose=0):
+        X, t_r, hrf_rois, hrf_model='scaled_hrf',
+        deactivate_v_learning=False, n_atoms=10, n_times_atom=60,
+        lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
+        prox_u='l1-positive-simplex', max_iter=100, get_obj=False,
+        get_time=False, random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
     `learn_u_z_v_multi`.
 
@@ -475,6 +511,8 @@ def multi_runs_learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    u_init_type : str, (default='ica'), strategy to init u, possible value are
+        ['gaussian_noise', 'ica', 'patch']
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
@@ -526,7 +564,8 @@ def multi_runs_learn_u_z_v_multi(
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
                   deactivate_v_learning=deactivate_v_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
-                  lbda_strategy=lbda_strategy, lbda=lbda, prox_u=prox_u,
+                  lbda_strategy=lbda_strategy, lbda=lbda,
+                  u_init_type=u_init_type, prox_u=prox_u,
                   max_iter=max_iter, get_obj=get_obj, get_time=get_time,
                   random_seed=random_seed, early_stopping=early_stopping,
                   eps=eps, raise_on_increase=raise_on_increase,

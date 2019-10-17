@@ -9,6 +9,37 @@ import numba
 from .atlas import get_indices_from_roi
 
 
+def _precompute_sum_ztz_sum_ztz_y(uz_roi, X_roi, n_times_atom, factor):
+    """ Precompute usefull constants for _grad_v_scaled_hrf
+
+    Parameters
+    ----------
+    X_roi : array, shape (n_voxels_roi, n_times), fMRI data
+    uz_roi : array, shape (n_voxels_roi, n_times_valid), neural activty signals
+
+    Return
+    ------
+    sum_ztz : array, shape (2 * n_times_valid - 1,), sum of auto-convolution
+        for each temporal activation (for each voxels)
+    sum_ztz_y : array or None, shape (n_times_atom,), sum of auto-convolution
+        for each temporal activation convolved with x_j (for each voxels)
+    """
+    n_voxels_roi, n_times_valid = uz_roi.shape
+    sum_ztz = np.zeros((2 * n_times_atom - 1,))
+    sum_ztz_y = np.zeros((n_times_atom,))
+    uz_roi_padded = np.zeros(2 * (n_times_atom - 1) + n_times_valid)
+    for j in range(n_voxels_roi):
+        _indices = slice(n_times_atom - 1, n_times_atom - 1 + n_times_valid)
+        uz_roi_padded[_indices] = uz_roi[j, :]
+        sum_ztz += np.convolve(uz_roi[j, :][::-1], uz_roi_padded, 'valid')
+        # In case we try to recover the cost-function from the gradient,
+        # the formula needs a '2 *' before 'the X_roi[j, :]', thus the factor
+        # option (equal to 1.0 in case of gradient compuation)
+        sum_ztz_y += np.convolve(uz_roi[j, :][::-1], factor * X_roi[j, :],
+                                 'valid')
+    return sum_ztz, sum_ztz_y
+
+
 @numba.jit((numba.float64[:, :], numba.float64[:, :], numba.int64[:, :]),
            nopython=True, cache=True, fastmath=True)
 def _precompute_uvtuv(u, v, rois_idx):  # pragma: no cover

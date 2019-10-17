@@ -5,7 +5,7 @@
 import numpy as np
 
 from .checks import check_random_state
-from .hrf_model import spm_hrf
+from .hrf_model import double_gamma_hrf
 from .loss_grad import construct_X_hat_from_v
 from .utils import add_gaussian_noise
 from .atlas import split_atlas
@@ -63,7 +63,7 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
     u = np.c_[u_0, u_1].T
     n_voxels = u_0.size
 
-    v = spm_hrf(t_r=t_r, n_times_atom=n_times_atom)[None, :]
+    v = double_gamma_hrf(t_r=t_r, n_times_atom=n_times_atom)[None, :]
 
     X = construct_X_hat_from_v(v, z, u, rois_idx)
     noisy_X, _ = add_gaussian_noise(X, snr=snr, random_state=rng)
