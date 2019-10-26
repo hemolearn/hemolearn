@@ -24,7 +24,7 @@ from distutils.version import LooseVersion
 __version__ = '0.0.0'
 
 _HEMOLEARN_INSTALL_MSG = "See {0} for installation information.".format(
-                    'https://github.com/CherkaouiHamza/hemolearn')
+                    'https://github.com/hcherkaoui/hemolearn')
 
 # This is a tuple to preserve order, so that dependencies are checked
 #   in some meaningful order (more => less 'core').

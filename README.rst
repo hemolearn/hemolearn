@@ -6,12 +6,12 @@
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35: https://badge.fury.io/py/scikit-learn
 
-.. |Travis| image:: https://travis-ci.com/CherkaouiHamza/hemolearn.svg?branch=master
-.. _Travis: https://travis-ci.com/CherkaouiHamza/hemolearn
+.. |Travis| image:: https://travis-ci.com/hcherkaoui/hemolearn.svg?branch=master
+.. _Travis: https://travis-ci.com/hcherkaoui/hemolearn
 
 
-.. |Codecov| image:: https://codecov.io/gh/CherkaouiHamza/hemolearn/branch/master/graph/badge.svg
-.. _Codecov: https://codecov.io/gh/CherkaouiHamza/hemolearn
+.. |Codecov| image:: https://codecov.io/gh/hcherkaoui/hemolearn/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/hcherkaoui/hemolearn
 
 
 HemoLearn
@@ -26,7 +26,7 @@ neurovascular coupling from the the neural activity.
 Important links
 ===============
 
-- Official source code repo: https://github.com/CherkaouiHamza/hemolearn
+- Official source code repo: https://github.com/hcherkaoui/hemolearn
 
 Dependencies
 ============
@@ -71,8 +71,8 @@ GIT
 
 You can check the latest sources with the command::
 
-    git clone git://github.com/CherkaouiHamza/hemolearn
+    git clone git://github.com/hcherkaoui/hemolearn
 
 or if you have write privileges::
 
-    git clone git@github.com:CherkaouiHamza/hemolearn
+    git clone git@github.com:hcherkaoui/hemolearn

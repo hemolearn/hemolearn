@@ -37,7 +37,7 @@ DESCRIPTION = __doc__
 LONG_DESCRIPTION = open('README.rst').read()
 MAINTAINER = 'Hamza Cherkaoui'
 MAINTAINER_EMAIL = 'hamza.cherkaoui@inria.fr'
-URL = 'https://github.com/CherkaouiHamza/hemolearn'
+URL = 'https://github.com/hcherkaoui/hemolearn'
 LICENSE = 'new BSD'
 VERSION = _VERSION_GLOBALS['__version__']
 

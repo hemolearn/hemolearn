@@ -112,6 +112,7 @@ def get_nifti_ext(func_fname):
 
     Return
     ------
+    fname : str, the basename of the fMRI data
     ext : str, the extension of the fMRI data
     """
     err_msg = "Filename extension not understood, {extension}"
