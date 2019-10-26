@@ -31,6 +31,7 @@ from .atlas import fetch_atlas_basc_2015, split_atlas
 from .build_numba import build_numba_functions_of_hemolearn
 
 
+# call each functions defined with Numba to build the functions
 build_numba_functions_of_hemolearn()
 
 
@@ -167,7 +168,8 @@ class SLRDA(TransformerMixin):
             raise ValueError("fMRI data should passed as a "
                              "filename (string), got {}".format(type(X)))
 
-        # load the fMRI data into a matrix
+        # load the fMRI data into a matrix, given-X being a filename,
+        # produced-X being a 2d-array (n_voxels, n_time)
         X = self.masker_.fit_transform(X).T
 
         # transformation of the atlas format
