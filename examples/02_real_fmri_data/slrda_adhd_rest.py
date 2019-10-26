@@ -36,7 +36,7 @@ seed = None
 n_atoms = 10
 hrf_atlas = 'scale122'
 slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=20,
-              hrf_model='scaled_hrf', lbda=0.6, max_iter=100, eps=1.0e-3,
+              hrf_model='scaled_hrf', lbda=0.8, max_iter=100, eps=1.0e-3,
               deactivate_v_learning=False, prox_u='l1-positive-simplex',
               raise_on_increase=False, random_state=seed, n_jobs=1,
               nb_fit_try=1, verbose=2)

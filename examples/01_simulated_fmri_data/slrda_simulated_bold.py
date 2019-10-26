@@ -37,7 +37,7 @@ results = multi_runs_learn_u_z_v_multi(
                     noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                     deactivate_v_learning=True, prox_u='l1-positive-simplex',
                     n_times_atom=n_times_atom, hrf_model='scaled_hrf',
-                    lbda_strategy='ratio', lbda=0.4,
+                    lbda_strategy='ratio', lbda=0.5,
                     u_init_type='gaussian_noise', max_iter=30, get_obj=True,
                     get_time=True, raise_on_increase=False, random_seed=None,
                     n_jobs=4, nb_fit_try=4, verbose=1)
