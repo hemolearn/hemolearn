@@ -9,7 +9,8 @@ from hemolearn.checks import check_random_state
 from hemolearn.constants import _precompute_uvtuv
 from hemolearn.atlas import get_indices_from_roi
 from hemolearn.utils import (get_nifti_ext, lipschitz_est, tp, fwhm,
-                             _compute_uvtuv_z, get_unique_dirname)
+                             _compute_uvtuv_z, get_unique_dirname,
+                             add_gaussian_noise)
 from hemolearn.utils import _set_up_test
 
 
@@ -19,6 +20,20 @@ def test_get_unique_dirname():
     time.sleep(1)
     dirname2 = get_unique_dirname('')
     assert dirname1 != dirname2
+
+
+@pytest.mark.repeat(3)
+@pytest.mark.parametrize('seed', [None])
+@pytest.mark.parametrize('snr', [0.1, 1.0, 10.0])
+def test_add_gaussian_noise(seed, snr):
+    """ Check the production of a synthtique noisy signa at a given SNR. """
+    rng = check_random_state(seed)
+    signal = rng.randn(500)
+    noisy_signal, noise = add_gaussian_noise(signal, snr, random_state=rng)
+    l2_signal = np.sum(np.square(signal))
+    l2_noise = np.sum(np.square(noise))
+    true_snr = 10.0 * np.log10((l2_signal / l2_noise))
+    assert np.abs(snr - true_snr) < 1.0e-5
 
 
 @pytest.mark.repeat(3)

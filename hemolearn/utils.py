@@ -222,7 +222,7 @@ def fmri_preprocess(  # pragma: no cover
     return preproc_fname
 
 
-def add_gaussian_noise(signal, snr, random_state=None, verbose=True):
+def add_gaussian_noise(signal, snr, random_state=None):
     """ Add a Gaussian noise to inout signal to output a noisy signal with the
     targeted SNR.
 
@@ -250,11 +250,6 @@ def add_gaussian_noise(signal, snr, random_state=None, verbose=True):
     std_dev = (1.0 / np.sqrt(10**(snr/10.0))) * true_snr
     noise = std_dev * noise
     noisy_signal = signal + noise
-    # check the resulting SNR
-    l2_signal = np.sum(np.square(signal))
-    l2_noise = np.sum(np.square(noise))
-    true_snr = 10.0 * np.log10((l2_signal / l2_noise))
-    assert np.abs(snr - true_snr) < 1.0e-5
 
     return noisy_signal, noise
 
@@ -353,7 +348,7 @@ def _set_up_test(seed):
     return kwargs
 
 
-def profile_me(func):
+def profile_me(func):  # pragma: no cover
     """ Profiling decorator, produce a report <func-name>.profile to be open as
     `python -m snakeviz  <func-name>.profile`
 

@@ -9,7 +9,7 @@
 *.profile
 
 # coverage
-.coverage
+.coverage*
 
 # ignore specific usual dir
 dist/
