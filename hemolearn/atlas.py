@@ -43,6 +43,7 @@ def split_atlas(hrf_rois):
     rois_label : int array, shape (n_hrf_rois,) label for each ROI
     n_hrf_rois : int, number of ROIs in the HRF atlas
     """
+    # main use of the function is to be passed to Numba (C-object compliant)
     n_hrf_rois = len(hrf_rois)
     len_indices = [len(indices) for indices in hrf_rois.values()]
     max_voxels_in_rois = np.max(len_indices)
@@ -85,6 +86,7 @@ def fetch_atlas_basc_2015(n_scales='scale007'):
                          "'scale036', 'scale064', 'scale122'], "
                          "got '{}'".format(n_scales))
     roi_atlas = image.load_img(atlas_rois_fname)
+    # compute the full brain mask (0/1 Nifti object)
     raw_data = np.ones_like(roi_atlas.get_data())
     raw_data[roi_atlas.get_data() == 0] = 0
     mask_full_brain = nib.Nifti1Image(raw_data,

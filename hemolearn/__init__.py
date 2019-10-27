@@ -172,12 +172,18 @@ class SLRDA(TransformerMixin):
         # produced-X being a 2d-array (n_voxels, n_time)
         X = self.masker_.fit_transform(X).T
 
-        # transformation of the atlas format
+        # transformation of the atlas format:
+        # flattent the HRF ROIs
         rois = self.masker_.transform(self.atlas_rois).astype(int).ravel()
+        # list the indices for each ROIs (already sorted)
         index = np.arange(rois.shape[-1])
+        # gather for each ROIs (defined by its index) the concerned voxels idx
         for roi_label in np.unique(rois):
             self.hrf_rois[roi_label] = index[roi_label == rois]
         _, rois_label, _ = split_atlas(self.hrf_rois)
+        # roi_label_from_hrf_idx: split the HRF atlas into a table of indices
+        # for each ROIs, a vector of labels for each ROIs and the number of
+        # ROIs from a dict atlas
         self.roi_label_from_hrf_idx = rois_label
 
         if self.verbose > 0:
@@ -202,6 +208,7 @@ class SLRDA(TransformerMixin):
                       verbose=self.verbose, n_jobs=self.n_jobs,
                       nb_fit_try=self.nb_fit_try)
 
+        # handle the caching option of the decomposition
         if isinstance(self.cache_dir, str):
             decompose = Memory(self.cache_dir).cache(
                                         multi_runs_learn_u_z_v_multi)

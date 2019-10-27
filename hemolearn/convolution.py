@@ -26,9 +26,11 @@ def adjconv_uv(residual_i, u, v, rois_idx):  # pragma: no cover
     ------
     uvtX : array, shape (n_atoms, n_times_valid) computed operator image
     """
+    # use to compute uvtX for grad_z function
     _, n_times_atom = v.shape
     n_voxels, n_time = residual_i.shape
     vtX = np.empty((n_voxels, n_time - n_times_atom + 1))
+    # double for-loop that cycle on all the voxels
     for m in range(rois_idx.shape[0]):
         for j in get_indices_from_roi(m, rois_idx):
             vtX[j, :] = np.correlate(residual_i[j, :], v[m, :])
@@ -50,6 +52,10 @@ def adjconv_uH(residual, u, H, rois_idx):
     ------
     uvtX : array, shape (n_atoms, n_times_valid) computed operator image
     """
+    # use to compute uvtX for grad_z function
+    # no need to Numba this function the dot product is already on C. This
+    # function is not faster than adjconv_uv since residual[indices, :] is not
+    # adjacent is the memory
     n_hrf_rois, _, n_times_valid = H.shape
     n_voxels, n_time = residual.shape
     vtX = np.empty((n_voxels, n_times_valid))

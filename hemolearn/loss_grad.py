@@ -30,12 +30,13 @@ def _loss_v(a, u, z, X, t_r, n_times_atom, sum_ztz=None, sum_ztz_y=None):
     ------
     loss : float, the cost-function evaluated on a
     """
+    # sufficent statistic case
     if (sum_ztz is not None) and (sum_ztz_y is not None):
         X_ravel = X.ravel()
         v = scaled_hrf(a, t_r, n_times_atom)
         _grad = np.convolve(v, sum_ztz, 'valid') - sum_ztz_y
         cost = 0.5 * v.dot(_grad) + 0.5 * X_ravel.dot(X_ravel)
-    else:
+    else:  # full computation case (iteration on n_atoms)
         n_atoms, _ = z.shape
         v = scaled_hrf(a, t_r, n_times_atom)
         X_hat = np.zeros_like(X)
@@ -149,6 +150,7 @@ def construct_X_hat_from_v(v, z, u, rois_idx):  # pragma: no cover
     ------
     X_hat : array, shape (n_voxels, n_times), estimated fMRI data
     """
+    # np.convolve construct_X_hat case
     n_voxels, n_times = u.shape[1], z.shape[1] + v.shape[1] - 1
     uz = z.T.dot(u).T
     X_hat = np.empty((n_voxels, n_times))
@@ -175,6 +177,7 @@ def construct_X_hat_from_H(H, z, u, rois_idx):  # pragma: no cover
     ------
     X_hat : array, shape (n_voxels, n_times), estimated fMRI data
     """
+    # Toeplitz matrix construct_X_hat case
     n_voxels, n_times = u.shape[1], H.shape[1]
     zu = z.T.dot(u)
     X_hat = np.empty((n_voxels, n_times))

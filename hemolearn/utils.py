@@ -278,6 +278,7 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     n_hrf_rois, n_times_atom = v.shape
     n_times = n_times_valid + n_times_atom - 1
     variances = np.empty(n_atoms)
+    # recompose each X_hat_k (components) to compute its variance
     for k in range(n_atoms):
         X_hat = np.empty((n_voxels, n_times))
         for m in range(n_hrf_rois):
@@ -341,6 +342,7 @@ def _set_up_test(seed):
     for m in range(n_hrf_rois):
         H[m, ...] = make_toeplitz(v[m], n_times_valid)
     B, C = _precompute_B_C(X, z, H, rois_idx)
+    # gather the various parameters in a big dictionary for unit-tests
     kwargs = dict(t_r=t_r, n_hrf_rois=n_hrf_rois, n_atoms=n_atoms,
                   n_voxels=n_voxels, n_times=n_times,
                   n_times_atom=n_times_atom, n_times_valid=n_times_valid,
