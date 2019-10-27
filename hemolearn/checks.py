@@ -81,7 +81,7 @@ def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
     eps_ = (lobj[-2] - lobj[-1]) / lobj[-2]
 
     # check increasing cost-function
-    if raise_on_increase and eps_ < eps:
+    if raise_on_increase and eps_ < 0.0:
         raise CostFunctionIncreased(
                            "[{}/{}] Iteration relatively increase "
                            "global cost-function of "
@@ -124,17 +124,17 @@ def _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
     eps_v = (lobj[-2] - lobj[-1]) / lobj[-2]
 
     # check increasing cost-function
-    if raise_on_increase and eps_z < eps:
+    if raise_on_increase and eps_z < 0.0:
         raise CostFunctionIncreased(
                            "[{}/{}] Updating z relatively increase "
                            "global cost-function of "
                            "{:.3e}".format(ii + 1, max_iter, -eps_z))
-    if raise_on_increase and eps_u < eps:
+    if raise_on_increase and eps_u < 0.0:
         raise CostFunctionIncreased(
                            "[{}/{}] Updating u relatively increase "
                            "global cost-function of "
                            "{:.3e}".format(ii + 1, max_iter, -eps_u))
-    if raise_on_increase and eps_v < eps:
+    if raise_on_increase and eps_v < 0.0:
         raise CostFunctionIncreased(
                            "[{}/{}] Updating v relatively increase "
                            "global cost-function of "
