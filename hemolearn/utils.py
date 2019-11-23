@@ -199,6 +199,9 @@ def fmri_preprocess(  # pragma: no cover
     Return
     ------
     nfname : str, the filename of the preprocessed fMRI data
+    nfname : array, the array of the preprocessed fMRI data
+    nfname : nifti data, the nifti data of the preprocessed fMRI data
+
     """
     if not isinstance(func_fname, str):
         raise ValueError("func_fname should be the filename of "
@@ -219,7 +222,7 @@ def fmri_preprocess(  # pragma: no cover
         preproc_fname = fname + '_preproc' + ext
     preproc_X_img.to_filename(preproc_fname)
 
-    return preproc_fname
+    return preproc_fname, preproc_X_img, preproc_X
 
 
 def add_gaussian_noise(signal, snr, random_state=None):
