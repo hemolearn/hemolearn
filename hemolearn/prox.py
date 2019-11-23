@@ -36,6 +36,27 @@ def _prox_l1_simplex(u_i, eta):  # pragma: no cover
 
 @numba.jit((numba.float64[:], numba.float64,), nopython=True, cache=True,
            fastmath=True)
+def _prox_positive(u_k, step_size):  # pragma: no cover
+    """_prox_positive,
+    Full computation of prox-op for: I{ u_kj > 0 }.
+
+    Parameters
+    ----------
+    u_k : array, shape (n_voxels, ), one spatial map
+
+    Return
+    ------
+    prox_u_k : array, shape (n_voxels, ), one valid spatial map
+    """
+    p = u_k.shape[0]
+    for j in range(p):
+        if u_k[j] < 0.0:
+            u_k[j] = 0.0
+    return u_k
+
+
+@numba.jit((numba.float64[:], numba.float64,), nopython=True, cache=True,
+           fastmath=True)
 def _prox_positive_l2_ball(u_k, step_size):  # pragma: no cover
     """_prox_positive_L2_ball,
     Full computation of prox-op for: I{ u_kj > 0 and ||u_k||_2^2 =< 1.0}.

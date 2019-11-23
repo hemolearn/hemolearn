@@ -53,7 +53,9 @@ class SLRDA(TransformerMixin):
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
     deactivate_v_learning : bool, (default=False), option to force the
-        estimated HRF to to the initial value.
+        estimated HRF to its initial value.
+    deactivate_z_learning : bool, (default=False), option to force the
+        estimated z to its initial value.
     lbda_strategy str, (default='ratio'), strategy to fix the temporal
         regularization parameter, possible choice are ['ratio', 'fixed']
     lbda : float, (default=0.1), whether the temporal regularization parameter
@@ -61,6 +63,8 @@ class SLRDA(TransformerMixin):
         lbda_strategy == 'ratio'
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
+    z_init : None or array, (default=None), initialization of z, if None, z is
+        initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
@@ -96,19 +100,22 @@ class SLRDA(TransformerMixin):
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
                  lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
-                 prox_u='l1-positive-simplex', hrf_atlas='scale122',
-                 deactivate_v_learning=False, max_iter=100, random_state=None,
+                 z_init=None, prox_u='l1-positive-simplex',
+                 hrf_atlas='scale122', deactivate_v_learning=False,
+                 deactivate_z_learning=False, max_iter=100, random_state=None,
                  early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-                 cache_dir='.cache', nb_fit_try=1, n_jobs=1, verbose=0):
+                 cache_dir='__cache__', nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
         self.hrf_model = hrf_model
         self.deactivate_v_learning = deactivate_v_learning
+        self.deactivate_z_learning = deactivate_z_learning
         self.n_times_atom = n_times_atom
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
         self.u_init_type = u_init_type
+        self.z_init = z_init
         self.prox_u = prox_u
 
         # convergence parameters
@@ -198,11 +205,12 @@ class SLRDA(TransformerMixin):
         params = dict(X=X, t_r=self.t_r, hrf_rois=self.hrf_rois,
                       hrf_model=self.hrf_model,
                       deactivate_v_learning=self.deactivate_v_learning,
+                      deactivate_z_learning=self.deactivate_z_learning,
                       n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
                       lbda_strategy=self.lbda_strategy, lbda=self.lbda,
-                      u_init_type=self.u_init_type, prox_u=self.prox_u,
-                      max_iter=self.max_iter, get_obj=1, get_time=1,
-                      random_seed=self.random_state,
+                      u_init_type=self.u_init_type, z_init=self.z_init,
+                      prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
+                      get_time=1, random_seed=self.random_state,
                       early_stopping=self.early_stopping, eps=self.eps,
                       raise_on_increase=self.raise_on_increase,
                       verbose=self.verbose, n_jobs=self.n_jobs,

@@ -16,12 +16,12 @@ from .utils import lipschitz_est
 from .constants import _precompute_uvtuv, _precompute_B_C
 from .optim import cdclinmodel, proximal_descent
 from .loss_grad import _grad_z, _obj
-from .prox import _prox_tv_multi
 from .hrf_model import scaled_hrf, hrf_3_basis, hrf_2_basis
 from .estim_v import _estim_v_d_basis, _estim_v_scaled_hrf
 from .atlas import split_atlas
 from .convolution import adjconv_uH, make_toeplitz
-from .prox import _prox_l1_simplex, _prox_positive_l2_ball
+from .prox import (_prox_l1_simplex, _prox_positive_l2_ball, _prox_positive,
+                   _prox_tv_multi)
 
 
 def _update_v(a0, constants):
@@ -155,10 +155,11 @@ def _update_z(z0, constants):
 
 def learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
-        n_atoms=10, n_times_atom=60, lbda_strategy='ratio', lbda=0.1,
-        u_init_type='ica', prox_u='l1-positive-simplex', max_iter=100,
-        get_obj=0, get_time=0, random_seed=None, early_stopping=True,
-        eps=1.0e-5, raise_on_increase=True, verbose=0):
+        deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
+        lbda_strategy='ratio', lbda=0.1, u_init_type='ica', z_init=None,
+        prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
+        random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
 
     Parameters
@@ -172,6 +173,8 @@ def learn_u_z_v_multi(
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
     deactivate_v_learning : bool, (default=False), option to force the
         estimated HRF to to the initial value.
+    deactivate_z_learning : bool, (default=False), option to force the
+        estimated z to its initial value.
     n_atoms : int, number of components on which to decompose the neural
         activity (number of temporal components and its associated spatial
         maps).
@@ -185,6 +188,8 @@ def learn_u_z_v_multi(
         lbda_strategy == 'ratio'
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
+    z_init : None or array, (default=None), initialization of z, if None, z is
+        initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
@@ -240,6 +245,15 @@ def learn_u_z_v_multi(
         raise ValueError("'n_times_atom' is too hight w.r.t the duration of "
                          "the acquisition, please reduce it.")
 
+    if deactivate_z_learning:
+        prox_u = 'positive'
+        print("'deactivate_z_learning' is enable: 'prox_u' is forced to "
+              "'positive'")
+
+    if deactivate_z_learning and (z_init is None):
+        raise ValueError("If 'deactivate_z_learning' is enable 'z_init' should"
+                         " be provided")
+
     # split atlas
     rois_idx, _, n_hrf_rois = split_atlas(hrf_rois)
 
@@ -278,7 +292,15 @@ def learn_u_z_v_multi(
         H_hat[m, :, :] = make_toeplitz(v_hat[m], n_times_valid=n_times_valid)
 
     # z initialization
-    z_hat = np.zeros((n_atoms, n_times_valid))
+    if z_init is None:
+        z_hat = np.zeros((n_atoms, n_times_valid))
+    else:
+        if (n_atoms, n_times_valid) != z_init.shape:
+            raise ValueError("'z_init' should have the shape (n_atoms, "
+                             "n_times_valid)={}, "
+                             "got {}".format((n_atoms, n_times_valid),
+                                             z_init.shape))
+        z_hat = np.copy(z_init)
 
     # u initialization
     if u_init_type == 'gaussian_noise':
@@ -304,7 +326,7 @@ def learn_u_z_v_multi(
             u_hat[k, :] = _prox_l1_simplex(u_k_init, eta=10.0)
 
     else:
-        raise ValueError("u_init_type should be in ['gaussian_noise', "
+        raise ValueError("u_init_type should be in ['ica', "
                          "'gaussian_noise', 'patch'],"
                          " got {}".format(u_init_type))
 
@@ -323,6 +345,10 @@ def learn_u_z_v_multi(
     elif prox_u == 'l1-positive-simplex':
         def _prox(u_k):
             return _prox_l1_simplex(u_k, eta=10.0)
+        prox_u_func = _prox
+    elif prox_u == 'positive':
+        def _prox(u_k):
+            return _prox_positive(u_k, step_size=1.0)
         prox_u_func = _prox
     else:
         raise ValueError("prox_u should be in ['l2-positive-ball', "
@@ -350,32 +376,34 @@ def learn_u_z_v_multi(
                 H_hat[m, ...] = make_toeplitz(v_hat[m],
                                               n_times_valid=n_times_valid)
 
-            # Update z
-            constants['a'] = a_hat
-            constants['v'] = v_hat
-            constants['H'] = H_hat
-            constants['u'] = u_hat
+            if not deactivate_z_learning:
 
-            if get_time == 2:
-                t0 = time.process_time()
-            z_hat = _update_z(z_hat, constants)  # update
-            if get_time == 2:
-                ltime.append(time.process_time() - t0)
+                # Update z
+                constants['a'] = a_hat
+                constants['v'] = v_hat
+                constants['H'] = H_hat
+                constants['u'] = u_hat
 
-            if get_obj == 2:
-                lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
-                                 z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                 valid=True))
-                if verbose > 1:
-                    if get_time:
-                        print("[{}/{}] Update z done in {:.1f} s : "
-                              "cost = {:.6f}".format(ii + 1, max_iter,
-                                                     ltime[-1],
-                                                     lobj[-1] / lobj[0]))
-                    else:
-                        print("[{}/{}] Update z done: "
-                              "cost = {:.6f}".format(ii + 1, max_iter,
-                                                     lobj[-1] / lobj[0]))
+                if get_time == 2:
+                    t0 = time.process_time()
+                z_hat = _update_z(z_hat, constants)  # update
+                if get_time == 2:
+                    ltime.append(time.process_time() - t0)
+
+                if get_obj == 2:
+                    lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
+                                     z=z_hat, H=H_hat, rois_idx=rois_idx,
+                                     valid=True))
+                    if verbose > 1:
+                        if get_time:
+                            print("[{}/{}] Update z done in {:.1f} s : "
+                                  "cost = {:.6f}".format(ii + 1, max_iter,
+                                                         ltime[-1],
+                                                         lobj[-1] / lobj[0]))
+                        else:
+                            print("[{}/{}] Update z done: "
+                                  "cost = {:.6f}".format(ii + 1, max_iter,
+                                                         lobj[-1] / lobj[0]))
 
             # check if some z_k vanished
             msg = ("Temporal component vanished, may be 'lbda' is too "
@@ -481,9 +509,9 @@ def learn_u_z_v_multi(
 
 def multi_runs_learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf',
-        deactivate_v_learning=False, n_atoms=10, n_times_atom=60,
-        lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
-        prox_u='l1-positive-simplex', max_iter=100, get_obj=False,
+        deactivate_v_learning=False, deactivate_z_learning=False, n_atoms=10,
+        n_times_atom=60, lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
+        z_init=None, prox_u='l1-positive-simplex', max_iter=100, get_obj=False,
         get_time=False, random_seed=None, early_stopping=True, eps=1.0e-5,
         raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
@@ -500,6 +528,8 @@ def multi_runs_learn_u_z_v_multi(
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
     deactivate_v_learning : bool, (default=False), option to force the
         estimated HRF to to the initial value.
+    deactivate_z_learning : bool, (default=False), option to force the
+        estimated z to its initial value.
     n_atoms : int, number of components on which to decompose the neural
         activity (number of temporal components and its associated spatial
         maps).
@@ -513,6 +543,8 @@ def multi_runs_learn_u_z_v_multi(
         lbda_strategy == 'ratio'
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
+    z_init : None or array, (default=None), initialization of z, if None, z is
+        initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
@@ -563,9 +595,10 @@ def multi_runs_learn_u_z_v_multi(
     """
     params = dict(X=X, t_r=t_r, hrf_rois=hrf_rois, hrf_model=hrf_model,
                   deactivate_v_learning=deactivate_v_learning,
+                  deactivate_z_learning=deactivate_z_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
                   lbda_strategy=lbda_strategy, lbda=lbda,
-                  u_init_type=u_init_type, prox_u=prox_u,
+                  u_init_type=u_init_type, z_init=z_init, prox_u=prox_u,
                   max_iter=max_iter, get_obj=get_obj, get_time=get_time,
                   random_seed=random_seed, early_stopping=early_stopping,
                   eps=eps, raise_on_increase=raise_on_increase,
