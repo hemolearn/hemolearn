@@ -29,17 +29,18 @@ TR = 2.0
 adhd_dataset = datasets.fetch_adhd(n_subjects=1)
 func_fname = adhd_dataset.func[0]
 confound_fname = adhd_dataset.confounds[0]
-X = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
-                    detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
-                    memory='.cache', verbose=0, confounds=confound_fname)
+X, _, _ = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
+                          detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
+                          memory='__cache__', verbose=0,
+                          confounds=confound_fname)
 seed = None
-n_atoms = 10
+n_atoms = 30
 hrf_atlas = 'scale122'
-slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=20,
-              hrf_model='scaled_hrf', lbda=0.8, max_iter=100, eps=1.0e-3,
+slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=50,
+              hrf_model='scaled_hrf', lbda=0.5, max_iter=100, eps=5.0e-3,
               deactivate_v_learning=False, prox_u='l1-positive-simplex',
-              raise_on_increase=False, random_state=seed, n_jobs=1,
-              nb_fit_try=1, verbose=2)
+              raise_on_increase=True, random_state=seed, n_jobs=1,
+              cache_dir='__cache__', nb_fit_try=1, verbose=2)
 
 t0 = time.time()
 slrda.fit(X)
