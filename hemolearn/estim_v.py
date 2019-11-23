@@ -94,7 +94,7 @@ def _estim_v_d_basis(a, X, h, z, u, rois_idx):
     n_atoms_hrf, n_times_atom = h.shape
     n_hrf_rois, _ = rois_idx.shape
     _, n_times = X.shape
-    _, n_times_valid = z.shape
+    n_atoms, n_times_valid = z.shape
     v = np.empty((n_hrf_rois, n_times_atom))
 
     H = np.empty((n_atoms_hrf, n_times, n_times_valid))
@@ -103,27 +103,31 @@ def _estim_v_d_basis(a, X, h, z, u, rois_idx):
 
     for m in range(n_hrf_rois):
         indices = get_indices_from_roi(m, rois_idx)
-        uz = u[:, indices].T.dot(z)
+        u_rois = u[:, indices].T
+        X_rois = X[indices, :]
+        uz = u_rois.dot(z)
         n_voxels_rois, _ = uz.shape
-        AtA, AtX = _precompute_d_basis_constant(X[indices, :], uz, H)
+        AtA, AtX = _precompute_d_basis_constant(X_rois, uz, H)
         a0 = a[m, :]
 
         def grad(a):
             return _grad_v_hrf_d_basis(a, AtA, AtX)
 
+        def obj(a):
+            v = a.dot(h)
+            v_z = np.empty((n_atoms, n_times_valid + n_times_atom - 1))
+            for k in range(z.shape[0]):
+                v_z[k, :] = np.convolve(v, z[k, :])
+            X_hat = u_rois.dot(v_z)
+            residual = (X_hat - X_rois).ravel()
+            return 0.5 * residual.dot(residual)
+
         n_atoms_hrf = len(a0)
         bounds = np.array(((1, 1), ) + ((0.0, 1.0), ) * (n_atoms_hrf - 1))
 
-        def prox(a, step_size):
-            return np.clip(a, bounds[:, 0], bounds[:, 1])
+        params = dict(func=obj, x0=a0, fprime=grad, bounds=bounds)
 
-        def AtA_(a):
-            return _grad_v_hrf_d_basis(a, AtA)
-        step_size = 0.9 / lipschitz_est(AtA_, a0.shape)
-
-        params = dict(x0=a0, grad=grad, prox=prox, step_size=step_size,
-                      momentum='fista', restarting=None, max_iter=500)
-        a_m_hat = proximal_descent(**params)
+        a_m_hat, _, _ = optimize.fmin_l_bfgs_b(**params)
 
         a[m, :] = a_m_hat
         v[m, :] = a_m_hat.dot(h)
