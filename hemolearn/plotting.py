@@ -14,7 +14,7 @@ from .atlas import fetch_atlas_basc_2015
 from .utils import tp, fwhm
 
 
-def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
+def plotting_obj_values(times, pobj, plot_dir='.', fname=None, min_obj=1.0-6,
                         figsize=(3, 3), verbose=False):
     """ Plot, and save as pdf, the objective function values.
 
@@ -25,6 +25,7 @@ def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
     pobj : array, shape (current_n_iter,) or(3 * current_n_iter,), the saved
         duration per steps
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    fname : str, (default='obj.pdf'), filename under which the pdf is saved
     min_obj : float, (default=1.0-6), tolerance for minimum of the
         cost-function
     figsize : tuple of int, (default=(3, 3)), size of the produced figure
@@ -38,14 +39,16 @@ def plotting_obj_values(times, pobj, plot_dir='.', min_obj=1.0-6,
     plt.xlabel('Time [s]')
     plt.ylabel('cost function [%]')
     plt.grid()
-    filename = os.path.join(plot_dir, "obj.pdf")
+    if fname is None:
+        fname = 'obj.pdf'
+    fname = os.path.join(plot_dir, fname)
     if verbose:
-        print("Saving plot under '{0}'".format(filename))
-    plt.savefig(filename, dpi=150)
+        print("Saving plot under '{0}'".format(fname))
+    plt.savefig(fname, dpi=150)
 
 
 def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
-                           aux_plots=None, aux_plots_kwargs=dict(),
+                           fname=None, aux_plots=None, aux_plots_kwargs=dict(),
                            verbose=False):
     """ Plot, and save as pdf, each temporal estimated component.
 
@@ -59,6 +62,7 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
     onset : bool, (default=False), whether or not to plot the first order
         derivative of z
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    fname : str, (default='z.pdf'), filename under which the pdf is saved
     aux_plots : func, to plot a additional features on the figure
     aux_plots_kwargs : dict, keywords arguments for the aux_plots func
     verbose : bool, (default=False), verbosity level
@@ -80,10 +84,12 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
         plt.subplot(n_atoms, 1, k)
         if onset:
             plt.stem(np.diff(z_k))
-            plot_title = "Dz.pdf"
+            if fname is None:
+                fname = "Dz.pdf"
         else:
             plt.plot(z_k, lw=2.0)
-            plot_title = "z.pdf"
+            if fname is None:
+                fname = "z.pdf"
         plt.axhline(0.0, color='black', lw=2.0)
         if aux_plots is not None:
             aux_plots(**aux_plots_kwargs)
@@ -95,13 +101,13 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
         plt.yticks([np.min(z_k), 0, np.max(z_k)], fontsize=20)
         plt.grid()
     plt.tight_layout()
-    filename = os.path.join(plot_dir, plot_title)
+    filename = os.path.join(plot_dir, fname)
     if verbose:
         print("Saving plot under '{0}'".format(filename))
     plt.savefig(filename, dpi=150)
 
 
-def plotting_spatial_comp(u, variances, masker, plot_dir='.',
+def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
                           display_mode='ortho', perc_voxels_to_retain=0.1,
                           bg_img=None, verbose=False):
     """ Plot, and save as pdf, each spatial estimated component.
@@ -114,6 +120,7 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
     masker : Nilearn-Masker like, masker class to perform the inverse Nifti
         transformation
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    fname : str, (default='u.pdf'), filename under which the pdf is saved
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
     perc_voxels_to_retain : float, (default=0.1), percentage of voxels to
@@ -157,7 +164,9 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
         img_u_k.to_filename(os.path.join(plot_dir, "u_{0:03d}.nii".format(k)))
         plt.savefig(os.path.join(plot_dir, "u_{0:03d}.pdf".format(k)), dpi=150)
     pdf_files = os.path.join(plot_dir, 'u_*.pdf')
-    pdf_file = os.path.join(plot_dir, 'u.pdf')
+    if fname is None:
+        fname = 'u.pdf'
+    pdf_file = os.path.join(plot_dir, fname)
     if compress_plot:
         cmd_cat = ("pdfjam --suffix nup --nup 8x5 --no-landscape {} "
                    "--outfile {}".format(pdf_files, pdf_file))
@@ -173,7 +182,7 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.',
 
 
 def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
-                 normalized=False, plot_dir='.', verbose=True):
+                 normalized=False, plot_dir='.', fname=None, verbose=True):
     """ Plot, and save as pdf, each HRF for each ROIs.
 
     Parameters
@@ -190,6 +199,7 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     normalized : bool, (default=False), whether or not to normalized by the
         l-inf norm each HRFs
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    fname : str, (default='v.pdf'), filename under which the pdf is saved
     verbose : bool, (default=False), verbosity level
     """
     if isinstance(hrf_rois, str):
@@ -232,7 +242,9 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     pdf_files = os.path.join(plot_dir, 'rois_.pdf')
     pdf_files += ' '
     pdf_files += os.path.join(plot_dir, 'hrf_.pdf')
-    pdf_file = os.path.join(plot_dir, 'v.pdf')
+    if fname is None:
+        fname = 'v.pdf'
+    pdf_file = os.path.join(plot_dir, fname)
     subprocess.call("pdftk {} cat output {}".format(pdf_files, pdf_file),
                     shell=True)
     subprocess.call("rm -f {}".format(pdf_files), shell=True)
@@ -242,7 +254,7 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
 
 def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
                        stat_type='tp', cut_coords=None, plot_dir='.',
-                       verbose=False):
+                       fname=None, verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -262,6 +274,8 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         l-inf norm each HRFs
     cut_coords : tuple or None, MNI coordinate to perform display
     plot_dir : str, (default='.'), directory under which the pdf is saved
+    fname : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
+        saved
     verbose : bool, (default=False), verbosity level
     """
     if stat_type not in ['tp', 'fwhm']:
@@ -294,7 +308,10 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
                                 atlas_rois.header)
     plotting.plot_stat_map(stats_map, title=title, colorbar=True,
                            cut_coords=cut_coords, symmetric_cbar=False)
-    fname = os.path.join(plot_dir, "v_{}.pdf".format(stat_type))
+    stats_map.to_filename(os.path.join(plot_dir, "v_{}.nii".format(stat_type)))
+    if fname is None:
+        fname = "v_{}.pdf".format(stat_type)
+    fname = os.path.join(plot_dir, fname)
     plt.savefig(fname, dpi=150)
     if verbose:
         print("Saving plot under '{0}'".format(fname))
