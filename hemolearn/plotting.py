@@ -253,8 +253,8 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
 
 
 def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
-                       stat_type='tp', cut_coords=None, plot_dir='.',
-                       fname=None, verbose=False):
+                       stat_type='tp', display_mode='ortho', cut_coords=None,
+                       plot_dir='.', fname=None, verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -272,6 +272,8 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         choice are ('tp', 'fwhm')
     normalized : bool, (default=False), whether or not to normalized by the
         l-inf norm each HRFs
+    display_mode : None or str, coords to cut the plotting, possible value are
+        None to have x, y, z or 'x', 'y', 'z' for a single cut
     cut_coords : tuple or None, MNI coordinate to perform display
     plot_dir : str, (default='.'), directory under which the pdf is saved
     fname : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
@@ -307,7 +309,8 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     stats_map = nib.Nifti1Image(raw_atlas_rois, atlas_rois.affine,
                                 atlas_rois.header)
     plotting.plot_stat_map(stats_map, title=title, colorbar=True,
-                           cut_coords=cut_coords, symmetric_cbar=False)
+                           display_mode=display_mode, cut_coords=cut_coords,
+                           symmetric_cbar=False)
     stats_map.to_filename(os.path.join(plot_dir, "v_{}.nii".format(stat_type)))
     if fname is None:
         fname = "v_{}.pdf".format(stat_type)
