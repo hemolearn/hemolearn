@@ -6,9 +6,7 @@ import numpy as np
 from scipy import optimize
 
 from .atlas import get_indices_from_roi
-from .utils import lipschitz_est
 from .loss_grad import _grad_v_hrf_d_basis, _grad_v_scaled_hrf, _loss_v
-from .optim import proximal_descent
 from .convolution import make_toeplitz
 from .constants import (_precompute_d_basis_constant,
                         _precompute_sum_ztz_sum_ztz_y)
