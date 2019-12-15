@@ -68,7 +68,8 @@ def test_get_lambda_max(seed):
     z, u, H, v = kwargs['z'], kwargs['u'], kwargs['H'], kwargs['v']
     rois_idx, X = kwargs['rois_idx'], kwargs['X']
     lbda_max = _get_lambda_max(X, u, H, rois_idx)
-    constants = dict(H=H, v=v, u=u, rois_idx=rois_idx, X=X, lbda=lbda_max)
+    constants = dict(H=H, v=v, u=u, rois_idx=rois_idx, X=X, lbda=lbda_max,
+                     prox_z='tv', delta=2.0)
     z_hat = _update_z(z, constants)
     assert np.linalg.norm(z_hat) / np.linalg.norm(z) < 0.05
 

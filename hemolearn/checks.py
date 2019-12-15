@@ -236,7 +236,7 @@ def _get_lambda_max(X, u, H, rois_idx):
     return np.max(np.abs(uvtX))
 
 
-def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx):
+def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx, prox_z='tv'):
     """ Return the temporal regularization parameter.
 
     Parameters
@@ -250,19 +250,29 @@ def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx):
     u : array, shape (n_atoms, n_voxels), spatial maps
     H : array, shape (n_hrf_rois, n_times_valid, n_times), Toeplitz matrices
     rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
+    prox_z : str, (default='tv'), temporal proximal operator should be in
+        ['tv', 'l1', 'l2', 'elastic-net']
 
     Return
     ------
     lbda : float, the value of the temporal regularization parameter
     """
+
     if lbda_strategy not in ['ratio', 'fixed']:
         raise ValueError("'lbda_strategy' should belong to "
                          "['ratio', 'fixed'], got '{}'".format(lbda_strategy))
+
+    if lbda_strategy == 'ratio' and prox_z in ['l2', 'elastic-net']:
+        raise ValueError("If 'prox_z' is ['l2', 'elastic-net'], "
+                         "'lbda_strategy' should be 'fixed', "
+                         "got {}".format(lbda_strategy))
+
     if lbda_strategy == 'ratio':
         lbda_max = _get_lambda_max(X, u=u, H=H, rois_idx=rois_idx)
         lbda = lbda * lbda_max
     else:
         if not isinstance(lbda, (int, float)):
             raise ValueError("If 'lbda_strategy' is 'fixed', 'lbda' should be "
-                             "numerical, got '{}'".format(lbda_strategy))
+                             "numerical, got '{}' with "
+                             "'{}'".format(lbda_strategy, lbda))
     return lbda

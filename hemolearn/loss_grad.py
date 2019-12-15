@@ -188,7 +188,7 @@ def construct_X_hat_from_H(H, z, u, rois_idx):  # pragma: no cover
 
 
 def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
-         lbda=None):
+         lbda=None, delta=2.0, prox_z='tv'):
     """ Main objective function.
 
     Parameters
@@ -206,6 +206,10 @@ def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
     return_reg : bool, (default=True), whether or not to include the temporal
         regularization penalty in the cost-function value
     lbda : float or None, (default=None), the temporal regularization parameter
+    delta : float, (default=2.0), the elastic-net temporal regularization
+        parameter
+    prox_z : str, (default='tv'), temporal proximal operator should be in
+        ['tv', 'l1', 'l2', 'elastic-net']
 
     Return
     ------
@@ -225,7 +229,16 @@ def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
 
     if return_reg:
         if lbda is not None:
-            regu = lbda * np.sum(np.abs(np.diff(z, axis=-1)))
+            if prox_z == 'tv':
+                regu = lbda * np.sum(np.abs(np.diff(z, axis=-1)))
+            if prox_z == 'l1':
+                regu = lbda * np.sum(np.abs(z))
+            if prox_z == 'l2':
+                regu = lbda * np.linalg.norm(z)
+            if prox_z == 'elastic-net':
+                l1 = np.sum(np.abs(z))
+                l2 = np.linalg.norm(z)
+                regu = lbda * (l1 + delta / 2.0 * l2)
             return cost + regu
         else:
             raise ValueError("obj must have lbda to return regularization "

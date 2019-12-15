@@ -107,7 +107,7 @@ def _update_z(z0, constants):
     ----------
     z0 : array, shape (n_atoms, n_voxels), initial temporal components
     constants : dict, gather the usefull constant for the estimation of the
-        temporal components, keys are (v, H, u, rois_idx, X, lbda)
+        temporal components, keys are (v, H, u, rois_idx, X, lbda, prox_z)
 
     Return
     ------
@@ -125,6 +125,10 @@ def _update_z(z0, constants):
     assert ('X' in constants), msg
     msg = "'lbda' is missing in 'constants' for '_update_z' step."
     assert ('lbda' in constants), msg
+    msg = "'delta' is missing in 'constants' for '_update_z' step."
+    assert ('delta' in constants), msg
+    msg = "'prox_z' is missing in 'constants' for '_update_z' step."
+    assert ('prox_z' in constants), msg
 
     u = constants['u']
     H = constants['H']
@@ -132,12 +136,35 @@ def _update_z(z0, constants):
     rois_idx = constants['rois_idx']
     X = constants['X']
     lbda = constants['lbda']
+    delta = constants['delta']
+    prox_z = constants['prox_z']
 
     uvtuv = _precompute_uvtuv(u=u, v=v, rois_idx=rois_idx)
     uvtX = adjconv_uH(X, u=u, H=H, rois_idx=rois_idx)
 
-    def prox(z, step_size):
-        return _prox_tv_multi(z, lbda, step_size)
+    if prox_z == 'tv':
+        def prox(z, step_size):
+            return _prox_tv_multi(z, lbda, step_size)
+
+    elif prox_z == 'l1':
+        def prox(z, step_size):
+            th = lbda * step_size
+            return np.sign(z) * np.clip(np.abs(z) - th, 0.0, None)
+
+    elif prox_z == 'l2':
+        def prox(z, step_size):
+            th = lbda * step_size
+            return np.clip(1 - th / np.linalg.norm(z), 0.0, None) * z
+
+    elif prox_z == 'elastic-net':
+        def prox(z, step_size):
+            th = lbda * step_size
+            prox_z = np.sign(z) * np.clip(np.abs(z) - th, 0.0, None)
+            return prox_z / (1.0 + th * delta)
+
+    else:
+        raise ValueError("'prox_z' should be in ['tv', 'l1', 'l2', "
+                         "'elastic-net'], got {}".format(prox_z))
 
     def grad(z):
         return _grad_z(z, uvtuv, uvtX)
@@ -156,10 +183,10 @@ def _update_z(z0, constants):
 def learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
         deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
-        lbda_strategy='ratio', lbda=0.1, u_init_type='ica', z_init=None,
-        prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
-        random_seed=None, early_stopping=True, eps=1.0e-5,
-        raise_on_increase=True, verbose=0):
+        prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
+        u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
+        max_iter=100, get_obj=0, get_time=0, random_seed=None,
+        early_stopping=True, eps=1.0e-5, raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
 
     Parameters
@@ -181,11 +208,15 @@ def learn_u_z_v_multi(
     n_times_atom : int, (default=30), number of points on which represent the
         Haemodynamic Response Function (HRF), this leads to the duration of the
         response function, duration = n_times_atom * t_r
+    prox_z : str, (default='tv'), temporal proximal operator should be in
+        ['tv', 'l1', 'l2', 'elastic-net']
     lbda_strategy str, (default='ratio'), strategy to fix the temporal
         regularization parameter, possible choice are ['ratio', 'fixed']
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    delta : float, (default=2.0), the elastic-net temporal regularization
+        parameter
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
     z_init : None or array, (default=None), initialization of z, if None, z is
@@ -335,7 +366,8 @@ def learn_u_z_v_multi(
                          " to True if get_obj is True")
 
     # temporal regularization parameter
-    lbda = check_lbda(lbda, lbda_strategy, X, u_hat, H_hat, rois_idx)
+    lbda = check_lbda(lbda, lbda_strategy, X, u_hat, H_hat, rois_idx,
+                      prox_z)
 
     # spatial regularization parameter
     if prox_u == 'l2-positive-ball':
@@ -354,12 +386,15 @@ def learn_u_z_v_multi(
         raise ValueError("prox_u should be in ['l2-positive-ball', "
                          "'l1-positive-simplex'], got {}".format(prox_u))
 
+    constants['prox_z'] = prox_z
     constants['lbda'] = lbda
+    constants['delta'] = delta
     constants['prox_u'] = prox_u_func
 
     if get_obj:
         lobj = [_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat, z=z_hat,
-                     H=H_hat, rois_idx=rois_idx, valid=True)]
+                     H=H_hat, rois_idx=rois_idx, valid=True, delta=delta,
+                     prox_z=prox_z)]
     if get_time:
         ltime = [0.0]
 
@@ -393,7 +428,7 @@ def learn_u_z_v_multi(
                 if get_obj == 2:
                     lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                      z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                     valid=True))
+                                     valid=True, delta=delta, prox_z=prox_z))
                     if verbose > 1:
                         if get_time:
                             print("[{}/{}] Update z done in {:.1f} s : "
@@ -424,7 +459,7 @@ def learn_u_z_v_multi(
             if get_obj == 2:
                 lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                  z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                 valid=True))
+                                 valid=True, delta=delta, prox_z=prox_z))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update u done in {:.1f} s : "
@@ -451,7 +486,7 @@ def learn_u_z_v_multi(
                 if get_obj == 2:
                     lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                      z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                     valid=True))
+                                     valid=True, delta=delta, prox_z=prox_z))
                     if verbose > 1:
                         if get_time:
                             print("[{}/{}] Update v done in {:.1f} s : "
@@ -469,7 +504,7 @@ def learn_u_z_v_multi(
             if get_obj == 1:
                 lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                  z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                 valid=True))
+                                 valid=True, delta=delta, prox_z=prox_z))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Iteration done in {:.1f} s : "
@@ -508,12 +543,13 @@ def learn_u_z_v_multi(
 
 
 def multi_runs_learn_u_z_v_multi(
-        X, t_r, hrf_rois, hrf_model='scaled_hrf',
-        deactivate_v_learning=False, deactivate_z_learning=False, n_atoms=10,
-        n_times_atom=60, lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
-        z_init=None, prox_u='l1-positive-simplex', max_iter=100, get_obj=False,
-        get_time=False, random_seed=None, early_stopping=True, eps=1.0e-5,
-        raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
+        X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
+        deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
+        prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
+        u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
+        max_iter=100, get_obj=0, get_time=0, random_seed=None,
+        early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+        n_jobs=1, nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
     `learn_u_z_v_multi`.
 
@@ -536,11 +572,15 @@ def multi_runs_learn_u_z_v_multi(
     n_times_atom : int, (default=30), number of points on which represent the
         Haemodynamic Response Function (HRF), this leads to the duration of the
         response function, duration = n_times_atom * t_r
+    prox_z : str, (default='tv'), temporal proximal operator should be in
+        ['tv', 'l1', 'l2', 'elastic-net']
     lbda_strategy str, (default='ratio'), strategy to fix the temporal
         regularization parameter, possible choice are ['ratio', 'fixed']
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    delta : float, (default=2.0), the elastic-net temporal regularization
+        parameter
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
     z_init : None or array, (default=None), initialization of z, if None, z is
@@ -597,12 +637,12 @@ def multi_runs_learn_u_z_v_multi(
                   deactivate_v_learning=deactivate_v_learning,
                   deactivate_z_learning=deactivate_z_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
-                  lbda_strategy=lbda_strategy, lbda=lbda,
-                  u_init_type=u_init_type, z_init=z_init, prox_u=prox_u,
-                  max_iter=max_iter, get_obj=get_obj, get_time=get_time,
-                  random_seed=random_seed, early_stopping=early_stopping,
-                  eps=eps, raise_on_increase=raise_on_increase,
-                  verbose=verbose)
+                  prox_z=prox_z, lbda_strategy=lbda_strategy, lbda=lbda,
+                  delta=delta, u_init_type=u_init_type, z_init=z_init,
+                  prox_u=prox_u, max_iter=max_iter, get_obj=get_obj,
+                  get_time=get_time, random_seed=random_seed,
+                  early_stopping=early_stopping, eps=eps,
+                  raise_on_increase=raise_on_increase, verbose=verbose)
 
     results = Parallel(n_jobs=n_jobs)(
                 delayed(learn_u_z_v_multi)(**params)

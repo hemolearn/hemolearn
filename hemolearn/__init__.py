@@ -56,11 +56,15 @@ class SLRDA(TransformerMixin):
         estimated HRF to its initial value.
     deactivate_z_learning : bool, (default=False), option to force the
         estimated z to its initial value.
+    prox_z : str, (default='tv'), temporal proximal operator should be in
+        ['tv', 'l1', 'l2', 'elastic-net']
     lbda_strategy str, (default='ratio'), strategy to fix the temporal
         regularization parameter, possible choice are ['ratio', 'fixed']
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
+    delta : float, (default=2.0), the elastic-net temporal regularization
+        parameter
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
     z_init : None or array, (default=None), initialization of z, if None, z is
@@ -99,8 +103,8 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
-                 lbda_strategy='ratio', lbda=0.1, u_init_type='ica',
-                 z_init=None, prox_u='l1-positive-simplex',
+                 prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
+                 u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
                  hrf_atlas='scale122', deactivate_v_learning=False,
                  deactivate_z_learning=False, max_iter=100, random_state=None,
                  early_stopping=True, eps=1.0e-5, raise_on_increase=True,
@@ -112,8 +116,10 @@ class SLRDA(TransformerMixin):
         self.deactivate_v_learning = deactivate_v_learning
         self.deactivate_z_learning = deactivate_z_learning
         self.n_times_atom = n_times_atom
+        self.prox_z = prox_z
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
+        self.delta = delta
         self.u_init_type = u_init_type
         self.z_init = z_init
         self.prox_u = prox_u
@@ -202,19 +208,21 @@ class SLRDA(TransformerMixin):
             else:
                 print("Running {} fits in series".format(self.nb_fit_try))
 
-        params = dict(X=X, t_r=self.t_r, hrf_rois=self.hrf_rois,
-                      hrf_model=self.hrf_model,
-                      deactivate_v_learning=self.deactivate_v_learning,
-                      deactivate_z_learning=self.deactivate_z_learning,
-                      n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
-                      lbda_strategy=self.lbda_strategy, lbda=self.lbda,
-                      u_init_type=self.u_init_type, z_init=self.z_init,
-                      prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
-                      get_time=1, random_seed=self.random_state,
-                      early_stopping=self.early_stopping, eps=self.eps,
-                      raise_on_increase=self.raise_on_increase,
-                      verbose=self.verbose, n_jobs=self.n_jobs,
-                      nb_fit_try=self.nb_fit_try)
+        params = dict(
+                X=X, t_r=self.t_r, hrf_rois=self.hrf_rois,
+                hrf_model=self.hrf_model,
+                deactivate_v_learning=self.deactivate_v_learning,
+                deactivate_z_learning=self.deactivate_z_learning,
+                n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
+                prox_z=self.prox_z, lbda_strategy=self.lbda_strategy,
+                lbda=self.lbda, delta=self.delta,
+                u_init_type=self.u_init_type, z_init=self.z_init,
+                prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
+                get_time=1, random_seed=self.random_state,
+                early_stopping=self.early_stopping, eps=self.eps,
+                raise_on_increase=self.raise_on_increase,
+                verbose=self.verbose, n_jobs=self.n_jobs,
+                nb_fit_try=self.nb_fit_try)
 
         # handle the caching option of the decomposition
         if isinstance(self.cache_dir, str):
