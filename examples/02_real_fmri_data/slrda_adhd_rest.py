@@ -35,12 +35,11 @@ X, _, _ = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
                           confounds=confound_fname)
 seed = None
 n_atoms = 30
-hrf_atlas = 'scale122'
-slrda = SLRDA(n_atoms=n_atoms, t_r=TR, hrf_atlas=hrf_atlas, n_times_atom=50,
-              hrf_model='scaled_hrf', lbda=0.5, max_iter=100, eps=5.0e-3,
-              deactivate_v_learning=False, prox_u='l1-positive-simplex',
-              raise_on_increase=True, random_state=seed, n_jobs=1,
-              cache_dir='__cache__', nb_fit_try=1, verbose=2)
+slrda = SLRDA(n_atoms=n_atoms, t_r=TR, n_times_atom=30, hrf_model='scaled_hrf',
+              lbda=0.9, max_iter=100, eps=1.0e-3, deactivate_v_learning=False,
+              prox_u='l1-positive-simplex', raise_on_increase=True,
+              random_state=seed, n_jobs=1, cache_dir='__cache__', nb_fit_try=1,
+              verbose=2)
 
 t0 = time.time()
 slrda.fit(X)
@@ -64,11 +63,9 @@ plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
                       perc_voxels_to_retain=0.1, verbose=True)
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname, verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
-plotting_hrf(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-             hrf_ref=hrf_ref, normalized=True, plot_dir=dirname, verbose=True)
-plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='tp', plot_dir=dirname,
-                   verbose=True)
-plotting_hrf_stats(v_hat, TR, hrf_atlas, roi_label_from_hrf_idx,
-                   hrf_ref=None, stat_type='fwhm', plot_dir=dirname,
-                   verbose=True)
+plotting_hrf(v_hat, TR, roi_label_from_hrf_idx, hrf_ref=hrf_ref,
+             normalized=True, plot_dir=dirname, verbose=True)
+plotting_hrf_stats(v_hat, TR, roi_label_from_hrf_idx, hrf_ref=None,
+                   stat_type='tp', plot_dir=dirname, verbose=True)
+plotting_hrf_stats(v_hat, TR, roi_label_from_hrf_idx, hrf_ref=None,
+                   stat_type='fwhm', plot_dir=dirname, verbose=True)

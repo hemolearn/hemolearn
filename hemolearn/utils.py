@@ -276,6 +276,7 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     variances : array, shape (n_atoms, ) the order variances for each
         components
     """
+    rois_idx, rois_label, n_hrf_rois = split_atlas(hrf_rois)
     n_atoms, n_voxels = u.shape
     _, n_times_valid = z.shape
     n_hrf_rois, n_times_atom = v.shape
@@ -284,8 +285,11 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     # recompose each X_hat_k (components) to compute its variance
     for k in range(n_atoms):
         X_hat = np.empty((n_voxels, n_times))
-        for m in range(n_hrf_rois):
-            for j in hrf_rois[m + 1]:
+        for m in range(n_hrf_rois):  # iteration on all HRF ROIs
+            # get voxels idx for this ROI
+            voxels_idx = rois_idx[m, 1:rois_idx[m, 0]]
+            # iterate on each voxels
+            for j in voxels_idx:
                 X_hat[j, :] = np.convolve(u[k, j] * v[m, :], z[k, :])
         variances[k] = np.var(X_hat)
     order = np.argsort(variances)[::-1]

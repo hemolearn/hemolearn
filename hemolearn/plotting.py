@@ -10,7 +10,7 @@ import numpy as np
 import nibabel as nib
 from nilearn import plotting
 
-from .atlas import fetch_atlas_basc_2015
+from .atlas import fetch_vascular_atlas
 from .utils import tp, fwhm
 
 
@@ -181,7 +181,7 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
         print("Saving plot under '{0}'".format(pdf_file))
 
 
-def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
+def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
                  normalized=False, plot_dir='.', fname=None, verbose=True):
     """ Plot, and save as pdf, each HRF for each ROIs.
 
@@ -190,8 +190,6 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
     t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
         resolution
-    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
-        atlas HRF
     roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
         corresponding to the index of the ROI
     hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
@@ -202,8 +200,7 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     fname : str, (default='v.pdf'), filename under which the pdf is saved
     verbose : bool, (default=False), verbosity level
     """
-    if isinstance(hrf_rois, str):
-        _, atlas_rois = fetch_atlas_basc_2015(hrf_rois)
+    _, atlas_rois = fetch_vascular_atlas()
     n_rois, n_times_atoms = v.shape
     n_cols = np.int(np.sqrt(n_rois))
     n_raws = n_rois // n_cols
@@ -252,7 +249,7 @@ def plotting_hrf(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
         print("Saving plot under '{0}'".format(pdf_file))
 
 
-def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
+def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
                        stat_type='tp', display_mode='ortho', cut_coords=None,
                        plot_dir='.', fname=None, verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
@@ -262,8 +259,6 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
     t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
         resolution
-    hrf_rois : dict (key: ROIs labels, value: indices of voxels of the ROI)
-        atlas HRF
     roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
         corresponding to the index of the ROI
     hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
@@ -283,7 +278,7 @@ def plotting_hrf_stats(v, t_r, hrf_rois, roi_label_from_hrf_idx, hrf_ref=None,
     if stat_type not in ['tp', 'fwhm']:
         raise ValueError("stat_type should be in ['tp', 'fwhm'], "
                          "got {}".format(stat_type))
-    _, atlas_rois = fetch_atlas_basc_2015(hrf_rois)
+    _, atlas_rois = fetch_vascular_atlas()
     raw_atlas_rois = atlas_rois.get_data()
     n_hrf_rois, n_times_atom = v.shape
     if hrf_ref is not None:

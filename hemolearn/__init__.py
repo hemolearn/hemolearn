@@ -27,7 +27,7 @@ from sklearn.exceptions import NotFittedError
 from nilearn import input_data
 
 from .learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
-from .atlas import fetch_atlas_basc_2015, split_atlas
+from .atlas import fetch_vascular_atlas, split_atlas
 from .build_numba import build_numba_functions_of_hemolearn
 
 
@@ -72,9 +72,6 @@ class SLRDA(TransformerMixin):
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex']
-    hrf_atlas : str, (default='basc122'), HRF atlas to use to define the HRF
-        ROIs, possible choice are ['scale007', 'scale012', 'scale036',
-        'scale064', 'scale122']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     random_state : None, int, random-instance, (default=None), random-instance
@@ -105,10 +102,10 @@ class SLRDA(TransformerMixin):
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
                  prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
                  u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
-                 hrf_atlas='scale122', deactivate_v_learning=False,
-                 deactivate_z_learning=False, max_iter=100, random_state=None,
-                 early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-                 cache_dir='__cache__', nb_fit_try=1, n_jobs=1, verbose=0):
+                 deactivate_v_learning=False, deactivate_z_learning=False,
+                 max_iter=100, random_state=None, early_stopping=True,
+                 eps=1.0e-5, raise_on_increase=True, cache_dir='__cache__',
+                 nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
@@ -138,8 +135,7 @@ class SLRDA(TransformerMixin):
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
-        basc_atlas = fetch_atlas_basc_2015(hrf_atlas)
-        self.mask_full_brain, self.atlas_rois = basc_atlas
+        self.mask_full_brain, self.atlas_rois = fetch_vascular_atlas()
         self.hrf_rois = dict()
 
         # fMRI masker
