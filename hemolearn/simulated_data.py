@@ -5,7 +5,7 @@
 import numpy as np
 
 from .checks import check_random_state
-from .hrf_model import double_gamma_hrf
+from .hrf_model import scaled_hrf
 from .loss_grad import construct_X_hat_from_v
 from .utils import add_gaussian_noise
 from .atlas import split_atlas
@@ -23,7 +23,7 @@ def _gen_single_case_checkerboard(len_square, n=5, random_seed=None):
     return u
 
 
-def _2_blocks_signal(n_times_valid=300, n=10, rng=np.random):
+def _2_blocks_task_signal(n_times_valid=300, n=10, rng=np.random):
     """ return a 1d signal of n blocks of length T
     """
     d = int(n_times_valid / n)
@@ -40,8 +40,29 @@ def _2_blocks_signal(n_times_valid=300, n=10, rng=np.random):
     return z_0, z_1
 
 
+def _2_blocks_rest_signal(n_times_valid=300, n=10, s=0.05, rng=np.random):
+    """ return a 1d signal of n blocks of length T
+    """
+    Dz_0 = np.zeros(n_times_valid)
+    Dz_1 = np.zeros(n_times_valid)
+    idx_dirac_Dz_0 = rng.randint(0, n_times_valid, int(n_times_valid * s))
+    ampl_dirac_Dz_0 = rng.randn(int(n_times_valid * s))
+    Dz_0[idx_dirac_Dz_0] = ampl_dirac_Dz_0
+    idx_dirac_Dz_1 = rng.randint(0, n_times_valid, int(n_times_valid * s))
+    ampl_dirac_Dz_1 = rng.randn(int(n_times_valid * s))
+    Dz_1[idx_dirac_Dz_1] = ampl_dirac_Dz_1
+    z_0 = np.cumsum(Dz_0)
+    z_1 = np.cumsum(Dz_1)
+    z_0 -= np.mean(z_0)
+    z_0 /= np.max(np.abs(z_0))
+    z_1 -= np.mean(z_0)
+    z_1 /= np.max(np.abs(z_1))
+    return z_0, z_1
+
+
 def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
-                   snr=1.0, eta=10.0, random_seed=None):
+                   snr=1.0, eta=10.0, delta=1.0, z_type='rest', s=0.05,
+                   random_seed=None):
     """ Generate simulated BOLD data with its temporal components z and the
     corresponding maps u.
     """
@@ -50,7 +71,15 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
     hrf_rois = {1: range(n_voxels)}
     rois_idx, _, _ = split_atlas(hrf_rois)
 
-    z_0, z_1 = _2_blocks_signal(n_times_valid=n_times_valid, rng=rng)
+    if z_type == 'rest':
+        z_0, z_1 = _2_blocks_rest_signal(n_times_valid=n_times_valid, s=s,
+                                         rng=rng)
+    elif z_type == 'task':
+        z_0, z_1 = _2_blocks_task_signal(n_times_valid=n_times_valid, s=s,
+                                         rng=rng)
+    else:
+        raise ValueError("z_type should belong to "
+                         "['rest', 'task'], got {}".format(z_type))
     z = np.vstack([z_0, z_1])
 
     len_square = int(np.sqrt(n_voxels))
@@ -63,7 +92,7 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
     u = np.c_[u_0, u_1].T
     n_voxels = u_0.size
 
-    v = double_gamma_hrf(t_r=t_r, n_times_atom=n_times_atom)[None, :]
+    v = scaled_hrf(delta=delta, t_r=t_r, n_times_atom=n_times_atom)[None, :]
 
     X = construct_X_hat_from_v(v, z, u, rois_idx)
     noisy_X, _ = add_gaussian_noise(X, snr=snr, random_state=rng)
