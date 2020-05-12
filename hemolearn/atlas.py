@@ -128,3 +128,33 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
     brain_mask[atlas_to_return.get_data() == 0] = 0
 
     return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return
+
+
+def fetch_atlas_basc_2015(n_scales='scale007'):
+    """ Fetch the BASC brain atlas given its resolution.
+
+    Parameters
+    ----------
+    hrf_atlas: str, BASC dataset name possible values are: 'scale007',
+        'scale012', 'scale036', 'scale064', 'scale122'
+
+    Return
+    ------
+    mask_full_brain : Nifti Image, full mask brain
+    atlas_rois : Nifti Image, ROIs atlas
+    """
+    if n_scales not in ['scale007', 'scale012', 'scale036', 'scale064',
+                        'scale122']:
+        raise ValueError("n_scales should be in ['scale007', 'scale012', "
+                         "'scale036', 'scale064', 'scale122'], "
+                         "got '{}'".format(n_scales))
+
+    basc_dataset = datasets.fetch_atlas_basc_multiscale_2015(version='sym')
+    atlas_rois_fname = basc_dataset[n_scales]
+    atlas_to_return = image.load_img(atlas_rois_fname)
+
+    # compute the full brain mask (0/1 Nifti object)
+    brain_mask = np.ones_like(atlas_to_return.get_data())
+    brain_mask[atlas_to_return.get_data() == 0] = 0
+
+    return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return
