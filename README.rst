@@ -14,6 +14,9 @@
 .. _Codecov: https://codecov.io/gh/hcherkaoui/hemolearn
 
 
+.. image:: https://i.ibb.co/71j06FR/hemolearn-logo.png
+
+
 HemoLearn
 =========
 
