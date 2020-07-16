@@ -47,10 +47,10 @@ if __name__ == "__main__":
         module_check_fn = _VERSION_GLOBALS['_check_module_dependencies']
         module_check_fn(is_hemolearn_installing=True)
 
-    install_requires = \
-            ['{0}>={1}'.format(mod, meta['min_version'])
-             for mod, meta in _VERSION_GLOBALS['REQUIRED_MODULE_METADATA']
-             if meta['required_at_installation']]
+    install_requires = ['{0}>={1}'.format(mod, meta['min_version'])
+                        for mod, meta
+                        in _VERSION_GLOBALS['REQUIRED_MODULE_METADATA']
+                        if meta['required_at_installation']]
 
     setup(name=DISTNAME,
           maintainer=MAINTAINER,
