@@ -9,7 +9,6 @@ import time
 import shutil
 import pickle
 import numpy as np
-from scipy.stats.stats import pearsonr
 import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data

@@ -14,8 +14,7 @@ from hemolearn import SLRDA
 from hemolearn.utils import (fmri_preprocess, get_unique_dirname,
                              sort_atoms_by_explained_variances)
 from hemolearn.plotting import (plotting_spatial_comp, plotting_temporal_comp,
-                            plotting_obj_values, plotting_hrf,
-                            plotting_hrf_stats)
+                                plotting_obj_values)
 
 
 dirname = get_unique_dirname("results_slrda_adhd_#")
@@ -63,4 +62,3 @@ plotting_spatial_comp(u_hat, variances, slrda.masker_, plot_dir=dirname,
                       perc_voxels_to_retain=0.1, verbose=True)
 plotting_temporal_comp(z_hat, variances, TR, plot_dir=dirname, verbose=True)
 plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
-
