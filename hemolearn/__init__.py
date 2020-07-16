@@ -27,7 +27,7 @@ from sklearn.exceptions import NotFittedError
 from nilearn import input_data
 
 from .learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
-from .atlas import fetch_vascular_atlas, split_atlas
+from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015, split_atlas
 from .build_numba import build_numba_functions_of_hemolearn
 
 
@@ -52,6 +52,11 @@ class SLRDA(TransformerMixin):
         response function, duration = n_times_atom * t_r
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
+    hrf_atlas : str, (default='default'), select the haemodynamic atlas. The
+        possible values are: 'basc', any other value ('default', None, etc)
+        fall back to Havard-Oxford atlas.
+    n_scales : int, (default=122), select the number of scale if
+        hrf_atlas == 'basc'.
     deactivate_v_learning : bool, (default=False), option to force the
         estimated HRF to its initial value.
     deactivate_z_learning : bool, (default=False), option to force the
@@ -100,8 +105,9 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
-                 prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
-                 u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
+                 hrf_atlas='default', n_scales=122, prox_z='tv',
+                 lbda_strategy='ratio', lbda=0.1, delta=2.0, u_init_type='ica',
+                 z_init=None, prox_u='l1-positive-simplex',
                  deactivate_v_learning=False, deactivate_z_learning=False,
                  max_iter=100, random_state=None, early_stopping=True,
                  eps=1.0e-5, raise_on_increase=True, cache_dir='__cache__',
@@ -110,6 +116,8 @@ class SLRDA(TransformerMixin):
         self.t_r = t_r
         self.n_atoms = n_atoms
         self.hrf_model = hrf_model
+        self.hrf_atlas = hrf_atlas
+        self.n_scales = n_scales
         self.deactivate_v_learning = deactivate_v_learning
         self.deactivate_z_learning = deactivate_z_learning
         self.n_times_atom = n_times_atom
@@ -135,7 +143,12 @@ class SLRDA(TransformerMixin):
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
-        self.mask_full_brain, self.atlas_rois = fetch_vascular_atlas()
+        if self.hrf_atlas == 'basc':
+            # retro-compat
+            self.mask_full_brain, self.atlas_rois = fetch_atlas_basc_2015(
+                                                        n_scales=self.n_scales)
+        else:
+            self.mask_full_brain, self.atlas_rois = fetch_vascular_atlas()
         self.hrf_rois = dict()
 
         # fMRI masker
