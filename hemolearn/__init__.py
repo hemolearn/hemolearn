@@ -55,7 +55,7 @@ class SLRDA(TransformerMixin):
     hrf_atlas : str, (default='default'), select the haemodynamic atlas. The
         possible values are: 'basc', any other value ('default', None, etc)
         fall back to Havard-Oxford atlas.
-    n_scales : int, (default=122), select the number of scale if
+    n_scales : str, (default='scale122'), select the number of scale if
         hrf_atlas == 'basc'.
     deactivate_v_learning : bool, (default=False), option to force the
         estimated HRF to its initial value.
@@ -105,7 +105,7 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
-                 hrf_atlas='default', n_scales=122, prox_z='tv',
+                 hrf_atlas='default', n_scales='scale122', prox_z='tv',
                  lbda_strategy='ratio', lbda=0.1, delta=2.0, u_init_type='ica',
                  z_init=None, prox_u='l1-positive-simplex',
                  deactivate_v_learning=False, deactivate_z_learning=False,
