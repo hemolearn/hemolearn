@@ -109,7 +109,7 @@ def plotting_temporal_comp(z, variances, t_r, onset=False, plot_dir='.',
 
 def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
                           display_mode='ortho', perc_voxels_to_retain=0.1,
-                          bg_img=None, verbose=False):
+                          bg_img=None, save_nifti=False, verbose=False):
     """ Plot, and save as pdf, each spatial estimated component.
 
     Parameters
@@ -127,6 +127,8 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
         retain when plotting the spatial maps
     bg_img : Nifti-like or None, (default=None), background image, None means
         no image
+    save_nifti : bool, (default=False), whether or not to save the image as
+        Nifti
     verbose : bool, (default=False), verbosity level
     """
     if display_mode in ['x', 'y', 'z']:
@@ -161,7 +163,9 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
             plotting.plot_stat_map(img_u_k, title=title, colorbar=colorbar,
                                    display_mode=display_mode,
                                    cut_coords=cut_coords, threshold=th)
-        img_u_k.to_filename(os.path.join(plot_dir, "u_{0:03d}.nii".format(k)))
+        if save_nifti:
+            nii_filename = os.path.join(plot_dir, "u_{0:03d}.nii".format(k))
+            img_u_k.to_filename(nii_filename)
         plt.savefig(os.path.join(plot_dir, "u_{0:03d}.pdf".format(k)), dpi=150)
     pdf_files = os.path.join(plot_dir, 'u_*.pdf')
     if fname is None:
@@ -251,7 +255,8 @@ def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
 
 def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
                        stat_type='tp', display_mode='ortho', cut_coords=None,
-                       plot_dir='.', fname=None, verbose=False):
+                       plot_dir='.', fname=None, save_nifti=False,
+                       verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -273,6 +278,8 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     plot_dir : str, (default='.'), directory under which the pdf is saved
     fname : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
         saved
+    save_nifti : bool, (default=False), whether or not to save the image as
+        Nifti
     verbose : bool, (default=False), verbosity level
     """
     if stat_type not in ['tp', 'fwhm']:
@@ -306,7 +313,9 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     plotting.plot_stat_map(stats_map, title=title, colorbar=True,
                            display_mode=display_mode, cut_coords=cut_coords,
                            symmetric_cbar=False)
-    stats_map.to_filename(os.path.join(plot_dir, "v_{}.nii".format(stat_type)))
+    if save_nifti:
+        nii_filename = os.path.join(plot_dir, "v_{}.nii".format(stat_type))
+        stats_map.to_filename(nii_filename)
     if fname is None:
         fname = "v_{}.pdf".format(stat_type)
     fname = os.path.join(plot_dir, fname)
