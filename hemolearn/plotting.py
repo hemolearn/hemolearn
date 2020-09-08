@@ -10,7 +10,7 @@ import numpy as np
 import nibabel as nib
 from nilearn import plotting
 
-from .atlas import fetch_vascular_atlas
+from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015
 from .utils import tp, fwhm
 
 
@@ -255,8 +255,8 @@ def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
 
 def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
                        stat_type='tp', display_mode='ortho', cut_coords=None,
-                       plot_dir='.', fname=None, save_nifti=False,
-                       verbose=False):
+                       atlas_type='havard', n_scales=122, plot_dir='.',
+                       fname=None, save_nifti=False, verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -275,6 +275,9 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
     cut_coords : tuple or None, MNI coordinate to perform display
+    atlas_type : str or None, (default=None), atlas type, possible choice are
+        ['havard', 'basc']
+    n_scales : int, (default=122), number of scale if atlas_type == 'basc'
     plot_dir : str, (default='.'), directory under which the pdf is saved
     fname : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
         saved
@@ -285,7 +288,14 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     if stat_type not in ['tp', 'fwhm']:
         raise ValueError("stat_type should be in ['tp', 'fwhm'], "
                          "got {}".format(stat_type))
-    _, atlas_rois = fetch_vascular_atlas()
+    if atlas_type == 'havard':
+        _, atlas_rois = fetch_vascular_atlas()
+    elif atlas_type == 'basc':
+        n_scales_ = f"scale{int(n_scales)}"
+        _, atlas_rois = fetch_atlas_basc_2015(n_scales=n_scales_)
+    else:
+        raise ValueError(f"atlas_type should belong to ['havard', 'basc']"
+                         f", got {atlas_type}")
     raw_atlas_rois = atlas_rois.get_data()
     n_hrf_rois, n_times_atom = v.shape
     if hrf_ref is not None:

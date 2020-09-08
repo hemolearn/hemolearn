@@ -66,7 +66,7 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
     """ Generate simulated BOLD data with its temporal components z and the
     corresponding maps u.
     """
-    rng = check_random_state(None)
+    rng = check_random_state(random_seed)
 
     hrf_rois = {1: range(n_voxels)}
     rois_idx, _, _ = split_atlas(hrf_rois)

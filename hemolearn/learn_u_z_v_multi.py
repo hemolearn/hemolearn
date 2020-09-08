@@ -184,9 +184,10 @@ def learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
         deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
         prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
-        u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
-        max_iter=100, get_obj=0, get_time=0, random_seed=None,
-        early_stopping=True, eps=1.0e-5, raise_on_increase=True, verbose=0):
+        delta_init=1.0, u_init_type='ica', z_init=None,
+        prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
+        random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, verbose=0):
     """ Multivariate Convolutional Sparse Coding with n_atoms-rank constraint.
 
     Parameters
@@ -217,6 +218,8 @@ def learn_u_z_v_multi(
         lbda_strategy == 'ratio'
     delta : float, (default=2.0), the elastic-net temporal regularization
         parameter
+    delta_init : float, (default=1.0), the initialization value for the HRF
+        dilation parameter
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
     z_init : None or array, (default=None), initialization of z, if None, z is
@@ -304,9 +307,8 @@ def learn_u_z_v_multi(
         constants['h'] = h
 
     elif hrf_model == 'scaled_hrf':
-        delta = 1.0
-        a_hat = delta * np.ones(n_hrf_rois)
-        v_ = scaled_hrf(delta=delta, t_r=t_r, n_times_atom=n_times_atom)
+        a_hat = delta_init * np.ones(n_hrf_rois)
+        v_ = scaled_hrf(delta=delta_init, t_r=t_r, n_times_atom=n_times_atom)
         v_hat = np.c_[[v_ for a_ in a_hat]]
         constants['t_r'] = t_r
         constants['n_times_atom'] = n_times_atom
@@ -546,10 +548,10 @@ def multi_runs_learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
         deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
         prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
-        u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
-        max_iter=100, get_obj=0, get_time=0, random_seed=None,
-        early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-        n_jobs=1, nb_fit_try=1, verbose=0):
+        delta_init=1.0, u_init_type='ica', z_init=None,
+        prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
+        random_seed=None, early_stopping=True, eps=1.0e-5,
+        raise_on_increase=True, n_jobs=1, nb_fit_try=1, verbose=0):
     """ Multiple initialization parallel running version of
     `learn_u_z_v_multi`.
 
@@ -581,6 +583,8 @@ def multi_runs_learn_u_z_v_multi(
         lbda_strategy == 'ratio'
     delta : float, (default=2.0), the elastic-net temporal regularization
         parameter
+    delta_init : float, (default=1.0), the initialization value for the HRF
+        dilation parameter
     u_init_type : str, (default='ica'), strategy to init u, possible value are
         ['gaussian_noise', 'ica', 'patch']
     z_init : None or array, (default=None), initialization of z, if None, z is
@@ -638,9 +642,9 @@ def multi_runs_learn_u_z_v_multi(
                   deactivate_z_learning=deactivate_z_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
                   prox_z=prox_z, lbda_strategy=lbda_strategy, lbda=lbda,
-                  delta=delta, u_init_type=u_init_type, z_init=z_init,
-                  prox_u=prox_u, max_iter=max_iter, get_obj=get_obj,
-                  get_time=get_time, random_seed=random_seed,
+                  delta=delta, delta_init=delta_init, u_init_type=u_init_type,
+                  z_init=z_init, prox_u=prox_u, max_iter=max_iter,
+                  get_obj=get_obj, get_time=get_time, random_seed=random_seed,
                   early_stopping=early_stopping, eps=eps,
                   raise_on_increase=raise_on_increase, verbose=verbose)
 
