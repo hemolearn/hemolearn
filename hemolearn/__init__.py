@@ -21,6 +21,7 @@ this, no effect will be estimated.
 # License: BSD (3-clause)
 
 import numpy as np
+import collections
 from joblib import Memory
 from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
@@ -52,9 +53,11 @@ class SLRDA(TransformerMixin):
         response function, duration = n_times_atom * t_r
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
-    hrf_atlas : str, (default='default'), select the haemodynamic atlas. The
-        possible values are: 'basc', any other value ('default', None, etc)
-        fall back to Havard-Oxford atlas.
+    hrf_atlas : str, func, or None, (default='havard'), atlas type, possible
+        choice are ['havard', 'basc', given-function]. None default option will
+        lead to fetch the Havard-Oxford parcellation.
+    atlas_kwargs : dict, (default=dict()), additional kwargs for the atlas,
+        if a function is passed.
     n_scales : str, (default='scale122'), select the number of scale if
         hrf_atlas == 'basc'.
     deactivate_v_learning : bool, (default=False), option to force the
@@ -146,12 +149,18 @@ class SLRDA(TransformerMixin):
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
-        if self.hrf_atlas == 'basc':
-            # retro-compat
-            self.mask_full_brain, self.atlas_rois = fetch_atlas_basc_2015(
-                                                        n_scales=self.n_scales)
-        else:
+        if self.hrf_atlas == 'havard':
             self.mask_full_brain, self.atlas_rois = fetch_vascular_atlas()
+        elif self.hrf_atlas == 'basc':
+            n_scales_ = f"scale{int(n_scales)}"
+            res = fetch_atlas_basc_2015(n_scales=n_scales_)
+            self.mask_full_brain, self.atlas_rois = res
+        elif isinstance(self.hrf_atlas, collections.Callable):
+            res = self.hrf_atlas(**atlas_kwargs)
+            self.mask_full_brain, self.atlas_rois = res
+        else:
+            raise ValueError(f"hrf_atlas should belong to ['havard', 'basc', "
+                             f"given-function], got {self.hrf_atlas}")
         self.hrf_rois = dict()
 
         # fMRI masker

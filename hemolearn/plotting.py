@@ -5,12 +5,13 @@
 import os
 import time
 import subprocess
+import collections
 import matplotlib.pyplot as plt
 import numpy as np
 import nibabel as nib
 from nilearn import plotting
 
-from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015
+from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015, split_atlas
 from .utils import tp, fwhm
 
 
@@ -185,8 +186,9 @@ def plotting_spatial_comp(u, variances, masker, plot_dir='.', fname=None,
         print("Saving plot under '{0}'".format(pdf_file))
 
 
-def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
-                 normalized=False, plot_dir='.', fname=None, verbose=True):
+def plotting_hrf(v, t_r, hrf_ref=None, masker=None, atlas_type=None,
+                 atlas_kwargs=dict(), n_scales=122, normalized=False,
+                 plot_dir='.', fname=None, verbose=True):
     """ Plot, and save as pdf, each HRF for each ROIs.
 
     Parameters
@@ -194,17 +196,38 @@ def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
     t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
         resolution
-    roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
-        corresponding to the index of the ROI
     hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
         HRF to plot for comparison
+    masker : Nilearn-Masker like, masker class to perform the inverse Nifti
+        transformation
+    atlas_type : str, func, or None, (default=None), atlas type, possible
+        choice are ['havard', 'basc', given-function]
+    atlas_kwargs : dict, (default=dict()), additional kwargs for the atlas, if
+        a function is passed
+    n_scales : str, (default='scale122'), select the number of scale if
+        hrf_atlas == 'basc'.
     normalized : bool, (default=False), whether or not to normalized by the
         l-inf norm each HRFs
     plot_dir : str, (default='.'), directory under which the pdf is saved
     fname : str, (default='v.pdf'), filename under which the pdf is saved
     verbose : bool, (default=False), verbosity level
     """
-    _, atlas_rois = fetch_vascular_atlas()
+    if atlas_type == 'havard':
+        _, atlas_rois = fetch_vascular_atlas()
+    elif atlas_type == 'basc':
+        n_scales_ = f"scale{int(n_scales)}"
+        _, atlas_rois = fetch_atlas_basc_2015(n_scales=n_scales_)
+    elif isinstance(atlas_type, collections.Callable):
+        _, atlas_rois = atlas_type(**atlas_kwargs)
+    else:
+        raise ValueError(f"atlas_type should belong to ['havard', 'basc', "
+                         f"given-function], got {atlas_type}")
+    hrf_rois = dict()
+    rois = masker.transform(atlas_rois).astype(int).ravel()
+    index = np.arange(rois.shape[-1])
+    for roi_label in np.unique(rois):
+        hrf_rois[roi_label] = index[roi_label == rois]
+    _, roi_label_from_hrf_idx, _ = split_atlas(hrf_rois)
     n_rois, n_times_atoms = v.shape
     n_cols = np.int(np.sqrt(n_rois))
     n_raws = n_rois // n_cols
@@ -253,10 +276,11 @@ def plotting_hrf(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
         print("Saving plot under '{0}'".format(pdf_file))
 
 
-def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
-                       stat_type='tp', display_mode='ortho', cut_coords=None,
-                       atlas_type='havard', n_scales=122, plot_dir='.',
-                       fname=None, save_nifti=False, verbose=False):
+def plotting_hrf_stats(v, t_r, hrf_ref=None, stat_type='tp',
+                       display_mode='ortho', cut_coords=None,
+                       masker=None, atlas_type='havard', atlas_kwargs=dict(),
+                       n_scales=122, plot_dir='.', fname=None,
+                       save_nifti=False, verbose=False):
     """ Plot, and save as pdf, each stats HRF for each ROIs.
 
     Parameters
@@ -264,8 +288,6 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     v : array, shape (n_hrf_rois, n_times_atom), the initial used HRFs
     t_r : float, Time of Repetition, fMRI acquisition parameter, the temporal
         resolution
-    roi_label_from_hrf_idx : array, shape (n_hrf_rois, ), provide the label
-        corresponding to the index of the ROI
     hrf_ref : array or None, shape (n_times_atom, ), (default=None), reference
         HRF to plot for comparison
     stat_type : str, (default='tp'), statistic to compute on each HRFs possible
@@ -275,8 +297,12 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
     cut_coords : tuple or None, MNI coordinate to perform display
-    atlas_type : str or None, (default=None), atlas type, possible choice are
-        ['havard', 'basc']
+    masker : Nilearn-Masker like, masker class to perform the inverse Nifti
+        transformation
+    atlas_type : str, func, or None, (default=None), atlas type, possible
+        choice are ['havard', 'basc', given-function]
+    atlas_kwargs : dict, (default=dict()), additional kwargs for the atlas,
+        if a function is passed.
     n_scales : int, (default=122), number of scale if atlas_type == 'basc'
     plot_dir : str, (default='.'), directory under which the pdf is saved
     fname : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
@@ -293,9 +319,17 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
     elif atlas_type == 'basc':
         n_scales_ = f"scale{int(n_scales)}"
         _, atlas_rois = fetch_atlas_basc_2015(n_scales=n_scales_)
+    elif isinstance(atlas_type, collections.Callable):
+        _, atlas_rois = atlas_type(**atlas_kwargs)
     else:
-        raise ValueError(f"atlas_type should belong to ['havard', 'basc']"
-                         f", got {atlas_type}")
+        raise ValueError(f"atlas_type should belong to ['havard', 'basc', "
+                         f"given-function], got {atlas_type}")
+    hrf_rois = dict()
+    rois = masker.transform(atlas_rois).astype(int).ravel()
+    index = np.arange(rois.shape[-1])
+    for roi_label in np.unique(rois):
+        hrf_rois[roi_label] = index[roi_label == rois]
+    _, roi_label_from_hrf_idx, _ = split_atlas(hrf_rois)
     raw_atlas_rois = atlas_rois.get_data()
     n_hrf_rois, n_times_atom = v.shape
     if hrf_ref is not None:
@@ -318,8 +352,7 @@ def plotting_hrf_stats(v, t_r, roi_label_from_hrf_idx, hrf_ref=None,
             title = "{} map (s)".format(stat_name)
         label = roi_label_from_hrf_idx[m]
         raw_atlas_rois[raw_atlas_rois == label] = stat_
-    stats_map = nib.Nifti1Image(raw_atlas_rois, atlas_rois.affine,
-                                atlas_rois.header)
+    stats_map = image.new_img_like(atlas_rois, raw_atlas_rois)
     plotting.plot_stat_map(stats_map, title=title, colorbar=True,
                            display_mode=display_mode, cut_coords=cut_coords,
                            symmetric_cbar=False)
