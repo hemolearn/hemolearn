@@ -11,7 +11,7 @@ def load_version():
     """Executes hemolearn/info.py in a globals dictionary and return it.
 
     Note: importing HemoLearn is not an option because there may be
-    dependencies like nibabel which are not installed and
+    dependencies like prox_tv which are not installed and
     setup.py is supposed to install them.
     """
     # load all vars into globals, otherwise

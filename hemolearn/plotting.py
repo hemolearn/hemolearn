@@ -8,8 +8,7 @@ import subprocess
 import collections
 import matplotlib.pyplot as plt
 import numpy as np
-import nibabel as nib
-from nilearn import plotting
+from nilearn import plotting, image
 
 from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015, split_atlas
 from .utils import tp, fwhm

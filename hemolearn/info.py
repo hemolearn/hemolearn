@@ -49,17 +49,13 @@ REQUIRED_MODULE_METADATA = (
         'min_version': '2.1.2',
         'required_at_installation': True,
         'install_info': _HEMOLEARN_INSTALL_MSG}),
-    ('nibabel', {
-        'min_version': '2.3.0',
-        'required_at_installation': True,
-        'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('nilearn', {
         'min_version': '0.5.2',
         'required_at_installation': True,
         'install_info': _HEMOLEARN_INSTALL_MSG}),
     # XXX need to find a fix for the 'scikit-learn' / 'sklearn' problem
     # ('scikit-learn', {
-    #     'min_version': '0.19.2',
+    #     'min_version': '0.23.2',
     #     'required_at_installation': True,
     #     'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('threadpoolctl', {
