@@ -30,7 +30,7 @@ _HEMOLEARN_INSTALL_MSG = "See {0} for installation information.".format(
 #   in some meaningful order (more => less 'core').
 REQUIRED_MODULE_METADATA = (
     ('numba', {
-        'min_version': '0.41.0',
+        'min_version': '0.51.2',
         'required_at_installation': True,
         'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('joblib', {
@@ -55,7 +55,7 @@ REQUIRED_MODULE_METADATA = (
         'install_info': _HEMOLEARN_INSTALL_MSG}),
     # XXX need to find a fix for the 'scikit-learn' / 'sklearn' problem
     # ('scikit-learn', {
-    #     'min_version': '0.23.2',
+    #     'min_version': '0.22.1',
     #     'required_at_installation': True,
     #     'install_info': _HEMOLEARN_INSTALL_MSG}),
     ('threadpoolctl', {
