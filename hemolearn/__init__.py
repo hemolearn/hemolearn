@@ -68,7 +68,7 @@ class SLRDA(TransformerMixin):
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
-    delta : float, (default=2.0), the elastic-net temporal regularization
+    rho : float, (default=2.0), the elastic-net temporal regularization
         parameter
     delta_init : float, (default=1.0), the initialization value for the HRF
         dilation parameter
@@ -107,13 +107,13 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
-                 hrf_atlas='default', n_scales='scale122', prox_z='tv',
-                 lbda_strategy='ratio', lbda=0.1, delta=2.0, delta_init=1.0,
-                 u_init_type='ica', z_init=None, prox_u='l1-positive-simplex',
-                 deactivate_v_learning=False, deactivate_z_learning=False,
-                 max_iter=100, random_state=None, early_stopping=True,
-                 eps=1.0e-5, raise_on_increase=True, cache_dir='__cache__',
-                 nb_fit_try=1, n_jobs=1, verbose=0):
+                 hrf_atlas='havard', atlas_kwargs=dict(), n_scales='scale122',
+                 prox_z='tv', lbda_strategy='ratio', lbda=0.1, rho=2.0,
+                 delta_init=1.0, u_init_type='ica', z_init=None,
+                 prox_u='l1-positive-simplex', deactivate_v_learning=False,
+                 deactivate_z_learning=False, max_iter=100, random_state=None,
+                 early_stopping=True, eps=1.0e-5, raise_on_increase=True,
+                 cache_dir='__cache__', nb_fit_try=1, n_jobs=1, verbose=0):
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
@@ -126,7 +126,7 @@ class SLRDA(TransformerMixin):
         self.prox_z = prox_z
         self.lbda_strategy = lbda_strategy
         self.lbda = lbda
-        self.delta = delta
+        self.rho = rho
         self.delta_init = delta_init
         self.u_init_type = u_init_type
         self.z_init = z_init
@@ -227,7 +227,7 @@ class SLRDA(TransformerMixin):
                 deactivate_z_learning=self.deactivate_z_learning,
                 n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
                 prox_z=self.prox_z, lbda_strategy=self.lbda_strategy,
-                lbda=self.lbda, delta=self.delta, delta_init=self.delta_init,
+                lbda=self.lbda, rho=self.rho, delta_init=self.delta_init,
                 u_init_type=self.u_init_type, z_init=self.z_init,
                 prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
                 get_time=1, random_seed=self.random_state,

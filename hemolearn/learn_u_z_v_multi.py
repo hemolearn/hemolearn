@@ -125,8 +125,8 @@ def _update_z(z0, constants):
     assert ('X' in constants), msg
     msg = "'lbda' is missing in 'constants' for '_update_z' step."
     assert ('lbda' in constants), msg
-    msg = "'delta' is missing in 'constants' for '_update_z' step."
-    assert ('delta' in constants), msg
+    msg = "'rho' is missing in 'constants' for '_update_z' step."
+    assert ('rho' in constants), msg
     msg = "'prox_z' is missing in 'constants' for '_update_z' step."
     assert ('prox_z' in constants), msg
 
@@ -136,7 +136,7 @@ def _update_z(z0, constants):
     rois_idx = constants['rois_idx']
     X = constants['X']
     lbda = constants['lbda']
-    delta = constants['delta']
+    rho = constants['rho']
     prox_z = constants['prox_z']
 
     uvtuv = _precompute_uvtuv(u=u, v=v, rois_idx=rois_idx)
@@ -160,7 +160,7 @@ def _update_z(z0, constants):
         def prox(z, step_size):
             th = lbda * step_size
             prox_z = np.sign(z) * np.clip(np.abs(z) - th, 0.0, None)
-            return prox_z / (1.0 + th * delta)
+            return prox_z / (1.0 + th * rho)
 
     else:
         raise ValueError("'prox_z' should be in ['tv', 'l1', 'l2', "
@@ -183,7 +183,7 @@ def _update_z(z0, constants):
 def learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
         deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
-        prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
+        prox_z='tv', lbda_strategy='ratio', lbda=0.1, rho=2.0,
         delta_init=1.0, u_init_type='ica', z_init=None,
         prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
         random_seed=None, early_stopping=True, eps=1.0e-5,
@@ -216,7 +216,7 @@ def learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
-    delta : float, (default=2.0), the elastic-net temporal regularization
+    rho : float, (default=2.0), the elastic-net temporal regularization
         parameter
     delta_init : float, (default=1.0), the initialization value for the HRF
         dilation parameter
@@ -390,12 +390,12 @@ def learn_u_z_v_multi(
 
     constants['prox_z'] = prox_z
     constants['lbda'] = lbda
-    constants['delta'] = delta
+    constants['rho'] = rho
     constants['prox_u'] = prox_u_func
 
     if get_obj:
         lobj = [_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat, z=z_hat,
-                     H=H_hat, rois_idx=rois_idx, valid=True, delta=delta,
+                     H=H_hat, rois_idx=rois_idx, valid=True, rho=rho,
                      prox_z=prox_z)]
     if get_time:
         ltime = [0.0]
@@ -430,7 +430,7 @@ def learn_u_z_v_multi(
                 if get_obj == 2:
                     lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                      z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                     valid=True, delta=delta, prox_z=prox_z))
+                                     valid=True, rho=rho, prox_z=prox_z))
                     if verbose > 1:
                         if get_time:
                             print("[{}/{}] Update z done in {:.1f} s : "
@@ -461,7 +461,7 @@ def learn_u_z_v_multi(
             if get_obj == 2:
                 lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                  z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                 valid=True, delta=delta, prox_z=prox_z))
+                                 valid=True, rho=rho, prox_z=prox_z))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Update u done in {:.1f} s : "
@@ -488,7 +488,7 @@ def learn_u_z_v_multi(
                 if get_obj == 2:
                     lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                      z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                     valid=True, delta=delta, prox_z=prox_z))
+                                     valid=True, rho=rho, prox_z=prox_z))
                     if verbose > 1:
                         if get_time:
                             print("[{}/{}] Update v done in {:.1f} s : "
@@ -506,7 +506,7 @@ def learn_u_z_v_multi(
             if get_obj == 1:
                 lobj.append(_obj(X=X, prox=prox_u_func, lbda=lbda, u=u_hat,
                                  z=z_hat, H=H_hat, rois_idx=rois_idx,
-                                 valid=True, delta=delta, prox_z=prox_z))
+                                 valid=True, rho=rho, prox_z=prox_z))
                 if verbose > 1:
                     if get_time:
                         print("[{}/{}] Iteration done in {:.1f} s : "
@@ -547,7 +547,7 @@ def learn_u_z_v_multi(
 def multi_runs_learn_u_z_v_multi(
         X, t_r, hrf_rois, hrf_model='scaled_hrf', deactivate_v_learning=False,
         deactivate_z_learning=False, n_atoms=10, n_times_atom=60,
-        prox_z='tv', lbda_strategy='ratio', lbda=0.1, delta=2.0,
+        prox_z='tv', lbda_strategy='ratio', lbda=0.1, rho=2.0,
         delta_init=1.0, u_init_type='ica', z_init=None,
         prox_u='l1-positive-simplex', max_iter=100, get_obj=0, get_time=0,
         random_seed=None, early_stopping=True, eps=1.0e-5,
@@ -581,7 +581,7 @@ def multi_runs_learn_u_z_v_multi(
     lbda : float, (default=0.1), whether the temporal regularization parameter
         if lbda_strategy == 'fixed' or the ratio w.r.t lambda max if
         lbda_strategy == 'ratio'
-    delta : float, (default=2.0), the elastic-net temporal regularization
+    rho : float, (default=2.0), the elastic-net temporal regularization
         parameter
     delta_init : float, (default=1.0), the initialization value for the HRF
         dilation parameter
@@ -642,7 +642,7 @@ def multi_runs_learn_u_z_v_multi(
                   deactivate_z_learning=deactivate_z_learning,
                   n_atoms=n_atoms, n_times_atom=n_times_atom,
                   prox_z=prox_z, lbda_strategy=lbda_strategy, lbda=lbda,
-                  delta=delta, delta_init=delta_init, u_init_type=u_init_type,
+                  rho=rho, delta_init=delta_init, u_init_type=u_init_type,
                   z_init=z_init, prox_u=prox_u, max_iter=max_iter,
                   get_obj=get_obj, get_time=get_time, random_seed=random_seed,
                   early_stopping=early_stopping, eps=eps,
