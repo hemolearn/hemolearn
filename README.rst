@@ -1,10 +1,10 @@
 .. -*- mode: rst -*-
 
-|Python35|_ |Travis|_ |Codecov|_
+|Python36|_ |Travis|_ |Codecov|_
 
 
-.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
-.. _Python35: https://badge.fury.io/py/scikit-learn
+.. |Python36| image:: https://img.shields.io/badge/python-3.6-blue.svg
+.. _Python36: https://badge.fury.io/py/scikit-learn
 
 .. |Travis| image:: https://travis-ci.com/hcherkaoui/hemolearn.svg?branch=master
 .. _Travis: https://travis-ci.com/hcherkaoui/hemolearn
@@ -36,14 +36,13 @@ Dependencies
 
 The required dependencies to use the software are:
 
-* Numba >= 0.41.0
+* Numba >= 0.51.2
 * Joblib >= 0.11
 * Numpy >= 1.14.0
 * Scipy >= 1.0.0
 * Matplotlib >= 2.1.2
-* Nibabel >= 2.3.0
 * Nilearn >= 0.5.2
-* Sklearn >= 0.19.2
+* Sklearn >= 0.22.1
 * Threadpoolctl >= 1.0.0
 * Prox_tv
 

@@ -70,7 +70,7 @@ if __name__ == "__main__":
               'Topic :: Scientific/Engineering',
               'Operating System :: POSIX',
               'Operating System :: Unix',
-              'Programming Language :: Python :: 3.5',
+              'Programming Language :: Python :: 3.6',
           ],
           packages=find_packages(),
           install_requires=install_requires,
