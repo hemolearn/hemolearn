@@ -148,15 +148,14 @@ def _delta_derivative_double_gamma_hrf(delta, t_r=1.0, dur=60.0, onset=0.0):
     t = np.linspace(0, dur, int(float(dur) / DT)) - float(onset) / DT
     t = t[::int(t_r/DT)]
 
-    _dilated_gamma_pdf_hrf_peak = _gamma_pdf_hrf_peak(delta * t)
-    _dilated_gamma_pdf_hrf_undershoot = _gamma_pdf_hrf_undershoot(delta * t)
+    _dilated_gamma_pdf_hrf_p = _gamma_pdf_hrf_peak(delta * t)
+    _dilated_gamma_pdf_hrf_u = _gamma_pdf_hrf_undershoot(delta * t)
 
-    c_1 = (P_DELAY - 1) * _dilated_gamma_pdf_hrf_peak
-    c_2 = - P_DISP * delta * t * _dilated_gamma_pdf_hrf_peak
-    c_3 = - (UNDERSHOOT - 1) * _dilated_gamma_pdf_hrf_undershoot
-    c_4 = U_DISP * delta * t * _dilated_gamma_pdf_hrf_undershoot
-
-    grad = (c_1 + c_2 + P_U_RATIO * (c_3 + c_4)) / delta
+    c_1 = (P_DELAY / P_DISP - 1) / delta * _dilated_gamma_pdf_hrf_p
+    c_2 = - t * _dilated_gamma_pdf_hrf_p
+    c_3 = - (UNDERSHOOT / U_DISP - 1) / delta * _dilated_gamma_pdf_hrf_u
+    c_4 = t * _dilated_gamma_pdf_hrf_u
+    grad = c_1 + c_2 + P_U_RATIO * (c_3 + c_4)
 
     return grad, t
 
