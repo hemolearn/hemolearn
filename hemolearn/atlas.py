@@ -82,7 +82,7 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
                                    interpolation='nearest')
 
         # extract raw data
-        atlas_raw = atlas.get_data()
+        atlas_raw = atlas.get_fdata()
 
         # gather chosen hemisphere ROIs
         label_rois = [harvard_oxford.labels.index(region_name)
@@ -104,7 +104,7 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
         left_mask_img = image.new_img_like(atlas, chosen_hemi_mask[::-1])
 
         # re-index right hemisphere labels
-        atlas_raw_right = right_mask_img.get_data() * atlas_raw
+        atlas_raw_right = right_mask_img.get_fdata() * atlas_raw
         labels_right = enumerate(np.unique(atlas_raw_right)[1:], start=1)
         for i, label_right in labels_right:
             # even integer for the right hemisphere
@@ -114,7 +114,7 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
         atlas_raw_left = np.copy(atlas_raw_right[::-1])
 
         # odd integer for the left hemisphere
-        atlas_raw_left = (atlas_raw_left - 1) * left_mask_img.get_data()
+        atlas_raw_left = (atlas_raw_left - 1) * left_mask_img.get_fdata()
 
         # cast it to a Nifti
         atlas_raw_full = atlas_raw_right + atlas_raw_left
@@ -124,8 +124,8 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
         atlas_to_return = atlas
 
     # compute the full brain mask (0/1 Nifti object)
-    brain_mask = np.ones_like(atlas_to_return.get_data())
-    brain_mask[atlas_to_return.get_data() == 0] = 0
+    brain_mask = np.ones_like(atlas_to_return.get_fdata())
+    brain_mask[atlas_to_return.get_fdata() == 0] = 0
 
     return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return
 
@@ -154,7 +154,7 @@ def fetch_atlas_basc_2015(n_scales='scale007'):
     atlas_to_return = image.load_img(atlas_rois_fname)
 
     # compute the full brain mask (0/1 Nifti object)
-    brain_mask = np.ones_like(atlas_to_return.get_data())
-    brain_mask[atlas_to_return.get_data() == 0] = 0
+    brain_mask = np.ones_like(atlas_to_return.get_fdata())
+    brain_mask[atlas_to_return.get_fdata() == 0] = 0
 
     return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return

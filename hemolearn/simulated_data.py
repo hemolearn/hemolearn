@@ -40,7 +40,7 @@ def _2_blocks_task_signal(n_times_valid=300, n=10, rng=np.random):
     return z_0, z_1
 
 
-def _2_blocks_rest_signal(n_times_valid=300, n=10, s=0.05, rng=np.random):
+def _2_blocks_rest_signal(n_times_valid=300, s=0.05, rng=np.random):
     """ return a 1d signal of n blocks of length T
     """
     Dz_0 = np.zeros(n_times_valid)

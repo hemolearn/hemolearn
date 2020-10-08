@@ -247,7 +247,7 @@ class SLRDA(TransformerMixin):
 
         # handle the caching option of the decomposition
         if isinstance(self.cache_dir, str):
-            decompose = Memory(self.cache_dir).cache(
+            decompose = Memory(location=self.cache_dir).cache(
                                         multi_runs_learn_u_z_v_multi)
         else:
             decompose = multi_runs_learn_u_z_v_multi

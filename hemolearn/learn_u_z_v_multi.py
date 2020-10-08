@@ -314,9 +314,9 @@ def learn_u_z_v_multi(
         constants['n_times_atom'] = n_times_atom
 
     else:
-        raise ValueError("hrf_model should be in ['3_basis_hrf', '2_basis_hrf'"
-                         ", 'scaled_hrf', 'fir_hrf'], "
-                         "got {}".format(hrf_model))
+        raise ValueError(f"hrf_model should be in ['3_basis_hrf', "
+                         f"'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
+                         f"got {hrf_model}")
     v_init = v_hat[0, :]
 
     # H initialization
@@ -329,10 +329,9 @@ def learn_u_z_v_multi(
         z_hat = np.zeros((n_atoms, n_times_valid))
     else:
         if (n_atoms, n_times_valid) != z_init.shape:
-            raise ValueError("'z_init' should have the shape (n_atoms, "
-                             "n_times_valid)={}, "
-                             "got {}".format((n_atoms, n_times_valid),
-                                             z_init.shape))
+            raise ValueError(f"'z_init' should have the shape (n_atoms, "
+                             f"n_times_valid)={(n_atoms, n_times_valid)}, "
+                             f"got {z_init.shape}")
         z_hat = np.copy(z_init)
 
     # u initialization
