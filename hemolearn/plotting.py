@@ -250,7 +250,7 @@ def plotting_hrf(v, t_r, hrf_ref=None, masker=None, atlas_type=None,
         text_ = "TP={0:.2f}s\nFWHM={1:.2f}s".format(tp(t_r, v[i, :]),
                                                     fwhm(t_r, v[i, :]))
         axis[i].text(x_text, y_text, text_)
-        if normalized:
+        if normalized and (hrf_ref is not None):
             hrf_ref /= np.max(np.abs(hrf_ref))
         if hrf_ref is not None:
             axis[i].plot(hrf_ref, '--k', lw=0.5)
