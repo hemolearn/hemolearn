@@ -23,14 +23,15 @@ def _gen_single_case_checkerboard(len_square, n=5, random_seed=None):
     return u
 
 
-def _2_blocks_task_signal(n_times_valid=300, n=10, rng=np.random):
+def _2_blocks_task_signal(n_times_valid=300, n1=10, n2=10, rng=np.random):
     """ return a 1d signal of n blocks of length T
     """
-    d = int(n_times_valid / n)
-    b_11 = slice(d, 2*d)
-    b_12 = slice(d*(n-4), d*(n-3))
-    b_21 = slice(3*d, 4*d)
-    b_22 = slice(d*(n-2), d*(n-1))
+    d1 = int(n_times_valid / n1)
+    d2 = int(n_times_valid / n2)
+    b_11 = slice(d1, 2 * d1)
+    b_12 = slice(d2 * (n2 - 4), d2 * (n2 - 3))
+    b_21 = slice(3 * d1, 4 * d1)
+    b_22 = slice(d2 * (n2 - 2), d2 * (n2 - 1))
     z_0 = np.zeros(n_times_valid)
     z_1 = np.zeros(n_times_valid)
     z_0[b_11] = 1.0 + np.abs(0.5 * rng.randn())
@@ -61,8 +62,8 @@ def _2_blocks_rest_signal(n_times_valid=300, s=0.05, rng=np.random):
 
 
 def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
-                   snr=1.0, eta=10.0, delta=1.0, z_type='rest', s=0.05,
-                   random_seed=None):
+                   snr=1.0, eta=10.0, delta=1.0, z_type='rest', s=0.05, n1=10,
+                   n2=10, random_seed=None):
     """ Generate simulated BOLD data with its temporal components z and the
     corresponding maps u.
     """
@@ -75,15 +76,20 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
         z_0, z_1 = _2_blocks_rest_signal(n_times_valid=n_times_valid, s=s,
                                          rng=rng)
     elif z_type == 'task':
-        z_0, z_1 = _2_blocks_task_signal(n_times_valid=n_times_valid, s=s,
-                                         rng=rng)
+        z_0, z_1 = _2_blocks_task_signal(n_times_valid=n_times_valid, n1=n1,
+                                         n2=n2, rng=rng)
+    elif 'rest&task':
+        z_0, _ = _2_blocks_rest_signal(n_times_valid=n_times_valid, s=s,
+                                       rng=rng)
+        _, z_1 = _2_blocks_task_signal(n_times_valid=n_times_valid, n1=n1,
+                                       n2=n2, rng=rng)
     else:
         raise ValueError("z_type should belong to "
                          "['rest', 'task'], got {}".format(z_type))
     z = np.vstack([z_0, z_1])
 
     len_square = int(np.sqrt(n_voxels))
-    u_0 = _gen_single_case_checkerboard(len_square, n=5, random_seed=rng)
+    u_0 = _gen_single_case_checkerboard(len_square, n=4, random_seed=rng)
     u_1 = u_0.T
     u_0 = u_0.flatten()[:, None]
     u_1 = u_1.flatten()[:, None]
