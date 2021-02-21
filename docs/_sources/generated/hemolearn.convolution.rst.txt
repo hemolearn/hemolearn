@@ -1,0 +1,31 @@
+hemolearn.convolution
+=====================
+
+.. automodule:: hemolearn.convolution
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      adjconv_uH
+      adjconv_uv
+      make_toeplitz
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

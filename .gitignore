@@ -25,7 +25,6 @@ _build/
 auto_examples/
 generated/
 modules/
-docs/
 
 # ignore example results
 *results_*

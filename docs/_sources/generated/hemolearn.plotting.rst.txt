@@ -1,0 +1,33 @@
+hemolearn.plotting
+==================
+
+.. automodule:: hemolearn.plotting
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      plotting_hrf
+      plotting_hrf_stats
+      plotting_obj_values
+      plotting_spatial_comp
+      plotting_temporal_comp
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
