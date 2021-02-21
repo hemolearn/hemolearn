@@ -1,12 +1,22 @@
-""" Example to recover the different neural temporal activities, the associated
+"""
+Real fMRI data example
+======================
+
+Example to recover the different neural temporal activities, the associated
 functional networks maps and the HRFs per ROIs in the fMRI data, on the ADHD
-dataset resting-state. """
+dataset resting-state.
+
+.. contents:: **Contents**
+    :local:
+    :depth: 1
+
+"""
+
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
 import os
 import time
-import shutil
 import argparse
 import pickle
 import numpy as np
@@ -45,9 +55,6 @@ if __name__ == '__main__':
 
     if not os.path.exists(args.plot_dir):
         os.makedirs(args.plot_dir)
-
-    print("archiving '{0}' under '{1}'".format(__file__, args.plot_dir))
-    shutil.copyfile(__file__, os.path.join(args.plot_dir, __file__))
 
     TR = 2.0
     adhd_dataset = datasets.fetch_adhd(n_subjects=1)

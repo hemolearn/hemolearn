@@ -1,5 +1,5 @@
-Seven usage examples
-====================
+HemoLearn usage examples
+========================
 
 .. warning::
 

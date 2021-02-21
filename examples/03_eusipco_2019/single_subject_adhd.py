@@ -1,12 +1,21 @@
-""" Example to recover the different neural temporal activities, the associated
+"""
+EUSIPCO 2019 CHerkaoui et a.l. experimental reproduction
+========================================================
+
+Example to recover the different neural temporal activities, the associated
 functional networks maps and the HRFs per ROIs in the fMRI data, on the ADHD
-dataset resting-state. """
+dataset resting-state.
+
+.. contents:: **Contents**
+    :local:
+    :depth: 1
+
+"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
 import os
 import time
-import shutil
 import pickle
 from nilearn import datasets
 
@@ -20,9 +29,6 @@ from hemolearn.plotting import (plotting_spatial_comp, plotting_temporal_comp,
 dirname = get_unique_dirname("results_slrda_adhd_#")
 if not os.path.exists(dirname):
     os.makedirs(dirname)
-
-print("archiving '{0}' under '{1}'".format(__file__, dirname))
-shutil.copyfile(__file__, os.path.join(dirname, __file__))
 
 TR = 2.0
 adhd_dataset = datasets.fetch_adhd(n_subjects=1)

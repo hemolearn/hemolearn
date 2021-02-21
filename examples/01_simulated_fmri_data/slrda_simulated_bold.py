@@ -1,6 +1,18 @@
-""" Example to recover the different neural temporal activities, the associated
+"""
+Synthetic fMRI data example
+===========================
+
+Example to recover the different neural temporal activities, the associated
 functional networks maps and the HRFs per ROIs in the fMRI data, on simulated
-fMRI data. """
+fMRI data.
+
+.. contents:: **Contents**
+    :local:
+    :depth: 1
+
+"""
+
+
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 

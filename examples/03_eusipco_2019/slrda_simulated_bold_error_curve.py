@@ -1,12 +1,19 @@
-""" Example to recover the different neural temporal activities, the associated
-functional networks maps and the HRFs per ROIs in the fMRI data, on simulated
-fMRI data. """
+"""
+EUSIPCO 2019 CHerkaoui et a.l. experimental reproduction
+========================================================
+
+Example to obtain the estimation error of each parameter of the model.
+
+.. contents:: **Contents**
+    :local:
+    :depth: 1
+
+"""
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
 import os
 import time
-import shutil
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,9 +26,6 @@ from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
 dirname = get_unique_dirname("results_slrda_simu_curve_#")
 if not os.path.exists(dirname):
     os.makedirs(dirname)
-
-print("archiving '{0}' under '{1}'".format(__file__, dirname))
-shutil.copyfile(__file__, os.path.join(dirname, __file__))
 
 mean_min_Dz_errs, std_min_Dz_errs = [], []
 mean_min_u_errs, std_min_u_errs = [], []
