@@ -21,6 +21,10 @@ build
 .pytest_cache
 __pycache__
 .cachedir
+_build/
+auto_examples/
+generated/
+modules/
 
 # ignore example results
 *results_*
