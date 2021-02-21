@@ -25,11 +25,13 @@ in brain from resting-state or task fMRI data (BOLD signal). It relies on a
 Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
 neurovascular coupling from the the neural activity.
 
+This package was used to produce the results of the `Cherkaoui et al., submitted to NeuroImage 2021, paper <https://hal.archives-ouvertes.fr/hal-03005584/file/paper.pdf>`_
 
 Important links
 ===============
 
 - Official source code repo: https://github.com/hcherkaoui/hemolearn
+- Official documentation website: https://hcherkaoui.github.io/hemolearn/
 
 Dependencies
 ============
@@ -62,6 +64,13 @@ To run all the tests, run the following command from the hemolearn directory::
 
     pytest
 
+Documentation
+=============
+
+In order to build the documentation, run the following command from the doc/ directory::
+
+    make html
+
 Development
 ===========
 
@@ -73,8 +82,5 @@ GIT
 
 You can check the latest sources with the command::
 
-    git clone git://github.com/hcherkaoui/hemolearn
+    git clone https://github.com/hcherkaoui/hemolearn.git
 
-or if you have write privileges::
-
-    git clone git@github.com:hcherkaoui/hemolearn
