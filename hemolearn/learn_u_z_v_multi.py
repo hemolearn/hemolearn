@@ -357,6 +357,9 @@ def learn_u_z_v_multi(
             u_k_init = X[:, idx_start:idx_stop].dot(v_hat[0, :])
             u_hat[k, :] = _prox_l1_simplex(u_k_init, eta=10.0)
 
+    elif u_init_type.shape == (n_atoms, n_voxels):
+        u_hat = u_init_type
+
     else:
         raise ValueError("u_init_type should be in ['ica', "
                          "'gaussian_noise', 'patch'],"
