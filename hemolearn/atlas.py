@@ -7,6 +7,10 @@ import numba
 from nilearn import image, datasets
 
 
+valid_scales = ['scale007', 'scale012', 'scale036', 'scale064', 'scale122',
+                'scale197', 'scale325', 'scale444']
+
+
 @numba.jit((numba.int64, numba.int64[:, :]), nopython=True, cache=True,
            fastmath=True)
 def get_indices_from_roi(m, rois_idx):  # pragma: no cover
@@ -136,18 +140,17 @@ def fetch_atlas_basc_2015(n_scales='scale007'):
     Parameters
     ----------
     hrf_atlas: str, BASC dataset name possible values are: 'scale007',
-        'scale012', 'scale036', 'scale064', 'scale122'
+        'scale012', 'scale036', 'scale064', 'scale122', 'scale197', 'scale325',
+        'scale444'
 
     Return
     ------
     mask_full_brain : Nifti Image, full mask brain
     atlas_rois : Nifti Image, ROIs atlas
     """
-    if n_scales not in ['scale007', 'scale012', 'scale036', 'scale064',
-                        'scale122']:
-        raise ValueError("n_scales should be in ['scale007', 'scale012', "
-                         "'scale036', 'scale064', 'scale122'], "
-                         "got '{}'".format(n_scales))
+    if n_scales not in valid_scales:
+        raise ValueError(f"n_scales should be in {valid_scales}, "
+                         f"got '{n_scales}'")
 
     basc_dataset = datasets.fetch_atlas_basc_multiscale_2015(version='sym')
     atlas_rois_fname = basc_dataset[n_scales]
