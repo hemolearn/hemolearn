@@ -17,7 +17,6 @@ fMRI data.
 # License: BSD (3-clause)
 
 import os
-import subprocess
 import time
 import shutil
 import pickle
@@ -26,16 +25,15 @@ import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data
 from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
-from hemolearn.utils import get_unique_dirname
-from hemolearn.plotting import plotting_obj_values
 
 
-dirname = get_unique_dirname("results_slrda_simu_#")
+# %%
+
+dirname = 'plots'
 if not os.path.exists(dirname):
     os.makedirs(dirname)
 
-print("archiving '{0}' under '{1}'".format(__file__, dirname))
-shutil.copyfile(__file__, os.path.join(dirname, __file__))
+# %%
 
 TR = 1.0
 n_voxels, n_atoms, n_times_valid, n_times_atom, snr = 100, 2, 200, 30, 1.0
@@ -43,6 +41,8 @@ noisy_X, _, u, v, z, hrf_rois = simulated_data(n_voxels=n_voxels,
                                                n_times_valid=n_times_valid,
                                                n_times_atom=n_times_atom,
                                                snr=snr)
+
+# %%
 
 t0 = time.time()
 results = multi_runs_learn_u_z_v_multi(
@@ -56,6 +56,8 @@ results = multi_runs_learn_u_z_v_multi(
 z_hat, _, u_hat, a_hat, v_hat, v_init, lbda, pobj, times = results
 delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
 print("Fitting done in {}".format(delta_t))
+
+# %%
 
 u_0_true = u[0, :]
 u_1_true = u[1, :]
@@ -77,11 +79,7 @@ if prod_scal_0 < prod_scal_1:
     u_0_hat = u_1_hat
     u_1_hat = tmp
 
-res = dict(pobj=pobj, times=times, u_hat=u_hat, v_hat=v_hat, z_hat=z_hat)
-filename = os.path.join(dirname, "results.pkl")
-print("Pickling results under '{0}'".format(filename))
-with open(filename, "wb") as pfile:
-    pickle.dump(res, pfile)
+# %%
 
 # z
 plt.figure("Temporal atoms", figsize=(12, 5))
@@ -119,12 +117,12 @@ plt.xlabel("Time [time-frames]", fontsize=20)
 plt.legend(ncol=2, loc='lower center', fontsize=17, framealpha=0.3)
 plt.title("Second atom", fontsize=20)
 plt.tight_layout()
-filename = "z.pdf"
+filename = "z.png"
 filename = os.path.join(dirname, filename)
 plt.savefig(filename, dpi=150)
-subprocess.call("pdfcrop {}".format(filename), shell=True)
-os.rename(filename.split('.')[0]+'-crop.pdf', filename)
 print("Saving plot under '{0}'".format(filename))
+
+# %%
 
 # u
 fig, axes = plt.subplots(nrows=1, ncols=4)
@@ -148,12 +146,7 @@ fig.subplots_adjust(bottom=0.1, top=0.5, left=0.1, right=0.8,
 cbar_ax = fig.add_axes([0.83, 0.2, 0.02, 0.2])
 cbar = fig.colorbar(l_im[amax_u], cax=cbar_ax)
 cbar.set_ticks(np.linspace(0.0, max_u, 3))
-filename = "u.pdf"
+filename = "u.png"
 filename = os.path.join(dirname, filename)
 plt.savefig(filename, dpi=150)
-subprocess.call("pdfcrop {}".format(filename), shell=True)
-os.rename(filename.split('.')[0]+'-crop.pdf', filename)
 print("Saving plot under '{0}'".format(filename))
-
-# pobj
-plotting_obj_values(times, pobj, plot_dir=dirname, verbose=True)
