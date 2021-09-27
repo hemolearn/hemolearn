@@ -10,9 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sphinx_bootstrap_theme
 
 
 # -- Project information -----------------------------------------------------
@@ -39,7 +37,11 @@ extensions = [
     'sphinx.ext.intersphinx',
     'numpydoc',
     'sphinx_gallery.gen_gallery',
+    'sphinxcontrib.bibtex',
 ]
+
+# list the bibtex files to add
+bibtex_bibfiles = ['references.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -58,6 +60,8 @@ autosummary_generate = True
 # a list of builtin themes.
 #
 html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+
 
 html_theme_options = {
     'navbar_sidebarrel': False,
@@ -67,14 +71,18 @@ html_theme_options = {
     'navbar_links': [
         ("Examples", "auto_examples/index"),
         ("API", "api"),
-        ("GitHub", "https://github.com/hcherkaoui/hemolearn", True)
+        ("Bibliography", "bibliography"),
+        ("GitHub", "https://github.com/hemolearn", True)
     ],
-    'bootswatch_theme': "united"
+    'bootswatch_theme': "cosmo",
 }
+
+html_logo = "_static/logo_hemolearn.png"
 
 sphinx_gallery_conf = {
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
+    'ignore_pattern': 'func_code\.py',
 }
 
 intersphinx_mapping = {
@@ -82,6 +90,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/devdocs', None),
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org', None),
+    'nilearn': ('https://nilearn.github.io/', None),
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
