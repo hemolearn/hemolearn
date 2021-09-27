@@ -1,0 +1,6 @@
+hemolearn.plotting.plotting\_temporal\_comp
+===========================================
+
+.. currentmodule:: hemolearn.plotting
+
+.. autofunction:: plotting_temporal_comp

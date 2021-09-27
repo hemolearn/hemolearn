@@ -11,8 +11,7 @@ HemoLearn usage examples
 
     If you want to run the examples, make sure you execute them in a directory
     where you have write permissions, or you copy the examples into such a
-    directory. If you install nistats manually, make sure you have followed
-    :ref:`the instructions <installation>`.
+    directory.
 
 
 .. contents:: **Contents**
@@ -31,7 +30,8 @@ HemoLearn usage examples
 Simulated fMRI data examples
 -----------------------------
 
-Examples on synthetic data.
+A simple example on synthetic data to illustrate the usgae of the ``multi_runs_learn_u_z_v_multi`` function.
+
 
 
 .. raw:: html
@@ -40,10 +40,10 @@ Examples on synthetic data.
 
 .. only:: html
 
- .. figure:: /auto_examples/01_simulated_fmri_data/images/thumb/sphx_glr_slrda_simulated_bold_thumb.png
+ .. figure:: /auto_examples/01_simulated_fmri_data/images/thumb/sphx_glr_plot_simulated_bold_thumb.png
      :alt: Synthetic fMRI data example
 
-     :ref:`sphx_glr_auto_examples_01_simulated_fmri_data_slrda_simulated_bold.py`
+     :ref:`sphx_glr_auto_examples_01_simulated_fmri_data_plot_simulated_bold.py`
 
 .. raw:: html
 
@@ -53,7 +53,7 @@ Examples on synthetic data.
 .. toctree::
    :hidden:
 
-   /auto_examples/01_simulated_fmri_data/slrda_simulated_bold
+   /auto_examples/01_simulated_fmri_data/plot_simulated_bold
 .. raw:: html
 
     <div class="sphx-glr-clear"></div>
@@ -65,7 +65,7 @@ Examples on synthetic data.
 Real fMRI data examples
 -----------------------
 
-Examples on real resting-state fMRI data.
+A simple example on real resting-state fMRI data to illustration the usage of ``SLRDA``. Note that the ADHD does not provide a short enough TR value.
 
 
 .. raw:: html
@@ -74,10 +74,10 @@ Examples on real resting-state fMRI data.
 
 .. only:: html
 
- .. figure:: /auto_examples/02_real_fmri_data/images/thumb/sphx_glr_slrda_adhd_rest_thumb.png
+ .. figure:: /auto_examples/02_real_fmri_data/images/thumb/sphx_glr_plot_adhd_rest_thumb.png
      :alt: Real fMRI data example
 
-     :ref:`sphx_glr_auto_examples_02_real_fmri_data_slrda_adhd_rest.py`
+     :ref:`sphx_glr_auto_examples_02_real_fmri_data_plot_adhd_rest.py`
 
 .. raw:: html
 
@@ -87,7 +87,7 @@ Examples on real resting-state fMRI data.
 .. toctree::
    :hidden:
 
-   /auto_examples/02_real_fmri_data/slrda_adhd_rest
+   /auto_examples/02_real_fmri_data/plot_adhd_rest
 .. raw:: html
 
     <div class="sphx-glr-clear"></div>
@@ -109,12 +109,12 @@ Examples reproduces the results of `Cherkaoui et al., EUSIPCO 2019, paper <https
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Example to recover the different neural temporal activities, the associated functional networks...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Example script with invalid Python syntax ">
 
 .. only:: html
 
  .. figure:: /auto_examples/03_eusipco_2019/images/thumb/sphx_glr_single_subject_adhd_thumb.png
-     :alt: EUSIPCO 2019 CHerkaoui et a.l. experimental reproduction
+     :alt: SyntaxError
 
      :ref:`sphx_glr_auto_examples_03_eusipco_2019_single_subject_adhd.py`
 

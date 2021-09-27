@@ -23,9 +23,13 @@ from hemolearn.utils import get_unique_dirname
 from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
 
 
+# %%
+
 dirname = get_unique_dirname("results_slrda_simu_curve_#")
 if not os.path.exists(dirname):
     os.makedirs(dirname)
+
+# %%
 
 mean_min_Dz_errs, std_min_Dz_errs = [], []
 mean_min_u_errs, std_min_u_errs = [], []
@@ -121,12 +125,16 @@ for snr in l_snr:
                                     snr, mean_min_Dz_err, std_min_Dz_err,
                                     mean_min_u_err, std_min_u_err, delta_t))
 
+# %%
+
 res = dict(mean_min_Dz_errs=mean_min_Dz_errs, std_min_Dz_errs=std_min_Dz_errs,
            mean_min_u_errs=mean_min_u_errs, std_min_u_errs=std_min_u_errs)
 filename = os.path.join(dirname, "results.pkl")
 print("Pickling results under '{0}'".format(filename))
 with open(filename, "wb") as pfile:
     pickle.dump(res, pfile)
+
+# %%
 
 snr = np.array(l_snr)
 
@@ -144,6 +152,8 @@ filename = os.path.join(dirname, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
 
+# %%
+
 fig, ax2 = plt.subplots(figsize=(7, 4))
 ax2.set_xlabel("SNR [dB]", fontsize=18)
 ax2.set_ylabel("L2 error", fontsize=18)
@@ -158,6 +168,7 @@ filename = os.path.join(dirname, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
 
+# %%
 
 fig, ax1 = plt.subplots(figsize=(8, 4))
 ax1.set_xlabel("SNR [dB]", fontsize=18)

@@ -1,0 +1,30 @@
+hemolearn.optim
+===============
+
+.. automodule:: hemolearn.optim
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      cdclinmodel
+      proximal_descent
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

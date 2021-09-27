@@ -38,7 +38,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="index.html">
+        <a class="navbar-brand" href="index.html"><span><img src="_static/logo_hemolearn.png"></span>
           hemolearn</a>
         <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
@@ -48,7 +48,8 @@
             
                 <li><a href="auto_examples/index.html">Examples</a></li>
                 <li><a href="#">API</a></li>
-                <li><a href="https://github.com/hcherkaoui/hemolearn">GitHub</a></li>
+                <li><a href="bibliography.html">Bibliography</a></li>
+                <li><a href="https://github.com/hemolearn">GitHub</a></li>
             
             
               <li class="dropdown globaltoc-container">
@@ -89,36 +90,111 @@
       
   <div class="section" id="api-documentation">
 <span id="id1"></span><h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
-<p class="rubric">Modules</p>
+<div class="section" id="sparse-low-rank-decomposition-analysis">
+<h2>Sparse Low Rank Decomposition Analysis<a class="headerlink" href="#sparse-low-rank-decomposition-analysis" title="Permalink to this headline">¶</a></h2>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn</span></code></p></td>
-<td><p>HemoLearn is a Python module to estimate the Haemodynamic Response Function (HRF) in brain from resting-state or task fMRI data (BOLD signal).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/hemolearn.atlas.html#module-hemolearn.atlas" title="hemolearn.atlas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.atlas</span></code></a></p></td>
-<td><p>Atlas module, to define the HRF ROIs.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/hemolearn.simulated_data.html#module-hemolearn.simulated_data" title="hemolearn.simulated_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.simulated_data</span></code></a></p></td>
-<td><p>Simulated data module: provide function to generate simulated fMRI data</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/hemolearn.convolution.html#module-hemolearn.convolution" title="hemolearn.convolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.convolution</span></code></a></p></td>
-<td><p>Convolution module: gathers functions that define a convolutional operator.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/hemolearn.hrf_model.html#module-hemolearn.hrf_model" title="hemolearn.hrf_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.hrf_model</span></code></a></p></td>
-<td><p>HRF model module: Hemodynamic Responses Function (HRF) models</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/hemolearn.learn_u_z_v_multi.html#module-hemolearn.learn_u_z_v_multi" title="hemolearn.learn_u_z_v_multi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.learn_u_z_v_multi</span></code></a></p></td>
-<td><p>Main module: main decomposition function</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/hemolearn.plotting.html#module-hemolearn.plotting" title="hemolearn.plotting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting</span></code></a></p></td>
-<td><p>Plotting utilities.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.SLRDA.html#hemolearn.SLRDA" title="hemolearn.SLRDA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.SLRDA</span></code></a>(n_atoms, t_r[, …])</p></td>
+<td><p>Sparse Low-Rank Deconvolution Analysis (SLRDA) is a method to distangle the neural activation and the haemodynamic contributions in the fMRI data (BOLD signal).</p></td>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="vascular-atlas">
+<h2>Vascular atlas<a class="headerlink" href="#vascular-atlas" title="Permalink to this headline">¶</a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.atlas.fetch_atlas_basc_2015.html#hemolearn.atlas.fetch_atlas_basc_2015" title="hemolearn.atlas.fetch_atlas_basc_2015"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.atlas.fetch_atlas_basc_2015</span></code></a>([n_scales])</p></td>
+<td><p>Fetch the BASC brain atlas given its resolution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/hemolearn.atlas.fetch_vascular_atlas.html#hemolearn.atlas.fetch_vascular_atlas" title="hemolearn.atlas.fetch_vascular_atlas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.atlas.fetch_vascular_atlas</span></code></a>([sym, …])</p></td>
+<td><p>Fetch the Havard-Oxford brain atlas given its resolution.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="generating-synthesis-data">
+<h2>Generating synthesis data<a class="headerlink" href="#generating-synthesis-data" title="Permalink to this headline">¶</a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.simulated_data.simulated_data.html#hemolearn.simulated_data.simulated_data" title="hemolearn.simulated_data.simulated_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.simulated_data.simulated_data</span></code></a>([…])</p></td>
+<td><p>Generate simulated BOLD data with its temporal components z and the corresponding maps u.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="convolution-functions">
+<h2>Convolution functions<a class="headerlink" href="#convolution-functions" title="Permalink to this headline">¶</a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.convolution.make_toeplitz.html#hemolearn.convolution.make_toeplitz" title="hemolearn.convolution.make_toeplitz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.convolution.make_toeplitz</span></code></a>(v, …)</p></td>
+<td><p>Make Toeplitz matrix from given kernel to perform valid convolution.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="haemodynamic-response-function-models">
+<h2>Haemodynamic Response Function models<a class="headerlink" href="#haemodynamic-response-function-models" title="Permalink to this headline">¶</a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.hrf_model.hrf_2_basis.html#hemolearn.hrf_model.hrf_2_basis" title="hemolearn.hrf_model.hrf_2_basis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.hrf_model.hrf_2_basis</span></code></a>(t_r, …)</p></td>
+<td><p>Double gamma HRF 2 basis function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/hemolearn.hrf_model.hrf_3_basis.html#hemolearn.hrf_model.hrf_3_basis" title="hemolearn.hrf_model.hrf_3_basis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.hrf_model.hrf_3_basis</span></code></a>(t_r, …)</p></td>
+<td><p>Double gamma HRF 3 basis function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.hrf_model.scaled_hrf.html#hemolearn.hrf_model.scaled_hrf" title="hemolearn.hrf_model.scaled_hrf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.hrf_model.scaled_hrf</span></code></a>(delta, t_r[, …])</p></td>
+<td><p>Double gamma scaled HRF.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="plotting-functions">
+<h2>Plotting functions<a class="headerlink" href="#plotting-functions" title="Permalink to this headline">¶</a></h2>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.plotting.plotting_hrf.html#hemolearn.plotting.plotting_hrf" title="hemolearn.plotting.plotting_hrf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting.plotting_hrf</span></code></a>(v, t_r[, …])</p></td>
+<td><p>Plot, and save as pdf, each HRF for each ROIs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/hemolearn.plotting.plotting_hrf_stats.html#hemolearn.plotting.plotting_hrf_stats" title="hemolearn.plotting.plotting_hrf_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting.plotting_hrf_stats</span></code></a>(v, t_r)</p></td>
+<td><p>Plot, and save as pdf, each stats HRF for each ROIs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.plotting.plotting_obj_values.html#hemolearn.plotting.plotting_obj_values" title="hemolearn.plotting.plotting_obj_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting.plotting_obj_values</span></code></a>(…)</p></td>
+<td><p>Plot, and save as pdf, the objective function values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/hemolearn.plotting.plotting_spatial_comp.html#hemolearn.plotting.plotting_spatial_comp" title="hemolearn.plotting.plotting_spatial_comp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting.plotting_spatial_comp</span></code></a>(u, …)</p></td>
+<td><p>Plot, and save as pdf, each spatial estimated component.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/hemolearn.plotting.plotting_temporal_comp.html#hemolearn.plotting.plotting_temporal_comp" title="hemolearn.plotting.plotting_temporal_comp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hemolearn.plotting.plotting_temporal_comp</span></code></a>(z, …)</p></td>
+<td><p>Plot, and save as pdf, each temporal estimated component.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 
 

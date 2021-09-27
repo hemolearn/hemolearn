@@ -1,0 +1,37 @@
+hemolearn.utils
+===============
+
+.. automodule:: hemolearn.utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      add_gaussian_noise
+      fmri_preprocess
+      fwhm
+      get_nifti_ext
+      get_unique_dirname
+      lipschitz_est
+      profile_me
+      sort_atoms_by_explained_variances
+      tp
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

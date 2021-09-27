@@ -1,0 +1,6 @@
+hemolearn.plotting.plotting\_obj\_values
+========================================
+
+.. currentmodule:: hemolearn.plotting
+
+.. autofunction:: plotting_obj_values

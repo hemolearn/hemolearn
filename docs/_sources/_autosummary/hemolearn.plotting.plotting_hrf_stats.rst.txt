@@ -1,0 +1,6 @@
+hemolearn.plotting.plotting\_hrf\_stats
+=======================================
+
+.. currentmodule:: hemolearn.plotting
+
+.. autofunction:: plotting_hrf_stats

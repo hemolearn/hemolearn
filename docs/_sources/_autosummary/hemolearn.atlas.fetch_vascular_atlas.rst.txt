@@ -1,0 +1,6 @@
+hemolearn.atlas.fetch\_vascular\_atlas
+======================================
+
+.. currentmodule:: hemolearn.atlas
+
+.. autofunction:: fetch_vascular_atlas

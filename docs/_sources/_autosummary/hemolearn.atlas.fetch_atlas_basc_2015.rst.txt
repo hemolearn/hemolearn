@@ -1,0 +1,6 @@
+hemolearn.atlas.fetch\_atlas\_basc\_2015
+========================================
+
+.. currentmodule:: hemolearn.atlas
+
+.. autofunction:: fetch_atlas_basc_2015

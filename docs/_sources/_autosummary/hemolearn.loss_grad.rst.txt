@@ -1,0 +1,30 @@
+hemolearn.loss\_grad
+====================
+
+.. automodule:: hemolearn.loss_grad
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      construct_X_hat_from_H
+      construct_X_hat_from_v
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

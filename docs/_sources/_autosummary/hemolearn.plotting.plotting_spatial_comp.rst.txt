@@ -1,0 +1,6 @@
+hemolearn.plotting.plotting\_spatial\_comp
+==========================================
+
+.. currentmodule:: hemolearn.plotting
+
+.. autofunction:: plotting_spatial_comp
