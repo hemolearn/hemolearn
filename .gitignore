@@ -9,20 +9,22 @@
 *.profile
 
 # coverage
-.coverage*
+.coverage
 
 # ignore specific usual dir
 dist/
-hemolearn.egg-info
-.DS_Store
-.cache
-__cache__
-build
-.pytest_cache
-__pycache__
-.cachedir
+docs/
+hemolearn.egg-info/
+.DS_Store/
+.cache/
+__cache__/
+build/
+.pytest_cache/
+__pycache__/
+.cachedir/
 _build/
 auto_examples/
+_autosummary/
 generated/
 modules/
 
