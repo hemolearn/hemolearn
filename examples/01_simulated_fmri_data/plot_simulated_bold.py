@@ -12,14 +12,11 @@ fMRI data.
 
 """
 
-
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
 import os
 import time
-import shutil
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
