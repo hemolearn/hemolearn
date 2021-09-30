@@ -1,14 +1,9 @@
 .. -*- mode: rst -*-
 
-|Python36|_ |Travis|_ |Codecov|_
+|Travis|_ |Codecov|_
 
-
-.. |Python36| image:: https://img.shields.io/badge/python-3.6-blue.svg
-.. _Python36: https://badge.fury.io/py/scikit-learn
-
-.. |Travis| image:: https://travis-ci.com/hemolearn/hemolearn.svg?branch=master
-.. _Travis: https://travis-ci.com/hemolearn/hemolearn
-
+.. |Travis| image:: https://app.travis-ci.com/hemolearn/hemolearn.svg?branch=master
+.. _Travis: https://app.travis-ci.com/hemolearn/hemolearn
 
 .. |Codecov| image:: https://codecov.io/gh/hemolearn/hemolearn/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/hemolearn/hemolearn
