@@ -74,7 +74,7 @@ def _update_v(a0, constants):
                          "got {}".format(hrf_model))
 
 
-def _update_u(u0, constants):
+def _update_u(u0, constants):  # pragma: no cover
     """ Update the spatial maps.
 
     Parameters
@@ -100,7 +100,7 @@ def _update_u(u0, constants):
     return u_hat
 
 
-def _update_z(z0, constants):
+def _update_z(z0, constants):  # pragma: no cover
     """ Update the temporal components.
 
     Parameters
@@ -226,7 +226,7 @@ def learn_u_z_v_multi(
         initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
-        'l1-positive-simplex']
+        'l1-positive-simplex', 'positive']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to
@@ -387,8 +387,8 @@ def learn_u_z_v_multi(
             return _prox_positive(u_k, step_size=1.0)
         prox_u_func = _prox
     else:
-        raise ValueError("prox_u should be in ['l2-positive-ball', "
-                         "'l1-positive-simplex'], got {}".format(prox_u))
+        raise ValueError(f"prox_u should be in ['l2-positive-ball', "
+                         f"'l1-positive-simplex', 'positive'], got {prox_u}")
 
     constants['prox_z'] = prox_z
     constants['lbda'] = lbda
@@ -593,7 +593,7 @@ def multi_runs_learn_u_z_v_multi(
         initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
-        'l1-positive-simplex']
+        'l1-positive-simplex', 'positive']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     get_obj : int, the level of cost-function saving, 0 to not compute it, 1 to

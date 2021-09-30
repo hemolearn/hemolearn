@@ -81,7 +81,7 @@ class SLRDA(TransformerMixin):
         initialized to zero
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
-        'l1-positive-simplex']
+        'l1-positive-simplex', 'positive']
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     random_state : None, int, random-instance, (default=None), random-instance

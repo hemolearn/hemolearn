@@ -259,7 +259,7 @@ def add_gaussian_noise(signal, snr, random_state=None):
     return noisy_signal, noise
 
 
-def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
+def sort_atoms_by_explained_variances(u, z, v, hrf_rois):  # pragma: no cover
     """ Sorted the temporal the spatial maps and the associated activation by
     explained variance.
 
@@ -278,7 +278,7 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):
     variances : array, shape (n_atoms, ) the order variances for each
         components
     """
-    rois_idx, rois_label, n_hrf_rois = split_atlas(hrf_rois)
+    rois_idx, _, n_hrf_rois = split_atlas(hrf_rois)
     n_atoms, n_voxels = u.shape
     _, n_times_valid = z.shape
     n_hrf_rois, n_times_atom = v.shape
