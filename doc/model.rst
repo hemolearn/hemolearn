@@ -21,7 +21,7 @@ Mathematically, if we have :math:`P` fMRI time series of length
 		\enspace .
 	\end{align}
 
-We aims to distangle the neurovascular coupling modelled by
+We aim to distangle the neurovascular coupling modelled by
 :math:`\sum_{m=1}^{M} \boldsymbol{\Theta}_m ^\top \boldsymbol{v}_{\delta_m}`
 from the neural activation signals modelled by
 :math:`\sum_{k=1}^{K} \boldsymbol{u_k}^\top \boldsymbol{z_k}` by minimizing
@@ -36,6 +36,6 @@ the following cost-function:
 		\end{split}
 	\end{equation}
 
-With :math:`\lambda` the temporal regularization parameter, :math:`\eta` the
+With :math:`\lambda` being the temporal regularization parameter, :math:`\eta` the
 spatial sparcity parameter, :math:`K` the number of neural components and
 :math:`M` the number of vascular regions considered.

@@ -15,15 +15,16 @@
 Estimation of the Haemodnyamic Response Function from fMRI data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**HemoLearn** is a Python module to estimate the Haemodynamic Response Function (HRF) in brain from resting-state or task fMRI data (BOLD signal). It relies on a Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the neurovascular coupling from the the neural activity.
+**HemoLearn** is a Python module offering a new algorithm that aims to fit a
+rich multivariate decomposition of the BOLD data using a semi-blind
+deconvolution and low-rank sparse decomposition. The model distinguishes two
+major parts in the BOLD signal: the neurovascular coupling and the neural
+activity signal.
 
-|Python36|_ |Travis|_ |Codecov|_
+|Travis|_ |Codecov|_
 
-.. |Python36| image:: https://img.shields.io/badge/python-3.6-blue.svg
-.. _Python36: https://badge.fury.io/py/scikit-learn
-
-.. |Travis| image:: https://travis-ci.com/hemolearn/hemolearn.svg?branch=master
-.. _Travis: https://travis-ci.com/hemolearn/hemolearn
+.. |Travis| image:: https://app.travis-ci.com/hemolearn/hemolearn.svg?branch=master
+.. _Travis: https://app.travis-ci.com/hemolearn/hemolearn
 
 .. |Codecov| image:: https://codecov.io/gh/hemolearn/hemolearn/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/hemolearn/hemolearn
@@ -32,7 +33,7 @@ Estimation of the Haemodnyamic Response Function from fMRI data
 Installation
 ~~~~~~~~~~~~
 
-In order to perform the installation, run the following command from the hemolearn directory (from `GitHub repository <https://github.com/hemolearn/hemolearn>`_ )::
+In order to perform the installation, run the following command from the hemolearn directory (obtained from `GitHub repository <https://github.com/hemolearn/hemolearn>`_ )::
 
     python3 setup.py install --user
 
@@ -48,6 +49,9 @@ Contents
    api
    bibliography
 
+
+Navigate
+~~~~~~~~
 
 * :ref:`genindex`
 * :ref:`search`
