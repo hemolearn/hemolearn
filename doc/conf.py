@@ -20,8 +20,13 @@ copyright = '2021, Hamza Cherkaoui'
 author = 'Hamza Cherkaoui'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.0'
+from hemolearn.info import __version__  # noqa
+release = __version__
 
+source_suffix = '.rst'
+
+# The master toctree document.
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
@@ -29,16 +34,26 @@ release = '0.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # extension to pull docstrings from modules to document
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    # to generate automatic links to the documentation of
-    # objects in other projects
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'numpydoc',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.bibtex',
+    'sphinx.ext.mathjax',
+    'numpydoc',
 ]
+
+# The name of the Pygments (syntax highlighting) style to use.
+# pygments_style = 'sphinx'
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = False
+
+# generate autosummary even if no references
+autosummary_generate = True
+
+numpydoc_show_class_members = False
 
 # list the bibtex files to add
 bibtex_bibfiles = ['references.bib']
@@ -51,9 +66,6 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# generate autosummary even if no references
-autosummary_generate = True
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -62,13 +74,13 @@ autosummary_generate = True
 html_theme = 'bootstrap'
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
-
 html_theme_options = {
     'navbar_sidebarrel': False,
     'navbar_pagenav': False,
     'source_link_position': "",
     'navbar_class': "navbar navbar-inverse",
     'navbar_links': [
+        ("Model", "model"),
         ("Examples", "auto_examples/index"),
         ("API", "api"),
         ("Bibliography", "bibliography"),
@@ -91,6 +103,7 @@ intersphinx_mapping = {
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org', None),
     'nilearn': ('https://nilearn.github.io/', None),
+    'hemolearn': ('https://hemolearn.github.io/', None),
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

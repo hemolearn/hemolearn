@@ -3,6 +3,7 @@
 API Documentation
 =================
 
+.. currentmodule:: hemolearn
 
 Sparse Low Rank Decomposition Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,6 +11,8 @@ Sparse Low Rank Decomposition Analysis
    :toctree: _autosummary
 
    hemolearn.SLRDA
+   hemolearn.learn_u_z_v_multi.learn_u_z_v_multi
+   hemolearn.learn_u_z_v_multi.multi_runs_learn_u_z_v_multi
 
 Vascular atlas
 ~~~~~~~~~~~~~~
@@ -53,3 +56,11 @@ Plotting functions
       hemolearn.plotting.plotting_obj_values
       hemolearn.plotting.plotting_spatial_comp
       hemolearn.plotting.plotting_temporal_comp
+
+Utilities functions
+~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+      hemolearn.utils.fmri_preprocess
+      hemolearn.utils.sort_atoms_by_explained_variances

@@ -2,10 +2,11 @@
 
 .. _general_bibliography:
 
-General bibliography
-====================
+Cite our work
+=============
 
-This package was used to produce the results of the following papers. You can download the bib file :download:`here <./references.bib>`.
+If you use this code in your project, please consider citing our work. You can download the bib file :download:`here <./references.bib>`.
 
 .. bibliography:: ./references.bib
    :all:
+   :list: enumerated
