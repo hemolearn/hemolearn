@@ -27,14 +27,13 @@ from hemolearn.plotting import (plot_spatial_maps, plot_temporal_activations,
 
 t0_total = time.time()
 
-# %%
 ###############################################################################
 # Create plotting directory
+# -------------------------
 plot_dir = 'plots'
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 
-# %%
 ###############################################################################
 # Fetch fMRI subjects
 seed = 0
@@ -44,9 +43,9 @@ adhd_dataset = datasets.fetch_adhd(n_subjects=n_subjects)
 func_fnames = adhd_dataset.func[:n_subjects]
 confound_fnames = adhd_dataset.confounds[:n_subjects]
 
-# %%
 ###############################################################################
 # Distangle the neurovascular coupling from the neural activation
+# ---------------------------------------------------------------
 slrda = SLRDA(n_atoms=10, t_r=TR, n_times_atom=20, lbda=0.75, max_iter=30,
               eps=1.0e-3, shared_spatial_maps=True, random_state=seed,
               verbose=2)
@@ -56,9 +55,9 @@ slrda.fit(func_fnames, confound_fnames)
 delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
 print(f"Fitting done in {delta_t}")
 
-# %%
 ###############################################################################
 # Plot the spatial maps
+# ---------------------
 if slrda.shared_spatial_maps or n_subjects == 1:
     filename = os.path.join(plot_dir, f'spatial_maps.png')
     plot_spatial_maps(slrda.u_hat_img, filename=filename,
@@ -69,9 +68,9 @@ else:
         plot_spatial_maps(slrda.u_hat_img[n], filename=filename,
                           perc_voxels_to_retain='10%', verbose=True)
 
-# %%
 ###############################################################################
 # Plot the temporal activations
+# -----------------------------
 if n_subjects == 1:
     filename = os.path.join(plot_dir, f'activations.png')
     plot_temporal_activations(slrda.z_hat, TR, filename=filename, verbose=True)
@@ -83,6 +82,7 @@ else:
 
 ###############################################################################
 # Plot vascular maps
+# ------------------
 if n_subjects == 1:
     filename = os.path.join(plot_dir, f'vascular_maps.png')
     plot_vascular_map(slrda.a_hat_img, display_mode='z',
@@ -95,9 +95,9 @@ else:
                           cut_coords=np.linspace(-30, 60, 5),
                           filename=filename, verbose=True)
 
-# %%
 ###############################################################################
 # Display the runtime of the script
+# ---------------------------------
 delta_t = time.gmtime(time.time() - t0_total)
 delta_t = time.strftime("%H h %M min %S s", delta_t)
 print(f"Script runs in {delta_t}")

@@ -23,16 +23,16 @@ from hemolearn.hrf_model import scaled_hrf, hrf_3_basis, hrf_2_basis
 
 t0_total = time.time()
 
-# %%
 ###############################################################################
 # Create plotting directory
+# -------------------------
 plot_dir = 'plots'
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 
-# %%
 ###############################################################################
 # Construct the HRFs
+# ------------------
 TR = 0.5
 n_times_atom = 60
 
@@ -45,9 +45,9 @@ hrf_2_basis_ = np.array([1.0, 0.5]).dot(basis_2)
 delta = 1.0
 scaled_hrf_ = scaled_hrf(delta, TR, n_times_atom)
 
-# %%
 ###############################################################################
 # Plot the HRFs
+# -------------
 plt.figure("HRF models", figsize=(6, 3))
 plt.subplot(121)
 plt.plot(hrf_3_basis_.T, lw=2.0, label="3-basis HRF")
@@ -61,9 +61,9 @@ filename = os.path.join(plot_dir, 'hrf_model.png')
 print(f"Saving plot under '{filename}'")
 plt.savefig(filename, dpi=200)
 
-# %%
 ###############################################################################
 # Display the runtime of the script
+# ---------------------------------
 delta_t = time.gmtime(time.time() - t0_total)
 delta_t = time.strftime("%H h %M min %S s", delta_t)
 print(f"Script runs in {delta_t}")

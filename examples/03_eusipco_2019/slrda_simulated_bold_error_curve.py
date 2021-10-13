@@ -14,24 +14,26 @@ Example to obtain the estimation error of each parameter of the model.
 
 import os
 import time
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data
-from hemolearn.utils import get_unique_dirname
 from hemolearn.deconvolution import \
                                 multi_runs_blind_deconvolution_single_subject
 
 
-# %%
+t0_total = time.time()
 
-dirname = get_unique_dirname("results_slrda_simu_curve_#")
-if not os.path.exists(dirname):
-    os.makedirs(dirname)
+###############################################################################
+# Create plotting directory
+# -------------------------
+plot_dir = 'plots'
+if not os.path.exists(plot_dir):
+    os.makedirs(plot_dir)
 
-# %%
-
+###############################################################################
+# Collect the estimation errors
+# -----------------------------
 mean_min_Dz_errs, std_min_Dz_errs = [], []
 mean_min_u_errs, std_min_u_errs = [], []
 nb_trial = 100
@@ -126,17 +128,9 @@ for snr in l_snr:
                                     snr, mean_min_Dz_err, std_min_Dz_err,
                                     mean_min_u_err, std_min_u_err, delta_t))
 
-# %%
-
-res = dict(mean_min_Dz_errs=mean_min_Dz_errs, std_min_Dz_errs=std_min_Dz_errs,
-           mean_min_u_errs=mean_min_u_errs, std_min_u_errs=std_min_u_errs)
-filename = os.path.join(dirname, "results.pkl")
-print("Pickling results under '{0}'".format(filename))
-with open(filename, "wb") as pfile:
-    pickle.dump(res, pfile)
-
-# %%
-
+###############################################################################
+# Plot activation errors
+# ----------------------
 snr = np.array(l_snr)
 
 fig, ax1 = plt.subplots(figsize=(7, 4))
@@ -148,13 +142,14 @@ plt.xticks(snr)
 ax1.tick_params(labelsize=15)
 plt.grid()
 plt.tight_layout()
-filename = 'z_error.pdf'
-filename = os.path.join(dirname, filename)
+filename = 'activations_errors.pdf'
+filename = os.path.join(plot_dir, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
 
-# %%
-
+###############################################################################
+# Plot spatial maps errors
+# ------------------------
 fig, ax2 = plt.subplots(figsize=(7, 4))
 ax2.set_xlabel("SNR [dB]", fontsize=18)
 ax2.set_ylabel("L2 error", fontsize=18)
@@ -164,13 +159,14 @@ plt.xticks(snr)
 ax2.tick_params(labelsize=15)
 plt.grid()
 plt.tight_layout()
-filename = 'u_error_vs_snr.pdf'
-filename = os.path.join(dirname, filename)
+filename = 'spatial_maps_snr.pdf'
+filename = os.path.join(plot_dir, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
 
-# %%
-
+###############################################################################
+# Plot activation derivatives errors
+# ----------------------------------
 fig, ax1 = plt.subplots(figsize=(8, 4))
 ax1.set_xlabel("SNR [dB]", fontsize=18)
 ax1.set_ylabel("Dz l2 error", fontsize=18)
@@ -179,7 +175,14 @@ plt.errorbar(l_snr, mean_min_Dz_errs, yerr=std_min_Dz_errs, color='blue',
 plt.xticks(l_snr)
 ax1.tick_params(labelsize=18)
 plt.tight_layout()
-filename = 'z_error.pdf'
-filename = os.path.join(dirname, filename)
+filename = 'activation_derivatives_errors.pdf'
+filename = os.path.join(plot_dir, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
+
+###############################################################################
+# Display the runtime of the script
+# ---------------------------------
+delta_t = time.gmtime(time.time() - t0_total)
+delta_t = time.strftime("%H h %M min %S s", delta_t)
+print(f"Script runs in {delta_t}")

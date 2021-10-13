@@ -1,4 +1,4 @@
-Simulated fMRI data examples
------------------------------
+Simple functionalities examples
+-------------------------------
 
-A simple example on synthetic data to illustrate the usgae of the ``multi_runs_blind_deconvolution_single_subject`` function.
+A simple example on synthetic data to illustrate basic functions of HemoLearn.
