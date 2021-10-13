@@ -23,8 +23,9 @@ from distutils.version import LooseVersion
 
 __version__ = '0.0.0'
 
-_HEMOLEARN_INSTALL_MSG = "See {0} for installation information.".format(
-                    'https://github.com/hcherkaoui/hemolearn')
+_HEMOLEARN_GITHUB_REPO_URL = 'https://github.com/hemolearn/hemolearn'
+_HEMOLEARN_INSTALL_MSG = (f"See {_HEMOLEARN_GITHUB_REPO_URL} for installation"
+                          f" information.")
 
 # This is a tuple to preserve order, so that dependencies are checked
 #   in some meaningful order (more => less 'core').
@@ -88,9 +89,9 @@ def _import_module_with_version_check(module_name, minimum_version,
     try:
         module = __import__(module_name)
     except ImportError as exc:
-        user_friendly_info = ('Module "{0}" could not be found. {1}').format(
-            module_name,
-            install_info or 'Please install it properly to use HemoLearn.')
+        user_friendly_info = (
+           f"Module '{module_name}' could not be found. "
+           f"{install_info or 'Please install it properly to use HemoLearn.'}")
         exc.args += (user_friendly_info,)
         raise
 
@@ -101,13 +102,9 @@ def _import_module_with_version_check(module_name, minimum_version,
                        LooseVersion(minimum_version))
 
     if version_too_old:
-        message = (
-            'A {module_name} version of at least {minimum_version} '
-            'is required to use HemoLearn. {module_version} was found. '
-            'Please upgrade {module_name}').format(
-                module_name=module_name,
-                minimum_version=minimum_version,
-                module_version=module_version)
+        message = (f"A {module_name} version of at least {minimum_version} "
+                   f"is required to use HemoLearn. {module_version} was found."
+                   f" Please upgrade {module_name}")
 
         raise ImportError(message)
 
