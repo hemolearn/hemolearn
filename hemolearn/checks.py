@@ -83,14 +83,14 @@ def _check_obj_level_1(lobj, ii, max_iter, early_stopping=True,
     # check increasing cost-function
     if raise_on_increase and eps_ < 0.0:
         raise CostFunctionIncreased(
-                           "[{}/{}] Iteration relatively increase "
-                           "global cost-function of "
-                           "{:.3e}".format(ii, max_iter, -eps_))
+                           f"[{ii}/{max_iter}] Iteration relatively increase "
+                           f"global cost-function of "
+                           f"{-eps_:.3e}")
 
     # check early-stopping
     if early_stopping and np.abs(eps_) <= eps:
-        msg = ("[{}/{}] Early-stopping (!) with: "
-               "eps={:.3e}".format(ii, max_iter, eps_))
+        msg = (f"[{ii}/{max_iter}] Early-stopping (!) with: "
+               f"eps={eps_:.3e}")
         raise EarlyStopping(msg)
 
 
@@ -126,28 +126,27 @@ def _check_obj_level_2(lobj, ii, max_iter, early_stopping=True,
     # check increasing cost-function
     if raise_on_increase and eps_z < 0.0:
         raise CostFunctionIncreased(
-                           "[{}/{}] Updating z relatively increase "
-                           "global cost-function of "
-                           "{:.3e}".format(ii + 1, max_iter, -eps_z))
+                           f"[{ii + 1}/{max_iter}] Updating z relatively "
+                           f"increase global cost-function of "
+                           f"{-eps_z:.3e}")
     if raise_on_increase and eps_u < 0.0:
         raise CostFunctionIncreased(
-                           "[{}/{}] Updating u relatively increase "
-                           "global cost-function of "
-                           "{:.3e}".format(ii + 1, max_iter, -eps_u))
+                           f"[{ii + 1}/{max_iter}] Updating u relatively "
+                           f"increase global cost-function of "
+                           f"{-eps_u:.3e}")
     if raise_on_increase and eps_v < 0.0:
         raise CostFunctionIncreased(
-                           "[{}/{}] Updating v relatively increase "
-                           "global cost-function of "
-                           "{:.3e}".format(ii + 1, max_iter, -eps_v))
+                           f"[{ii + 1}/{max_iter}] Updating v relatively "
+                           f"increase global cost-function of "
+                           f"{-eps_v:.3e}")
 
     # check early-stopping
     eps_check = (np.abs(eps_z) <= eps)
     eps_check = eps_check and (np.abs(eps_u) <= eps)
     eps_check = eps_check and (np.abs(eps_v) <= eps)
     if (early_stopping and eps_check):
-        msg = ("[{}/{}] Early-stopping (!) with: z-eps={:.3e}, "
-               "u-eps={:.3e}, v-eps={:.3e}".format(ii + 1, max_iter, eps_z,
-                                                   eps_u, eps_v))
+        msg = (f"[{ii + 1}/{max_iter}] Early-stopping (!) with: "
+               f"z-eps={eps_z:.3e}, u-eps={eps_u:.3e}, v-eps={eps_v:.3e}")
         raise EarlyStopping(msg)
 
 
@@ -212,8 +211,8 @@ def check_random_state(seed):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed
-    raise ValueError('{0} cannot be used to seed a numpy.random.RandomState'
-                     ' instance'.format(seed))
+    raise ValueError(f"{seed} cannot be used to seed a "
+                     f"numpy.random.RandomState instance")
 
 
 def _get_lambda_max(X, u, H, rois_idx):
