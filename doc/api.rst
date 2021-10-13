@@ -51,16 +51,15 @@ Plotting functions
 .. autosummary::
    :toctree: _autosummary
 
-      hemolearn.plotting.plotting_hrf
-      hemolearn.plotting.plotting_hrf_stats
-      hemolearn.plotting.plotting_obj_values
-      hemolearn.plotting.plotting_spatial_comp
-      hemolearn.plotting.plotting_temporal_comp
+      hemolearn.plotting.plot_vascular_map
+      hemolearn.plotting.plot_spatial_maps
+      hemolearn.plotting.plot_temporal_activations
 
 Utilities functions
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
-      hemolearn.utils.fmri_preprocess
-      hemolearn.utils.sort_atoms_by_explained_variances
+      hemolearn.utils.sort_by_expl_var
+      hemolearn.utils.fwhm
+      hemolearn.utils.tp
