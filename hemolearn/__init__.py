@@ -5,31 +5,32 @@ neurovascular coupling from the the neural activity.
 
 The advantages of SLRDA are:
 
-* The estimation of the HRF for each voxels of the brain.
+* The estimation of the HRF for each regions of the given vascular atlas.
 * The decomposition of the neural activity in a set of temporal components and
 its associated spatial map that describe a function network in the brain.
 
 The disadvantages of SLRDA include:
 
-* If the temporal resolution in the fMRI data is too low (TR > 2s) it's likely
+* If the temporal resolution in the fMRI data is too low (TR > 1s) it's likely
 that the analysis will not found major difference between the HRFs. This is due
 to the fact that the common time-to-peak difference between HRFs within the
-same brain varies at maximum of 2 s, if the temporal resolution is greater that
+same brain varies at maximum of 1 s, if the temporal resolution is greater that
 this, no effect will be estimated.
 """
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
 import numpy as np
-import collections
+import pandas as pd
 from joblib import Memory
 from sklearn.base import TransformerMixin
 from sklearn.exceptions import NotFittedError
-from nilearn import input_data
+from nilearn import input_data, image, signal
 
-from .learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
+from .deconvolution import multi_runs_blind_deconvolution_multiple_subjects
 from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015, split_atlas
 from .build_numba import build_numba_functions_of_hemolearn
+from .utils import sort_by_expl_var
 
 
 # call each functions defined with Numba to build the functions
@@ -51,6 +52,8 @@ class SLRDA(TransformerMixin):
     n_times_atom : int, (default=30), number of points on which represent the
         Haemodynamic Response Function (HRF), this leads to the duration of the
         response function, duration = n_times_atom * t_r
+    shared_spatial_maps : bool, whether or not to learn a single set of
+        spatials maps accross subjects.
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
     hrf_atlas : str, func, or None, (default='havard'), atlas type, possible
@@ -82,6 +85,14 @@ class SLRDA(TransformerMixin):
     prox_u : str, (default='l2-positive-ball'), constraint to impose on the
         spatial maps possible choice are ['l2-positive-ball',
         'l1-positive-simplex', 'positive']
+    standardize : bool, (default=False), if standardize is True, the
+        time-series are centered and normed: their mean is put to 0 and their
+        variance to 1 in the time dimension.
+    detrend : bool, (defaul==False), whether or not to detrend the BOLD signal
+    low_pass : float or None, (defaul==None), the limit low freq pass band to
+        clean the BOLD signal
+    high_pass : float or None, (default=None), the limit high freq pass band to
+        clean the BOLD signal
     max_iter : int, (default=100), maximum number of iterations to perform the
         analysis
     random_state : None, int, random-instance, (default=None), random-instance
@@ -112,17 +123,21 @@ class SLRDA(TransformerMixin):
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
                  hrf_atlas='havard', atlas_kwargs=dict(), n_scales='scale122',
                  prox_z='tv', lbda_strategy='ratio', lbda=0.1, rho=2.0,
-                 delta_init=1.0, u_init_type='ica', z_init=None,
+                 delta_init=1.0, u_init_type='ica', eta=10.0, z_init=None,
                  prox_u='l1-positive-simplex', deactivate_v_learning=False,
-                 deactivate_z_learning=False, max_iter=100, random_state=None,
+                 shared_spatial_maps=False, deactivate_z_learning=False,
+                 standardize=False, detrend=False, low_pass=None,
+                 high_pass=None, max_iter=100, random_state=None,
                  early_stopping=True, eps=1.0e-5, raise_on_increase=True,
                  cache_dir='__cache__', nb_fit_try=1, n_jobs=1, verbose=0):
+
         # model hyperparameters
         self.t_r = t_r
         self.n_atoms = n_atoms
         self.hrf_model = hrf_model
         self.hrf_atlas = hrf_atlas
         self.n_scales = n_scales
+        self.shared_spatial_maps = shared_spatial_maps
         self.deactivate_v_learning = deactivate_v_learning
         self.deactivate_z_learning = deactivate_z_learning
         self.n_times_atom = n_times_atom
@@ -132,6 +147,7 @@ class SLRDA(TransformerMixin):
         self.rho = rho
         self.delta_init = delta_init
         self.u_init_type = u_init_type
+        self.eta = eta
         self.z_init = z_init
         self.prox_u = prox_u
 
@@ -141,6 +157,12 @@ class SLRDA(TransformerMixin):
         self.early_stopping = early_stopping
         self.eps = eps
         self.raise_on_increase = raise_on_increase
+
+        # preprocessing parameters
+        self.standardize = standardize
+        self.detrend = detrend
+        self.low_pass = low_pass
+        self.high_pass = high_pass
 
         # technical parameters
         self.verbose = verbose
@@ -155,7 +177,7 @@ class SLRDA(TransformerMixin):
             n_scales_ = f"scale{int(n_scales)}"
             res = fetch_atlas_basc_2015(n_scales=n_scales_)
             self.mask_full_brain, self.atlas_rois = res
-        elif isinstance(self.hrf_atlas, collections.Callable):
+        elif hasattr(self.hrf_atlas, '__call__'):
             res = self.hrf_atlas(**atlas_kwargs)
             self.mask_full_brain, self.atlas_rois = res
         else:
@@ -169,9 +191,12 @@ class SLRDA(TransformerMixin):
                             memory=self.cache_dir, memory_level=1, verbose=0)
 
         # model parameters
+        self.n_subjects = None
         self.z_hat_ = None
         self.u_hat_ = None
         self.a_hat_ = None
+        self.u_hat_img_ = None
+        self.a_hat_img_ = None
 
         # derivated model parameters
         self.Dz_hat_ = None
@@ -184,13 +209,16 @@ class SLRDA(TransformerMixin):
         self.lobj_ = None
         self.ltime_ = None
 
-    def fit(self, X):
+    def fit(self, X_fnames, confound_fnames=None):
         """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
         fitting the model.
 
         Parameters
         ----------
-        X : str, the filename of the fMRI data
+        X_fnames : str, the filename of the fMRI data
+        confound_fnames : Nifti-like img or None, (default=None), list of
+            confounds (2D arrays or filenames pointing to CSV files). Must be
+            of same length than imgs_list.
 
         Throws
         ------
@@ -198,13 +226,26 @@ class SLRDA(TransformerMixin):
             iteration, of the analysis. This can be due to the fact that the
             temporal regularization parameter is set to high
         """
-        if not isinstance(X, str):
-            raise ValueError("fMRI data should passed as a "
-                             "filename (string), got {}".format(type(X)))
+        if isinstance(X_fnames, str):
+            X_fnames = [X_fnames]
+
+        if isinstance(X_fnames, list):
+            for x_i in X_fnames:
+                if not isinstance(x_i, str):
+                    raise ValueError(f"fMRI data should passed as a "
+                                     f"filename (string), got {type(x_i)}")
+
+        else:
+            raise ValueError(f"fMRI data should passed as a list of"
+                             f"filenames (string), got {type(X_fnames)}")
+
+        self.n_subjects = len(X_fnames)
 
         # load the fMRI data into a matrix, given-X being a filename,
         # produced-X being a 2d-array (n_voxels, n_time)
-        X = self.masker_.fit_transform(X).T
+        self.masker_.fit(X_fnames)
+        X = [self.masker_.transform_single_imgs(x_fname).T
+             for x_fname in X_fnames]
 
         # transformation of the atlas format:
         # flattent the HRF ROIs
@@ -219,27 +260,50 @@ class SLRDA(TransformerMixin):
         # for each ROIs, a vector of labels for each ROIs and the number of
         # ROIs from a dict atlas
         self.roi_label_from_hrf_idx = rois_label
+        self.n_hrf_rois = len(rois_label)
+
+        # preprocess the input data
+        X_clean = []
+        for n in range(self.n_subjects):
+
+            if confound_fnames is not None:
+                # XXX confounds should be CSV file with '\t' sep
+                confounds = pd.read_csv(confound_fnames[n], sep='\t')
+            else:
+                confounds = None
+
+            if self.verbose > 0:
+                print(f"[SLRDA] Preprocessing subject '{X_fnames[n]}'")
+
+            x_clean = signal.clean(X[n].T, sessions=None, detrend=self.detrend,
+                                   standardize=self.standardize,
+                                   confounds=confounds, low_pass=self.low_pass,
+                                   high_pass=self.high_pass, t_r=self.t_r,
+                                   ensure_finite=True)
+
+            X_clean.append(x_clean.T)
 
         if self.verbose > 0:
-            print("Data loaded shape: {} voxels {} scans".format(*X.shape))
-
             if self.n_jobs > 1:
-                print("Running {} fits in parallel on {} "
-                      "CPU".format(self.nb_fit_try, self.n_jobs))
+                print(f"[SLRDA] Running {self.nb_fit_try} fit(s) on "
+                      f"{self.n_subjects} subject(s) in parallel on "
+                      f"{self.n_jobs} CPU")
             else:
-                print("Running {} fits in series".format(self.nb_fit_try))
+                print(f"[SLRDA] Running {self.nb_fit_try} fit(s) on "
+                      f"{self.n_subjects} subject(s) in series")
 
         params = dict(
-                X=X, t_r=self.t_r, hrf_rois=self.hrf_rois,
+                X=X_clean, t_r=self.t_r, hrf_rois=self.hrf_rois,
                 hrf_model=self.hrf_model,
+                shared_spatial_maps=self.shared_spatial_maps,
                 deactivate_v_learning=self.deactivate_v_learning,
                 deactivate_z_learning=self.deactivate_z_learning,
                 n_atoms=self.n_atoms, n_times_atom=self.n_times_atom,
                 prox_z=self.prox_z, lbda_strategy=self.lbda_strategy,
                 lbda=self.lbda, rho=self.rho, delta_init=self.delta_init,
-                u_init_type=self.u_init_type, z_init=self.z_init,
-                prox_u=self.prox_u, max_iter=self.max_iter, get_obj=1,
-                get_time=1, random_seed=self.random_state,
+                u_init_type=self.u_init_type, eta=self.eta, z_init=self.z_init,
+                prox_u=self.prox_u, max_iter=self.max_iter,
+                random_seed=self.random_state,
                 early_stopping=self.early_stopping, eps=self.eps,
                 raise_on_increase=self.raise_on_increase,
                 verbose=self.verbose, n_jobs=self.n_jobs,
@@ -247,10 +311,10 @@ class SLRDA(TransformerMixin):
 
         # handle the caching option of the decomposition
         if isinstance(self.cache_dir, str):
-            decompose = Memory(location=self.cache_dir).cache(
-                                        multi_runs_learn_u_z_v_multi)
+            decompose = Memory(location=self.cache_dir, verbose=0).cache(
+                            multi_runs_blind_deconvolution_multiple_subjects)
         else:
-            decompose = multi_runs_learn_u_z_v_multi
+            decompose = multi_runs_blind_deconvolution_multiple_subjects
 
         # SLRDA decomposition
         res = decompose(**params)
@@ -260,20 +324,59 @@ class SLRDA(TransformerMixin):
         self.u_hat_ = res[2]
         self.a_hat_ = res[3]
         self.v_hat_ = res[4]
+
+        if not self.shared_spatial_maps:
+
+            for n in range(self.n_subjects):
+
+                u_hat, z_hat, _ = sort_by_expl_var(self.u_hat_[n],
+                                                   self.z_hat_[n],
+                                                   self.v_hat_[n],
+                                                   self.hrf_rois)
+
+                self.u_hat_[n] = u_hat
+                self.z_hat_[n] = z_hat
+
         self.v_init_ = res[5]
         self.lbda_ = res[6]
         self.lobj_ = res[7]
         self.ltime_ = res[8]
 
+        if self.hrf_model == 'scaled_hrf':
+            a_hat_img_ = []
+            for n in range(self.n_subjects):
+                raw_atlas_rois = np.copy(self.atlas_rois.get_fdata())
+                for m in range(self.n_hrf_rois):
+                    label = int(self.roi_label_from_hrf_idx[m])
+                    raw_atlas_rois[raw_atlas_rois == label] = self.a_hat_[n][m]
+                a_hat_img_.append(image.new_img_like(self.atlas_rois,
+                                                     raw_atlas_rois))
+            self.a_hat_img_ = a_hat_img_
+
+        else:
+            self.a_hat_img_ = None
+
+        n_spatial_maps = 1 if self.shared_spatial_maps else self.n_subjects
+
+        u_hat_img_ = []
+        for n in range(n_spatial_maps):
+            u_hat_n_img_ = []
+            for k in range(self.n_atoms):
+                u_hat_nk_ = self.u_hat_[n][k]
+                u_hat_nk_img_ = self.masker_.inverse_transform(u_hat_nk_)
+                u_hat_n_img_.append(u_hat_nk_img_)
+            u_hat_img_.append(u_hat_n_img_)
+        self.u_hat_img_ = u_hat_img_
+
         return self
 
-    def fit_transform(self, X):
+    def fit_transform(self, X_fnames, confound_fnames=None):
         """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
         fitting the model (same as fit).
 
         Parameters
         ----------
-        X : str, the filename of the fMRI data
+        X_fnames : str, the filename of the fMRI data
 
         Throws
         ------
@@ -281,16 +384,16 @@ class SLRDA(TransformerMixin):
             iteration, of the analysis. This can be due to the fact that the
             temporal regularization parameter is set to high
         """
-        self.fit(X)
+        self.fit(X_fnames, confound_fnames=confound_fnames)
         return self
 
-    def transform(self, X):
+    def transform(self, X_fnames, confound_fnames=None):
         """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
         fitting the model (same as fit).
 
         Parameters
         ----------
-        X : str, the filename of the fMRI data
+        X_fnames : str, the filename of the fMRI data
 
         Throws
         ------
@@ -298,39 +401,64 @@ class SLRDA(TransformerMixin):
             iteration, of the analysis. This can be due to the fact that the
             temporal regularization parameter is set to high
         """
-        self.fit(X)
+        self.fit(X_fnames, confound_fnames=confound_fnames)
         return self
 
     def _check_fitted(self):
         """ Private helper, check if the Sparse Low-Rank Deconvolution Analysis
         (SLRDA) have been done.
         """
-        if self.u_hat is None:
+        if self.n_subjects is None:
             raise NotFittedError("Fit must be called before accessing the "
                                  "dictionary")
 
     @property
     def u_hat(self):
+        self._check_fitted()
+        if self.n_subjects == 1 or self.shared_spatial_maps:
+            return self.u_hat_[0]
         return self.u_hat_
+
+    @property
+    def u_hat_img(self):
+        self._check_fitted()
+        if self.n_subjects == 1 or self.shared_spatial_maps:
+            return self.u_hat_img_[0]
+        return self.u_hat_img_
 
     @property
     def z_hat(self):
         self._check_fitted()
+        if self.n_subjects == 1:
+            return self.z_hat_[0]
         return self.z_hat_
 
     @property
     def Dz_hat(self):
         self._check_fitted()
+        if self.n_subjects == 1:
+            return self.Dz_hat_[0]
         return self.Dz_hat_
 
     @property
     def a_hat(self):
         self._check_fitted()
+        if self.n_subjects == 1:
+            return self.a_hat_[0]
         return self.a_hat_
+
+    @property
+    def a_hat_img(self):
+        self._check_fitted()
+        if self.n_subjects == 1:
+            return self.a_hat_img_[0]
+        return self.a_hat_img_
 
     @property
     def v_hat(self):
         self._check_fitted()
+        if self.n_subjects == 1:
+            return self.v_hat_[0]
         return self.v_hat_
 
     @property
