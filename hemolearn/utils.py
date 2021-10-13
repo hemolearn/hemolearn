@@ -207,10 +207,26 @@ def _set_up_test(seed):  # pragma: no cover
     B, C = _precompute_B_C(X, z, H, rois_idx)
     # gather the various parameters in a big dictionary for unit-tests
     kwargs = dict(t_r=t_r, n_hrf_rois=n_hrf_rois, n_atoms=n_atoms,
-                  n_voxels=n_voxels, n_times=n_times,
+                  n_voxels=n_voxels, n_times=n_times, rng=rng,
                   n_times_atom=n_times_atom, n_times_valid=n_times_valid,
                   rois_idx=rois_idx, X=X, z=z, u=u, H=H, v=v, B=B, C=C)
     return kwargs
+
+
+def th(x, t, absolute=True):  # pragma: no cover
+    """Return threshold level to retain t entries of array x."""
+    if isinstance(t, str):
+        t = float(t[:-1]) / 100.
+    elif isinstance(t, float):
+        pass
+    else:
+        raise ValueError(f"t (={t}) type not understtod: shoud be a float"
+                         f" between 0 and 1 or a string such as '80%'")
+    n = -int(t * len(x.flatten()))
+    if absolute:
+        return np.sort(np.abs(x.flatten()))[n]
+    else:
+        return np.sort(x.flatten())[n]
 
 
 def profile_me(func):  # pragma: no cover
