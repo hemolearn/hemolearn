@@ -4,7 +4,6 @@
 
 import os
 import cProfile
-from datetime import datetime
 import numpy as np
 from scipy.signal import peak_widths, find_peaks
 
@@ -67,7 +66,7 @@ def lipschitz_est(AtA, shape, nb_iter=30, tol=1.0e-6, verbose=False):
     return np.linalg.norm(x_new)
 
 
-def fwhm(t_r, hrf):
+def fwhm(t_r, hrf):  # pragma: no cover
     """Return the full width at half maximum of the HRF.
 
     Parameters
@@ -85,7 +84,7 @@ def fwhm(t_r, hrf):
     return t_r * int(fwhm_in_idx)  # in seconds
 
 
-def tp(t_r, hrf):
+def tp(t_r, hrf):  # pragma: no cover
     """ Return time to peak oh the signal of the HRF.
 
     Parameters
@@ -134,7 +133,7 @@ def add_gaussian_noise(signal, snr, random_state=None):  # pragma: no cover
     return noisy_signal, noise
 
 
-def sort_atoms_by_explained_variances(u, z, v, hrf_rois):  # pragma: no cover
+def sort_by_expl_var(u, z, v, hrf_rois):  # pragma: no cover
     """ Sorted the temporal the spatial maps and the associated activation by
     explained variance.
 
@@ -173,27 +172,7 @@ def sort_atoms_by_explained_variances(u, z, v, hrf_rois):  # pragma: no cover
     return u[order, :], z[order, :], variances[order]
 
 
-def get_unique_dirname(prefix):
-    """ Return a unique dirname based on the time and the date.
-
-    Parameters
-    ----------
-    prefix : str, the prefix to add to the directory name
-
-    Return
-    ------
-    dirname : str, the unique directory name
-    """
-    msg = "prefix should be a string, got {}".format(prefix)
-    assert isinstance(prefix, str), msg
-    date = datetime.now()
-    date_tag = '{0}{1:02d}{2:02d}{3:02d}{4:02d}{5:02d}'.format(
-                                        date.year, date.month, date.day,
-                                        date.hour, date.minute, date.second)
-    return prefix + date_tag
-
-
-def _set_up_test(seed):
+def _set_up_test(seed):  # pragma: no cover
     """ General set up function for the tests.
 
     Parameters
@@ -210,7 +189,7 @@ def _set_up_test(seed):
     rng = check_random_state(None)
     t_r = 1.0
     n_hrf_rois = 2
-    n_atoms, n_voxels = 4, 100
+    n_atoms, n_voxels = 4, 200
     n_times, n_times_atom = 100, 20
     n_times_valid = n_times - n_times_atom + 1
     labels = np.arange(n_hrf_rois, dtype=int)
