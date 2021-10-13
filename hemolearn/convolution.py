@@ -57,7 +57,7 @@ def adjconv_uH(residual, u, H, rois_idx):
     # function is not faster than adjconv_uv since residual[indices, :] is not
     # adjacent is the memory
     n_hrf_rois, _, n_times_valid = H.shape
-    n_voxels, n_time = residual.shape
+    n_voxels, _ = residual.shape
     vtX = np.empty((n_voxels, n_times_valid))
     for m in range(n_hrf_rois):
         indices = get_indices_from_roi(m, rois_idx)
