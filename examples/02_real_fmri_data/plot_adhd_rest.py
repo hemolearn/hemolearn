@@ -17,73 +17,87 @@ dataset resting-state.
 
 import os
 import time
-import numpy as np
 from nilearn import datasets
+import numpy as np
 
 from hemolearn import SLRDA
-from hemolearn.utils import fmri_preprocess, sort_atoms_by_explained_variances
-from hemolearn.plotting import (plotting_spatial_comp, plotting_temporal_comp,
-                                plotting_hrf_stats)
+from hemolearn.plotting import (plot_spatial_maps, plot_temporal_activations,
+                                plot_vascular_map)
 
+
+t0_total = time.time()
 
 # %%
-
+###############################################################################
+# Create plotting directory
 plot_dir = 'plots'
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 
 # %%
-
+###############################################################################
+# Fetch fMRI subjects
+seed = 0
 TR = 2.0
-adhd_dataset = datasets.fetch_adhd(n_subjects=1)
-func_fname = adhd_dataset.func[0]
-confound_fname = adhd_dataset.confounds[0]
-X, _, _, _ = fmri_preprocess(func_fname, smoothing_fwhm=6.0, standardize=True,
-                             detrend=True, low_pass=0.1, high_pass=0.01, t_r=TR,
-                             memory='__cache__', verbose=0,
-                             confounds=confound_fname)
-
-seed = np.random.randint(0, 1000)
-print(f'Seed used = {seed}')
+n_subjects = 4
+adhd_dataset = datasets.fetch_adhd(n_subjects=n_subjects)
+func_fnames = adhd_dataset.func[:n_subjects]
+confound_fnames = adhd_dataset.confounds[:n_subjects]
 
 # %%
-
-slrda = SLRDA(n_atoms=10, t_r=TR, n_times_atom=20,
-              hrf_model='scaled_hrf', lbda=0.9, max_iter=50,
-              eps=1.0e-3, deactivate_v_learning=False,
-              prox_u='l1-positive-simplex', raise_on_increase=True,
-              random_state=seed, n_jobs=1, cache_dir='__cache__',
-              nb_fit_try=1, verbose=0)
+###############################################################################
+# Distangle the neurovascular coupling from the neural activation
+slrda = SLRDA(n_atoms=10, t_r=TR, n_times_atom=20, lbda=0.75, max_iter=30,
+              eps=1.0e-3, shared_spatial_maps=True, random_state=seed,
+              verbose=2)
 
 t0 = time.time()
-slrda.fit(X)
+slrda.fit(func_fnames, confound_fnames)
 delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
-print("Fitting done in {}".format(delta_t))
+print(f"Fitting done in {delta_t}")
 
 # %%
-
-hrf_ref = slrda.v_init
-roi_label_from_hrf_idx = slrda.roi_label_from_hrf_idx
-pobj, times, a_hat = slrda.lobj, slrda.ltime, slrda.a_hat
-v_hat = slrda.v_hat
-u_hat, z_hat, variances = sort_atoms_by_explained_variances(slrda.u_hat,
-                                                            slrda.z_hat,
-                                                            slrda.v_hat,
-                                                            slrda.hrf_rois)
-
-# %%
-
-plotting_spatial_comp(u_hat, variances, slrda.masker_,
-                      plot_dir=plot_dir, perc_voxels_to_retain=0.1,
-                      fname='u.png', verbose=True)
+###############################################################################
+# Plot the spatial maps
+if slrda.shared_spatial_maps or n_subjects == 1:
+    filename = os.path.join(plot_dir, f'spatial_maps.png')
+    plot_spatial_maps(slrda.u_hat_img, filename=filename,
+                      perc_voxels_to_retain='10%', verbose=True)
+else:
+    for n in range(n_subjects):
+        filename = os.path.join(plot_dir, f'spatial_maps_{n}.png')
+        plot_spatial_maps(slrda.u_hat_img[n], filename=filename,
+                          perc_voxels_to_retain='10%', verbose=True)
 
 # %%
+###############################################################################
+# Plot the temporal activations
+if n_subjects == 1:
+    filename = os.path.join(plot_dir, f'activations.png')
+    plot_temporal_activations(slrda.z_hat, TR, filename=filename, verbose=True)
+else:
+    for n in range(n_subjects):
+        filename = os.path.join(plot_dir, f'activations_{n}.png')
+        plot_temporal_activations(slrda.z_hat[n], TR, filename=filename,
+                                  verbose=True)
 
-plotting_temporal_comp(z_hat, variances, TR, plot_dir=plot_dir,
-                       fname='z.png', verbose=True)
+###############################################################################
+# Plot vascular maps
+if n_subjects == 1:
+    filename = os.path.join(plot_dir, f'vascular_maps.png')
+    plot_vascular_map(slrda.a_hat_img, display_mode='z',
+                      cut_coords=np.linspace(-30, 60, 5),
+                      filename=filename, verbose=True)
+else:
+    for n in range(n_subjects):
+        filename = os.path.join(plot_dir, f'vascular_maps_{n}.png')
+        plot_vascular_map(slrda.a_hat_img[n], display_mode='z',
+                          cut_coords=np.linspace(-30, 60, 5),
+                          filename=filename, verbose=True)
 
 # %%
-
-plotting_hrf_stats(v=v_hat, t_r=TR, masker=slrda.masker_, hrf_ref=None,
-                   stat_type='fwhm', plot_dir=plot_dir, fname='v_fwhm.png',
-                   verbose=True)
+###############################################################################
+# Display the runtime of the script
+delta_t = time.gmtime(time.time() - t0_total)
+delta_t = time.strftime("%H h %M min %S s", delta_t)
+print(f"Script runs in {delta_t}")

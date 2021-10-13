@@ -21,17 +21,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data
-from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
+from hemolearn.deconvolution import \
+                            multi_runs_blind_deconvolution_multiple_subjects
 
 
-# %%
-
-dirname = 'plots'
-if not os.path.exists(dirname):
-    os.makedirs(dirname)
+t0_total = time.time()
 
 # %%
+###############################################################################
+# Create plotting directory
+plot_dir = 'plots'
+if not os.path.exists(plot_dir):
+    os.makedirs(plot_dir)
 
+# %%
+###############################################################################
+# Generate the synthetic data
 TR = 1.0
 n_voxels, n_atoms, n_times_valid, n_times_atom, snr = 100, 2, 200, 30, 1.0
 noisy_X, _, u, v, z, hrf_rois = simulated_data(n_voxels=n_voxels,
@@ -40,22 +45,25 @@ noisy_X, _, u, v, z, hrf_rois = simulated_data(n_voxels=n_voxels,
                                                snr=snr)
 
 # %%
-
+###############################################################################
+# Distangle the neurovascular coupling from the neural activation
 t0 = time.time()
-results = multi_runs_learn_u_z_v_multi(
+results = multi_runs_blind_deconvolution_multiple_subjects(
                     noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                     deactivate_v_learning=True, prox_u='l1-positive-simplex',
                     n_times_atom=n_times_atom, hrf_model='scaled_hrf',
                     lbda_strategy='ratio', lbda=0.5,
                     u_init_type='gaussian_noise', max_iter=30, get_obj=True,
                     get_time=True, raise_on_increase=False, random_seed=None,
-                    n_jobs=4, nb_fit_try=4, verbose=1)
-z_hat, _, u_hat, a_hat, v_hat, v_init, lbda, pobj, times = results
+                    n_jobs=4, nb_fit_try=4, verbose=2)
+z_hat, _, u_hat, a_hat, v_hat, v_init, _, pobj, times = results
+z_hat, u_hat, a_hat, v_hat = z_hat[0], u_hat[0], a_hat[0], v_hat[0]
 delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
 print("Fitting done in {}".format(delta_t))
 
 # %%
-
+###############################################################################
+# Re-label the components
 u_0_true = u[0, :]
 u_1_true = u[1, :]
 z_0_true = z[0, :].T.ravel()
@@ -77,8 +85,8 @@ if prod_scal_0 < prod_scal_1:
     u_1_hat = tmp
 
 # %%
-
-# z
+###############################################################################
+# Plot the temporal activations
 plt.figure("Temporal atoms", figsize=(12, 5))
 plt.subplot(121)
 plt.plot(z_0_hat, lw=2.0, label="Est. atom")
@@ -114,14 +122,14 @@ plt.xlabel("Time [time-frames]", fontsize=20)
 plt.legend(ncol=2, loc='lower center', fontsize=17, framealpha=0.3)
 plt.title("Second atom", fontsize=20)
 plt.tight_layout()
-filename = "z.png"
-filename = os.path.join(dirname, filename)
+filename = "activations.png"
+filename = os.path.join(plot_dir, filename)
 plt.savefig(filename, dpi=150)
 print("Saving plot under '{0}'".format(filename))
 
 # %%
-
-# u
+###############################################################################
+# Plot the spatial maps
 fig, axes = plt.subplots(nrows=1, ncols=4)
 len_square = int(np.sqrt(n_voxels))
 l_u = [u_0_true.reshape(len_square, len_square),
@@ -143,7 +151,14 @@ fig.subplots_adjust(bottom=0.1, top=0.5, left=0.1, right=0.8,
 cbar_ax = fig.add_axes([0.83, 0.2, 0.02, 0.2])
 cbar = fig.colorbar(l_im[amax_u], cax=cbar_ax)
 cbar.set_ticks(np.linspace(0.0, max_u, 3))
-filename = "u.png"
-filename = os.path.join(dirname, filename)
+filename = "spatial_maps.png"
+filename = os.path.join(plot_dir, filename)
 plt.savefig(filename, dpi=150)
 print("Saving plot under '{0}'".format(filename))
+
+# %%
+###############################################################################
+# Display the runtime of the script
+delta_t = time.gmtime(time.time() - t0_total)
+delta_t = time.strftime("%H h %M min %S s", delta_t)
+print(f"Script runs in {delta_t}")

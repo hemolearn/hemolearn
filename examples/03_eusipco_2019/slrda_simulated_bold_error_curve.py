@@ -20,7 +20,8 @@ import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data
 from hemolearn.utils import get_unique_dirname
-from hemolearn.learn_u_z_v_multi import multi_runs_learn_u_z_v_multi
+from hemolearn.deconvolution import \
+                                multi_runs_blind_deconvolution_single_subject
 
 
 # %%
@@ -54,7 +55,7 @@ for snr in l_snr:
         for lbda in lbdas:
 
             try:
-                results = multi_runs_learn_u_z_v_multi(
+                results = multi_runs_blind_deconvolution_single_subject(
                         noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                         deactivate_v_learning=True,
                         prox_u='l1-positive-simplex',
