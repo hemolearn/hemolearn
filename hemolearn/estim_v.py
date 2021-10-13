@@ -35,7 +35,6 @@ def _estim_v_scaled_hrf(a, X, z, u, rois_idx, t_r, n_times_atom):
     v : array, shape (n_hrf_rois, n_times_atom), estimated HRFs
     """
     n_hrf_rois, _ = rois_idx.shape
-    n_atoms, n_times_valid = z.shape
     v = np.empty((n_hrf_rois, n_times_atom))
 
     for m in range(n_hrf_rois):
