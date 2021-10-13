@@ -2,9 +2,10 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
+from matplotlib import pyplot as plt
 import pytest
 import numpy as np
-from hemolearn.learn_u_z_v_multi import _update_z
+from hemolearn.deconvolution import _update_z
 from hemolearn.checks import (check_random_state, check_len_hrf,
                               check_if_vanished, _get_lambda_max, check_obj,
                               EarlyStopping, CostFunctionIncreased, check_lbda)
@@ -71,7 +72,7 @@ def test_get_lambda_max(seed):
     constants = dict(H=H, v=v, u=u, rois_idx=rois_idx, X=X, lbda=lbda_max,
                      prox_z='tv', rho=2.0)
     z_hat = _update_z(z, constants)
-    assert np.linalg.norm(z_hat) / np.linalg.norm(z) < 0.05
+    assert np.sum(np.abs(np.diff(z_hat, axis=1))) < 1e-6
 
 
 @pytest.mark.parametrize('level', [1, 2])
