@@ -84,8 +84,8 @@ def simulated_data(t_r=1.0, n_voxels=100, n_times_valid=100, n_times_atom=30,
         _, z_1 = _2_blocks_task_signal(n_times_valid=n_times_valid, n1=n1,
                                        n2=n2, rng=rng)
     else:
-        raise ValueError("z_type should belong to "
-                         "['rest', 'task'], got {}".format(z_type))
+        raise ValueError(f"z_type should belong to "
+                         f"['rest', 'task'], got {z_type}")
     z = np.vstack([z_0, z_1])
 
     len_square = int(np.sqrt(n_voxels))
