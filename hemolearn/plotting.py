@@ -30,7 +30,6 @@ def plot_temporal_activations(z, t_r, onset=False, filename='activations.png',
     """
     n_atoms, n_times_valid = z.shape
 
-
     ncols = 3
     nrows = int(np.ceil(n_atoms / ncols) + 1)
     _, axis = plt.subplots(nrows, ncols, figsize=(ncols * 6, nrows * 3))
@@ -144,12 +143,12 @@ def plot_vascular_map(a_img, display_mode='ortho', cut_coords=None,
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
     cut_coords : tuple or None, MNI coordinate to perform display
-    filename : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf is
-        saved
+    filename : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf
+        is saved
     verbose : bool, (default=False), verbosity level
     """
-    vmax =  a_img.get_fdata().max()
-    plotting.plot_stat_map(a_img, title=f"Vascular map", colorbar=True,
+    vmax = a_img.get_fdata().max()
+    plotting.plot_stat_map(a_img, title="Vascular map", colorbar=True,
                            vmax=vmax, display_mode=display_mode,
                            cut_coords=cut_coords)
     plt.savefig(filename, dpi=150)

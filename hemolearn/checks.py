@@ -284,7 +284,7 @@ def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx, prox_z='tv'):
     lbda : float, the value of the temporal regularization parameter
     """
     if not isinstance(lbda, (int, float)):
-            raise ValueError(f"'lbda' should be numerical, got '{type(lbda)}'")
+        raise ValueError(f"'lbda' should be numerical, got '{type(lbda)}'")
     lbda = float(lbda)
 
     if lbda_strategy not in ['ratio', 'fixed']:

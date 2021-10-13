@@ -2,7 +2,6 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
-from matplotlib import pyplot as plt
 import pytest
 import numpy as np
 from hemolearn.deconvolution import _update_z

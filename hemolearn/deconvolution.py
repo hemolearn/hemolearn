@@ -41,7 +41,7 @@ def set_get_time_get_obj(verbose, raise_on_increase, early_stopping):
     if (raise_on_increase or early_stopping) and (get_obj == 0):
         get_obj = 1
         print("If 'raise_on_increase' or 'early_stopping' are enables: "
-            "'get_obj' is forced to '1'")
+              "'get_obj' is forced to '1'")
 
     return get_obj, get_time
 
@@ -58,9 +58,9 @@ def init_z_hat(z_init, n_subjects, n_atoms, n_times_valid):
         else:
             if (n_atoms, n_times_valid[n]) != z_init[n].shape:
                 raise ValueError(f"'z_init' should have the shape "
-                                    f"(n_atoms, n_times_valid)="
-                                    f"{(n_atoms, n_times_valid[n])}, "
-                                    f"got {z_init[n].shape}")
+                                 f"(n_atoms, n_times_valid)="
+                                 f"{(n_atoms, n_times_valid[n])}, "
+                                 f"got {z_init[n].shape}")
             z_hat.append(np.copy(z_init[n]))
 
     return z_hat
@@ -108,14 +108,14 @@ def init_u_hat(X, v_hat, rng, u_init_type, eta, n_spatial_maps, n_atoms,
 
     else:
         raise ValueError(f"u_init_type should be in ['ica', "
-                        f"'gaussian_noise', 'patch'],"
-                        f" got {u_init_type}")
+                         f"'gaussian_noise', 'patch'],"
+                         f" got {u_init_type}")
 
     return u_hat
 
 
 def init_v_hat(hrf_model, t_r, n_times_atom, n_subjects, n_hrf_rois,
-                constants, delta_init):
+               constants, delta_init):
     """ Initilization function of 'v_hat'
     """
     if hrf_model == '3_basis_hrf':
@@ -139,7 +139,7 @@ def init_v_hat(hrf_model, t_r, n_times_atom, n_subjects, n_hrf_rois,
 
     elif hrf_model == 'scaled_hrf':
         v_ref = scaled_hrf(delta=delta_init, t_r=t_r,
-                        n_times_atom=n_times_atom)
+                           n_times_atom=n_times_atom)
         v_hat, a_hat = [], []
         for _ in range(n_subjects):
             a_hat.append(delta_init * np.ones(n_hrf_rois))
@@ -149,8 +149,8 @@ def init_v_hat(hrf_model, t_r, n_times_atom, n_subjects, n_hrf_rois,
 
     else:
         raise ValueError(f"hrf_model should be in ['3_basis_hrf', "
-                        f"'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
-                        f"got {hrf_model}")
+                         f"'2_basis_hrf', 'scaled_hrf', 'fir_hrf'], "
+                         f"got {hrf_model}")
 
     return v_hat, a_hat
 
@@ -439,9 +439,8 @@ def blind_deconvolution_multiple_subjects(
     if n_subjects == 1 and shared_spatial_maps:
         print("Only 1 subject loaded, 'shared_spatial_maps' force to False")
 
-    if (deactivate_v_learning
-        and deactivate_u_learning
-        and deactivate_z_learning):
+    if (deactivate_v_learning and deactivate_u_learning
+       and deactivate_z_learning):
         raise ValueError("'deactivate_v_learning', 'deactivate_z_learning' "
                          "and 'deactivate_u_learning' can't be set to True "
                          "all together.")
@@ -483,8 +482,8 @@ def blind_deconvolution_multiple_subjects(
     n_spatial_maps = 1 if shared_spatial_maps else n_subjects
 
     # u initialization
-    u_hat = init_u_hat(X, v_hat, rng, u_init_type, eta, n_spatial_maps, n_atoms,
-                       n_voxels, n_times, n_times_atom)
+    u_hat = init_u_hat(X, v_hat, rng, u_init_type, eta, n_spatial_maps,
+                       n_atoms, n_voxels, n_times, n_times_atom)
 
     # temporal regularization parameter
     lbda_new = []

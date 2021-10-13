@@ -2,7 +2,6 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
-import os
 import cProfile
 import numpy as np
 from scipy.signal import peak_widths, find_peaks
