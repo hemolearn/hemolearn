@@ -4,6 +4,7 @@
 
 import numpy as np
 from .convolution import adjconv_uH
+from .atlas import get_indices_from_roi
 
 
 class EarlyStopping(Exception):
@@ -223,7 +224,7 @@ def _get_lambda_max(X, u, H, rois_idx):
     ----------
     X : array, shape (n_voxels, n_times), fMRI data
     u : array, shape (n_atoms, n_voxels), spatial maps
-    H : array, shape (n_hrf_rois, n_times_valid, n_times), Toeplitz matrices
+    H : array, shape (n_hrf_rois, n_times, n_times_valid), Toeplitz matrices
     rois_idx: array, shape (n_hrf_rois, max_indices_per_rois), HRF ROIs
 
     Return
@@ -231,8 +232,34 @@ def _get_lambda_max(X, u, H, rois_idx):
     lbda_max : float, the maximum value of the temporal regularization
         parameter which systematically provide zero temporal components
     """
-    uvtX = adjconv_uH(residual=X, u=u, H=H, rois_idx=rois_idx)[:, None]
-    return np.max(np.abs(uvtX))
+    n_hrf_rois, _, n_times_valid = H.shape
+    _, n_times = X.shape
+    n_atoms, n_voxels = u.shape
+
+    # compute spatial vascular maps operator
+    DD = np.empty((n_atoms, n_times * n_voxels))
+    for k in range(n_atoms):
+        uk_1 = np.ones((n_times_valid, 1)).dot(u[k, :][None, :])
+        Dk_1 = np.empty((n_voxels, n_times))
+        for m in range(n_hrf_rois):
+            indices = get_indices_from_roi(m, rois_idx)
+            Dk_1[indices, :] = H[m, :, :].dot(uk_1[:, indices]).T
+        DD[k, :] = Dk_1.flatten()
+
+    pinv_DD = np.linalg.pinv(DD)
+    c_1 = X.ravel().dot(pinv_DD)[:, None] * np.ones((n_atoms, n_times_valid))
+
+    # compute X_hat
+    c_1u = c_1.T.dot(u)
+    X_hat = np.empty((n_voxels, n_times))
+    for m in range(n_hrf_rois):
+        indices = get_indices_from_roi(m, rois_idx)
+        X_hat[indices, :] = H[m, :, :].dot(c_1u[:, indices]).T
+
+    # return lambda max
+    L = np.triu(np.ones((n_times_valid, n_times_valid)))
+    LtuvtX = adjconv_uH(X - X_hat, u, H, rois_idx).dot(L.T)
+    return np.max(np.abs(LtuvtX))
 
 
 def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx, prox_z='tv'):
@@ -256,22 +283,20 @@ def check_lbda(lbda, lbda_strategy, X, u, H, rois_idx, prox_z='tv'):
     ------
     lbda : float, the value of the temporal regularization parameter
     """
+    if not isinstance(lbda, (int, float)):
+            raise ValueError(f"'lbda' should be numerical, got '{type(lbda)}'")
+    lbda = float(lbda)
 
     if lbda_strategy not in ['ratio', 'fixed']:
-        raise ValueError("'lbda_strategy' should belong to "
-                         "['ratio', 'fixed'], got '{}'".format(lbda_strategy))
+        raise ValueError(f"'lbda_strategy' should belong to "
+                         f"['ratio', 'fixed'], got '{lbda_strategy}'")
 
-    if lbda_strategy == 'ratio' and prox_z in ['l2', 'elastic-net']:
-        raise ValueError("If 'prox_z' is ['l2', 'elastic-net'], "
-                         "'lbda_strategy' should be 'fixed', "
-                         "got {}".format(lbda_strategy))
+    if lbda_strategy == 'ratio' and not prox_z == 'tv':
+        raise ValueError("If 'lbda_strategy' is set to 'ratio', 'prox_z' "
+                         "should be set to 'tv'")
 
     if lbda_strategy == 'ratio':
         lbda_max = _get_lambda_max(X, u=u, H=H, rois_idx=rois_idx)
         lbda = lbda * lbda_max
-    else:
-        if not isinstance(lbda, (int, float)):
-            raise ValueError("If 'lbda_strategy' is 'fixed', 'lbda' should be "
-                             "numerical, got '{}' with "
-                             "'{}'".format(lbda_strategy, lbda))
+
     return lbda
