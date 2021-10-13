@@ -7,7 +7,6 @@ import cProfile
 from datetime import datetime
 import numpy as np
 from scipy.signal import peak_widths, find_peaks
-from nilearn import input_data
 
 from .hrf_model import scaled_hrf
 from .atlas import split_atlas
@@ -103,131 +102,7 @@ def tp(t_r, hrf):
     return t[np.argmax(hrf)]  # in seconds
 
 
-def get_nifti_ext(func_fname):
-    """ Return the extension of the Nifti.
-
-    Parameters
-    ----------
-    func_fname : str, the filename of the fMRI data
-
-    Return
-    ------
-    fname : str, the basename of the fMRI data
-    ext : str, the extension of the fMRI data
-    """
-    err_msg = "Filename extension not understood, {extension}"
-    fname, ext = os.path.splitext(func_fname)
-    if ext == '.gz':
-        fname, ext_ = os.path.splitext(fname)
-        if ext_ == '.nii':
-            return fname, ext_ + ext
-        else:
-            raise ValueError(err_msg.format(extension=ext))
-    elif ext == '.nii':
-        return fname, ext
-    else:
-        raise ValueError(err_msg.format(extension=ext))
-
-
-def fmri_preprocess(  # pragma: no cover
-        func_fname, mask_img=None, sessions=None, smoothing_fwhm=None,
-        standardize=False, detrend=False, low_pass=None, high_pass=None,
-        t_r=None, target_affine=None, target_shape=None,
-        mask_strategy='background', mask_args=None, sample_mask=None,
-        dtype=None, memory_level=1, memory=None, verbose=0,
-        confounds=None, preproc_fname=None):
-    """ Preprocess the fMRI data.
-
-    Parameters
-    ----------
-    func_fname : str, the filename of the fMRI data
-    mask_img : Nifti-like img or None, (default=None),
-    sessions : array or None, (default=None), add a session level to the
-        preprocessing
-    smoothing_fwhm : float or None, (default=None), if smoothing_fwhm is not
-        None, it gives the full-width half maximum in millimeters of the
-        spatial smoothing to apply to the signal.
-    standardize : bool, (default=False), if standardize is True, the
-        time-series are centered and normed: their mean is put to 0 and their
-        variance to 1 in the time dimension.
-    detrend : bool, (defaul==False), whether or not to detrend the BOLD signal
-    low_pass : float or None, (defaul==None), the limit low freq pass band to
-        clean the BOLD signal
-    high_pass : float or None, (default=None), the limit high freq pass band to
-        clean the BOLD signal
-    t_r : float or None, (default=None), Time of Repetition, fMRI acquisition
-        parameter, the temporal resolution
-    target_affine :  3x3 or 4x4 array or None, (default=None), this parameter
-        is passed to nilearn.image.resample_img
-    target_shape : 3-tuple of integers or None, (default=None),this parameter
-        is passed to nilearn.image.resample_img
-    mask_strategy : {‘background’, ‘epi’ or ‘template’},
-        (default='background'), the strategy used to compute the mask: use
-        ‘background’ if your images present a clear homogeneous background,
-        ‘epi’ if they are raw EPI images, or you could use ‘template’ which
-        will extract the gray matter part of your data by resampling the MNI152
-        brain mask for your data’s field of view. Depending on this value, the
-        mask will be computed from nilearn.masking.compute_background_mask,
-        masking.compute_epi_mask or nilearn.masking.compute_gray_matter_mask.
-    mask_args : dict, (default=None), if mask is None, these are additional
-        parameters passed to masking.compute_background_mask or
-        nilearn.masking.compute_epi_mask to fine-tune mask computation. Please
-        see the related documentation for details.
-    sample_mask : Any type compatible with numpy-array indexing,
-        (default=None), any type compatible with numpy-array indexing Masks the
-        niimgs along time/fourth dimension. This complements 3D masking by the
-        mask_img argument. This masking step is applied before data
-        preprocessing at the beginning of NiftiMasker.transform. This is useful
-        to perform data subselection as part of a scikit-learn pipeline.
-    dtype :  {dtype, “auto”} or None, (default=None), data type toward which
-        the data should be converted. If “auto”, the data will be converted to
-        int32 if dtype is discrete and float32 if it is continuous.
-    memory : instance of joblib.Memory or str, (default=None), used to cache
-        the masking process. By default, no caching is done. If a string is
-        given, it is the path to the caching directory.
-    memory_level : int, (default=1), rough estimator of the amount of memory
-        used by caching. Higher value means more memory for caching
-    verbose : int, (default=0), indicate the level of verbosity. By default,
-        nothing is printed
-    confounds : Nifti-like img or None, (default=None), list of confounds (2D
-        arrays or filenames pointing to CSV files). Must be of same length than
-        imgs_list.
-    preproc_fname : str or None, (default=None), the full filename of the
-        preprocessed fMRI data filename, if not given simple '_preproc' suffix
-        is add to the original filename
-
-    Return
-    ------
-    preproc_X_fname : str, the filename of the preprocessed fMRI data
-    preproc_X_img : nifti data, the nifti data of the preprocessed fMRI data
-    preproc_X : array, the array of the preprocessed fMRI data
-    masker : NiftiMasker, Nilearn masker use to preprocessed the fMRI data
-    """
-    if not isinstance(func_fname, str):
-        raise ValueError("func_fname should be the filename of "
-                         "a 4d Nifti file")
-
-    masker = input_data.NiftiMasker(
-        mask_img=mask_img, sessions=sessions, smoothing_fwhm=smoothing_fwhm,
-        standardize=standardize, detrend=detrend, low_pass=low_pass,
-        high_pass=high_pass, t_r=t_r, target_affine=target_affine,
-        target_shape=target_shape, mask_strategy=mask_strategy,
-        mask_args=mask_args, sample_mask=sample_mask, dtype=dtype,
-        memory_level=memory_level, memory=memory, verbose=verbose)
-
-    preproc_X = masker.fit_transform(func_fname, confounds=confounds)
-    preproc_X_img = masker.inverse_transform(preproc_X)
-    if preproc_fname is None:
-        fname, ext = get_nifti_ext(func_fname)
-        preproc_X_fname = fname + '_preproc' + ext
-    else:
-        preproc_X_fname = preproc_fname
-    preproc_X_img.to_filename(preproc_X_fname)
-
-    return preproc_X_fname, preproc_X_img, preproc_X, masker
-
-
-def add_gaussian_noise(signal, snr, random_state=None):
+def add_gaussian_noise(signal, snr, random_state=None):  # pragma: no cover
     """ Add a Gaussian noise to inout signal to output a noisy signal with the
     targeted SNR.
 
