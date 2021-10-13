@@ -189,7 +189,7 @@ def construct_X_hat_from_H(H, z, u, rois_idx):  # pragma: no cover
 
 def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
          lbda=None, rho=2.0, prox_z='tv'):
-    """ Main objective function.
+    """ Main objective function for a single subject.
 
     Parameters
     ----------
@@ -222,7 +222,7 @@ def _obj(X, prox, u, z, rois_idx, H=None, v=None, valid=True, return_reg=True,
     if v is None and H is not None:
         X_hat = construct_X_hat_from_H(H, z, u, rois_idx)
     elif H is None and v is None:
-        raise ValueError("_obj must have either H or v.")
+        raise ValueError("'_obj' must have either H or v.")
 
     residual = (X - X_hat).ravel()
     cost = 0.5 * residual.dot(residual)
