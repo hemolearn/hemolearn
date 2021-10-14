@@ -13,7 +13,6 @@ Example to obtain the estimation error of each parameter of the model.
 # License: BSD (3-clause)
 
 import os
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -21,8 +20,6 @@ from hemolearn.simulated_data import simulated_data
 from hemolearn.deconvolution import \
                                 multi_runs_blind_deconvolution_single_subject
 
-
-t0_total = time.time()
 
 ###############################################################################
 # Create plotting directory
@@ -39,8 +36,6 @@ mean_min_u_errs, std_min_u_errs = [], []
 nb_trial = 100
 l_snr = [0.1, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0]
 for snr in l_snr:
-
-    t0 = time.time()
 
     min_Dz_errs, min_u_errs = [], []
     for _ in range(nb_trial):
@@ -70,7 +65,7 @@ for snr in l_snr:
             except AssertionError as e:
                 # lbda is too big...
                 continue
-            z_hat, _, u_hat, _, _, _, _, pobj, times = results
+            z_hat, _, u_hat, _, _, _, _, pobj, _ = results
 
             # rename all variables
             u_0 = u[0, :]
@@ -121,12 +116,9 @@ for snr in l_snr:
     mean_min_u_errs.append(mean_min_u_err)
     std_min_u_errs.append(std_min_u_err)
 
-    delta_t = time.strftime("%M min %S s", time.gmtime(time.time() - t0))
-
-    print("[case SNR={:.2e}dB], mean min Dz-error {:.2f} with std {:.2f}, "
-          "mean min u-error {:.2f} with std {:.2f}, c.t. : {}".format(
-                                    snr, mean_min_Dz_err, std_min_Dz_err,
-                                    mean_min_u_err, std_min_u_err, delta_t))
+    print(f"[case SNR={snr:.2e}dB], mean min Dz-error {mean_min_Dz_err:.2f} "
+          f"with std {std_min_Dz_err:.2f}, mean min u-error "
+          f"{mean_min_u_err:.2f} with std {std_min_u_err:.2f}")
 
 ###############################################################################
 # Plot activation errors
@@ -179,10 +171,3 @@ filename = 'activation_derivatives_errors.pdf'
 filename = os.path.join(plot_dir, filename)
 print("Saving error plot under {0}".format(filename))
 plt.savefig(filename, dpi=150)
-
-###############################################################################
-# Display the runtime of the script
-# ---------------------------------
-delta_t = time.gmtime(time.time() - t0_total)
-delta_t = time.strftime("%H h %M min %S s", delta_t)
-print(f"Script runs in {delta_t}")

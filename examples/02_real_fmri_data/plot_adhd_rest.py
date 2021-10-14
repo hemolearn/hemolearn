@@ -16,7 +16,6 @@ dataset resting-state.
 # License: BSD (3-clause)
 
 import os
-import time
 from nilearn import datasets
 import numpy as np
 
@@ -24,8 +23,6 @@ from hemolearn import SLRDA
 from hemolearn.plotting import (plot_spatial_maps, plot_temporal_activations,
                                 plot_vascular_map)
 
-
-t0_total = time.time()
 
 ###############################################################################
 # Create plotting directory
@@ -36,6 +33,7 @@ if not os.path.exists(plot_dir):
 
 ###############################################################################
 # Fetch fMRI subjects
+# -------------------------
 seed = 0
 TR = 2.0
 n_subjects = 4
@@ -49,11 +47,7 @@ confound_fnames = adhd_dataset.confounds[:n_subjects]
 slrda = SLRDA(n_atoms=10, t_r=TR, n_times_atom=20, lbda=0.75, max_iter=30,
               eps=1.0e-3, shared_spatial_maps=True, random_state=seed,
               verbose=2)
-
-t0 = time.time()
 slrda.fit(func_fnames, confound_fnames)
-delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
-print(f"Fitting done in {delta_t}")
 
 ###############################################################################
 # Plot the spatial maps
@@ -94,10 +88,3 @@ else:
         plot_vascular_map(slrda.a_hat_img[n], display_mode='z',
                           cut_coords=np.linspace(-30, 60, 5),
                           filename=filename, verbose=True)
-
-###############################################################################
-# Display the runtime of the script
-# ---------------------------------
-delta_t = time.gmtime(time.time() - t0_total)
-delta_t = time.strftime("%H h %M min %S s", delta_t)
-print(f"Script runs in {delta_t}")

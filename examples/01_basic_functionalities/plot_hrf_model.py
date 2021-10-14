@@ -14,14 +14,11 @@ Example to illutrate the different HRF model in HemoLearn.
 # License: BSD (3-clause)
 
 import os
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hemolearn.hrf_model import scaled_hrf, hrf_3_basis, hrf_2_basis
 
-
-t0_total = time.time()
 
 ###############################################################################
 # Create plotting directory
@@ -87,10 +84,3 @@ plt.tight_layout()
 filename = os.path.join(plot_dir, 'scaled_hrf_model.png')
 print(f"Saving plot under '{filename}'")
 plt.savefig(filename, dpi=200)
-
-###############################################################################
-# Display the runtime of the script
-# ---------------------------------
-delta_t = time.gmtime(time.time() - t0_total)
-delta_t = time.strftime("%H h %M min %S s", delta_t)
-print(f"Script runs in {delta_t}")

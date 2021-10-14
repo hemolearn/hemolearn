@@ -16,16 +16,12 @@ fMRI data.
 # License: BSD (3-clause)
 
 import os
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hemolearn.simulated_data import simulated_data
-from hemolearn.deconvolution import \
-                            multi_runs_blind_deconvolution_multiple_subjects
+from hemolearn import deconvolution
 
-
-t0_total = time.time()
 
 ###############################################################################
 # Create plotting directory
@@ -47,8 +43,7 @@ noisy_X, _, u, v, z, hrf_rois = simulated_data(n_voxels=n_voxels,
 ###############################################################################
 # Distangle the neurovascular coupling from the neural activation
 # ---------------------------------------------------------------
-t0 = time.time()
-results = multi_runs_blind_deconvolution_multiple_subjects(
+results = deconvolution.multi_runs_blind_deconvolution_multiple_subjects(
                     noisy_X, t_r=TR, hrf_rois=hrf_rois, n_atoms=n_atoms,
                     deactivate_v_learning=True, prox_u='l1-positive-simplex',
                     n_times_atom=n_times_atom, hrf_model='scaled_hrf',
@@ -58,8 +53,6 @@ results = multi_runs_blind_deconvolution_multiple_subjects(
                     n_jobs=4, nb_fit_try=4, verbose=2)
 z_hat, _, u_hat, a_hat, v_hat, v_init, _, pobj, times = results
 z_hat, u_hat, a_hat, v_hat = z_hat[0], u_hat[0], a_hat[0], v_hat[0]
-delta_t = time.strftime("%H h %M min %S s", time.gmtime(time.time() - t0))
-print("Fitting done in {}".format(delta_t))
 
 ###############################################################################
 # Re-label the components
@@ -155,10 +148,3 @@ filename = "spatial_maps.png"
 filename = os.path.join(plot_dir, filename)
 plt.savefig(filename, dpi=150)
 print("Saving plot under '{0}'".format(filename))
-
-###############################################################################
-# Display the runtime of the script
-# ---------------------------------
-delta_t = time.gmtime(time.time() - t0_total)
-delta_t = time.strftime("%H h %M min %S s", delta_t)
-print(f"Script runs in {delta_t}")
