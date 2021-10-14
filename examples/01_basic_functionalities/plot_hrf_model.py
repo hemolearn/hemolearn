@@ -14,6 +14,7 @@ Example to illutrate the different HRF model in HemoLearn.
 # License: BSD (3-clause)
 
 import os
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
