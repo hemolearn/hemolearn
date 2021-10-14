@@ -27,6 +27,7 @@ clean:
 	@rm -rf $(BUILDDIR)
 	@rm -rf auto_examples
 	@rm -rf generated
+	@rm -rf _autosummary
 	@echo "'$(BUILDDIR)', 'auto_examples', 'generated' directories deleted."
 
 clean-deploy:
