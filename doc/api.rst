@@ -11,8 +11,8 @@ Sparse Low Rank Decomposition Analysis
    :toctree: _autosummary
 
    hemolearn.SLRDA
-   hemolearn.learn_u_z_v_multi.learn_u_z_v_multi
-   hemolearn.learn_u_z_v_multi.multi_runs_learn_u_z_v_multi
+   hemolearn.deconvolution.blind_deconvolution_multiple_subjects
+   hemolearn.deconvolution.multi_runs_blind_deconvolution_multiple_subjects
 
 Vascular atlas
 ~~~~~~~~~~~~~~
