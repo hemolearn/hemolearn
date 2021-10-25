@@ -2,6 +2,10 @@
 # Authors: Hamza Cherkaoui <hamza.cherkaoui@inria.fr>
 # License: BSD (3-clause)
 
+import os
+import subprocess
+import wget
+import zipfile
 import numpy as np
 import numba
 from nilearn import image, datasets
@@ -59,8 +63,8 @@ def split_atlas(hrf_rois):
     return rois_idx, rois_label, n_hrf_rois
 
 
-def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
-    """ Fetch the Havard-Oxford brain atlas given its resolution.
+def fetch_harvard_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
+    """ Fetch the Harvard-Oxford brain atlas given its resolution.
 
     Parameters
     ----------
@@ -74,7 +78,7 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
     mask : Nifti Image, full brain mask
     atlas : Nifti Image, ROIs atlas
     """
-    # load Havard-Oxford atlas
+    # load Harvard-Oxford atlas
     harvard_oxford = datasets.fetch_atlas_harvard_oxford(
                                                 'cort-maxprob-thr25-2mm',
                                                 symmetric_split=True)
@@ -127,14 +131,13 @@ def fetch_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
     else:
         atlas_to_return = atlas
 
-    # compute the full brain mask (0/1 Nifti object)
-    brain_mask = np.ones_like(atlas_to_return.get_fdata())
-    brain_mask[atlas_to_return.get_fdata() == 0] = 0
+    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
 
-    return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return
+    return brain_mask, atlas_to_return
 
 
-def fetch_atlas_basc_2015(n_scales='scale007'):
+def fetch_basc_vascular_atlas(n_scales='scale007',
+                              target_affine=np.diag((5, 5, 5))):
     """ Fetch the BASC brain atlas given its resolution.
 
     Parameters
@@ -142,6 +145,9 @@ def fetch_atlas_basc_2015(n_scales='scale007'):
     hrf_atlas: str, BASC dataset name possible values are: 'scale007',
         'scale012', 'scale036', 'scale064', 'scale122', 'scale197', 'scale325',
         'scale444'
+
+    target_affine : np.array, (default=np.diag((5, 5, 5))), affine matrix for
+        the produced Nifti images
 
     Return
     ------
@@ -156,8 +162,83 @@ def fetch_atlas_basc_2015(n_scales='scale007'):
     atlas_rois_fname = basc_dataset[n_scales]
     atlas_to_return = image.load_img(atlas_rois_fname)
 
-    # compute the full brain mask (0/1 Nifti object)
-    brain_mask = np.ones_like(atlas_to_return.get_fdata())
-    brain_mask[atlas_to_return.get_fdata() == 0] = 0
+    atlas_to_return = image.resample_img(atlas_to_return, target_affine,
+                                         interpolation='nearest')
 
-    return image.new_img_like(atlas_to_return, brain_mask), atlas_to_return
+    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+
+    return brain_mask, atlas_to_return
+
+
+def fetch_aal_vascular_atlas(target_affine=np.diag((5, 5, 5))):
+    """ Fetch the AAL3 brain atlas given its resolution.
+
+    Parameters
+    ----------
+    target_affine : np.array, (default=np.diag((5, 5, 5))), affine matrix for
+        the produced Nifti images
+
+    Return
+    ------
+    mask_full_brain : Nifti Image, full mask brain
+    atlas_rois : Nifti Image, ROIs atlas
+    """
+    aal_dataset = datasets.fetch_atlas_aal()
+    atlas_rois_fname = aal_dataset.maps
+    atlas_to_return = image.load_img(atlas_rois_fname)
+
+    atlas_to_return = image.resample_img(atlas_to_return, target_affine,
+                                         interpolation='nearest')
+
+    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+
+    return brain_mask, atlas_to_return
+
+
+def fetch_aal3_vascular_atlas(target_affine=np.diag((5, 5, 5))):
+    """ Fetch the AAL3 brain atlas given its resolution.
+
+    Parameters
+    ----------
+    target_affine : np.array, (default=np.diag((5, 5, 5))), affine matrix for
+        the produced Nifti images
+
+    Return
+    ------
+    mask_full_brain : Nifti Image, full mask brain
+    atlas_rois : Nifti Image, ROIs atlas
+    """
+    data_dir = os.path.join(os.path.expanduser('~'), 'hemolearn_data')
+    aal3_dir = os.path.join(data_dir, 'AAL3v1')
+
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    if not os.path.exists(aal3_dir):
+        os.makedirs(aal3_dir)
+
+    url = 'https://www.gin.cnrs.fr/wp-content/uploads/AAL3v1_for_SPM12.zip'
+    dest_filename = os.path.join(aal3_dir, wget.filename_from_url(url))
+
+    if not os.path.exists(os.path.join(aal3_dir, 'AAL3')):
+        # download files
+        wget.download(url, out=aal3_dir)
+
+        # extract files
+        with zipfile.ZipFile(dest_filename, 'r') as zip_ref:
+            zip_ref.extractall(aal3_dir)
+
+        # clean directory
+        cmd = (f"find {data_dir} -type f \( -iname \*.m -o -iname \*.zip -o "
+               f"-iname \*.rtf -o -iname \*.pdf \) -delete")
+        subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL)
+
+    atlas_fname = os.path.join(aal3_dir, 'AAL3', 'AAL3v1.nii.gz')
+    atlas_to_return = image.load_img(atlas_fname)
+
+    atlas_to_return = image.resample_img(atlas_to_return, target_affine,
+                                         interpolation='nearest')
+
+    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+
+    return brain_mask, atlas_to_return
