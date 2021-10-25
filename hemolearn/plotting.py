@@ -79,7 +79,8 @@ def plot_temporal_activations(z, t_r, onset=False, filename='activations.png',
 
 
 def plot_spatial_maps(u_img, filename='spatial_maps.png',
-                      display_mode='ortho', perc_voxels_to_retain='10%',
+                      display_mode='ortho', cut_coords=None,
+                      perc_voxels_to_retain='10%',
                       bg_img=datasets.MNI152_FILE_PATH, verbose=False):
     """ Plot spatial maps.
 
@@ -89,25 +90,18 @@ def plot_spatial_maps(u_img, filename='spatial_maps.png',
     filename : str, (default='u.pdf'), filename under which the pdf is saved
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
+    cut_coords : list, list of slice coordinates to display
     perc_voxels_to_retain : float, (default=0.1), percentage of voxels to
         retain when plotting the spatial maps
     bg_img : Nifti-like or None, (default=None), background image, None means
         no image
     verbose : bool, (default=False), verbosity level
     """
-    if display_mode in ['x', 'y', 'z']:
-        cut_coords = 1
-        colorbar = False
-    else:
-        display_mode = 'ortho'
-        cut_coords = None
-        colorbar = True
-
     n_atoms = len(u_img)
 
     ncols = 3
     nrows = int(np.ceil(n_atoms / ncols) + 1)
-    _, axis = plt.subplots(nrows, ncols, figsize=(ncols * 7, nrows * 3))
+    _, axis = plt.subplots(nrows, ncols, figsize=(ncols * 8, nrows * 3))
 
     k = 1
     for i in range(nrows):
@@ -120,7 +114,7 @@ def plot_spatial_maps(u_img, filename='spatial_maps.png',
                 t = th(u_img[k - 1].get_fdata(), t=perc_voxels_to_retain,
                        absolute=False)
                 plotting.plot_stat_map(u_img[k - 1], title=f"Map-{k}",
-                                       colorbar=colorbar, axes=axis[i, j],
+                                       colorbar=True, axes=axis[i, j],
                                        display_mode=display_mode,
                                        cut_coords=cut_coords, threshold=t,
                                        bg_img=bg_img)
@@ -134,7 +128,7 @@ def plot_spatial_maps(u_img, filename='spatial_maps.png',
 
 
 def plot_vascular_map(a_img, display_mode='ortho', cut_coords=None,
-                      filename='vascular_map.png', verbose=False):
+                      filename='vascular_map.png', vmax=None, verbose=False):
     """ Plot vascular map.
 
     Parameters
@@ -143,11 +137,13 @@ def plot_vascular_map(a_img, display_mode='ortho', cut_coords=None,
     display_mode : None or str, coords to cut the plotting, possible value are
         None to have x, y, z or 'x', 'y', 'z' for a single cut
     cut_coords : tuple or None, MNI coordinate to perform display
-    filename : str, (default='v_{fwhm/tp}.pdf'), filename under which the pdf
+    filename : str, (default='vascular_map.png'), filename under which the pdf
         is saved
+    vmax : float, (default=None), maximum of the colorbar.
     verbose : bool, (default=False), verbosity level
     """
-    vmax = a_img.get_fdata().max()
+    if vmax is None:
+        vmax = a_img.get_fdata().max()
     plotting.plot_stat_map(a_img, title="Vascular map", colorbar=True,
                            vmax=vmax, display_mode=display_mode,
                            cut_coords=cut_coords)
