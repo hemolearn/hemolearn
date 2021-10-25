@@ -389,7 +389,7 @@ class SLRDA(TransformerMixin):
             temporal regularization parameter is set to high
         """
         self.fit(X_fnames, confound_fnames=confound_fnames)
-        return self
+        return self.a_hat_img
 
     def transform(self, X_fnames, confound_fnames=None):
         """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
@@ -405,8 +405,8 @@ class SLRDA(TransformerMixin):
             iteration, of the analysis. This can be due to the fact that the
             temporal regularization parameter is set to high
         """
-        self.fit(X_fnames, confound_fnames=confound_fnames)
-        return self
+        self.self._check_fitted()
+        return self.a_hat_img
 
     def _check_fitted(self):
         """ Private helper, check if the Sparse Low-Rank Deconvolution Analysis
