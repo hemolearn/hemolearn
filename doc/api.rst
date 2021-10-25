@@ -19,8 +19,10 @@ Vascular atlas
 .. autosummary::
    :toctree: _autosummary
 
-   hemolearn.atlas.fetch_atlas_basc_2015
-   hemolearn.atlas.fetch_vascular_atlas
+   hemolearn.atlas.fetch_basc_vascular_atlas
+   hemolearn.atlas.fetch_harvard_vascular_atlas
+   hemolearn.atlas.fetch_aal_vascular_atlas
+   hemolearn.atlas.fetch_aal3_vascular_atlas
 
 
 Generating synthesis data
