@@ -29,7 +29,8 @@ from nilearn import input_data, image, signal
 
 from .deconvolution import multi_runs_blind_deconvolution_multiple_subjects
 from .atlas import (fetch_harvard_vascular_atlas, fetch_basc_vascular_atlas,
-                    fetch_aal3_vascular_atlas, split_atlas)
+                    fetch_aal3_vascular_atlas, fetch_aal_vascular_atlas,
+                    split_atlas)
 from .build_numba import build_numba_functions_of_hemolearn
 from .utils import sort_by_expl_var
 
@@ -58,8 +59,8 @@ class SLRDA(TransformerMixin):
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
     hrf_atlas : str, func, or None, (default='aal3'), atlas type, possible
-        choice are ['harvard', 'basc', given-function]. None default option will
-        lead to fetch the Harvard-Oxford parcellation.
+        choice are ['aal', 'aal3', 'harvard', 'basc', given-function]. None
+        default option will lead to fetch the Harvard-Oxford parcellation.
     atlas_kwargs : dict, (default=dict()), additional kwargs for the atlas,
         if a function is passed.
     n_scales : str, (default='scale122'), select the number of scale if
@@ -174,12 +175,14 @@ class SLRDA(TransformerMixin):
         # HRF atlas
         if self.hrf_atlas == 'aal3':
             self.mask_full_brain, self.atlas_rois = fetch_aal3_vascular_atlas()
+        elif self.hrf_atlas == 'aal':
+            self.mask_full_brain, self.atlas_rois = fetch_aal_vascular_atlas()
         elif self.hrf_atlas == 'harvard':
             res = fetch_harvard_vascular_atlas()
             self.mask_full_brain, self.atlas_rois = res
         elif self.hrf_atlas == 'basc':
             n_scales_ = f"scale{int(n_scales)}"
-            res = fetch_atlas_basc_2015(n_scales=n_scales_)
+            res = fetch_basc_vascular_atlas(n_scales=n_scales_)
             self.mask_full_brain, self.atlas_rois = res
         elif hasattr(self.hrf_atlas, '__call__'):
             res = self.hrf_atlas(**atlas_kwargs)

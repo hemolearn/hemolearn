@@ -229,8 +229,9 @@ def fetch_aal3_vascular_atlas(target_affine=np.diag((5, 5, 5))):
             zip_ref.extractall(aal3_dir)
 
         # clean directory
-        cmd = (f"find {data_dir} -type f \( -iname \*.m -o -iname \*.zip -o "
-               f"-iname \*.rtf -o -iname \*.pdf \) -delete")
+        cmd = (f"find {data_dir} -type f \( -iname \*.m -o "  # noqa: W605
+               f"-iname \*.zip -o -iname \*.rtf -o -iname "  # noqa: W605
+               f"\*.pdf \) -delete")  # noqa: W605
         subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL)
 
     atlas_fname = os.path.join(aal3_dir, 'AAL3', 'AAL3v1.nii.gz')
