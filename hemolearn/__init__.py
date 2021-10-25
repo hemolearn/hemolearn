@@ -28,7 +28,8 @@ from sklearn.exceptions import NotFittedError
 from nilearn import input_data, image, signal
 
 from .deconvolution import multi_runs_blind_deconvolution_multiple_subjects
-from .atlas import fetch_vascular_atlas, fetch_atlas_basc_2015, split_atlas
+from .atlas import (fetch_harvard_vascular_atlas, fetch_basc_vascular_atlas,
+                    fetch_aal3_vascular_atlas, split_atlas)
 from .build_numba import build_numba_functions_of_hemolearn
 from .utils import sort_by_expl_var
 
@@ -56,9 +57,9 @@ class SLRDA(TransformerMixin):
         spatials maps accross subjects.
     hrf_model : str, (default='3_basis_hrf'), type of HRF model, possible
         choice are ['3_basis_hrf', '2_basis_hrf', 'scaled_hrf']
-    hrf_atlas : str, func, or None, (default='havard'), atlas type, possible
-        choice are ['havard', 'basc', given-function]. None default option will
-        lead to fetch the Havard-Oxford parcellation.
+    hrf_atlas : str, func, or None, (default='aal3'), atlas type, possible
+        choice are ['harvard', 'basc', given-function]. None default option will
+        lead to fetch the Harvard-Oxford parcellation.
     atlas_kwargs : dict, (default=dict()), additional kwargs for the atlas,
         if a function is passed.
     n_scales : str, (default='scale122'), select the number of scale if
@@ -121,7 +122,7 @@ class SLRDA(TransformerMixin):
     """
 
     def __init__(self, n_atoms, t_r, n_times_atom=60, hrf_model='scaled_hrf',
-                 hrf_atlas='havard', atlas_kwargs=dict(), n_scales='scale122',
+                 hrf_atlas='aal3', atlas_kwargs=dict(), n_scales='scale122',
                  prox_z='tv', lbda_strategy='ratio', lbda=0.1, rho=2.0,
                  delta_init=1.0, u_init_type='ica', eta=10.0, z_init=None,
                  prox_u='l1-positive-simplex', deactivate_v_learning=False,
@@ -171,8 +172,11 @@ class SLRDA(TransformerMixin):
         self.nb_fit_try = nb_fit_try
 
         # HRF atlas
-        if self.hrf_atlas == 'havard':
-            self.mask_full_brain, self.atlas_rois = fetch_vascular_atlas()
+        if self.hrf_atlas == 'aal3':
+            self.mask_full_brain, self.atlas_rois = fetch_aal3_vascular_atlas()
+        elif self.hrf_atlas == 'harvard':
+            res = fetch_harvard_vascular_atlas()
+            self.mask_full_brain, self.atlas_rois = res
         elif self.hrf_atlas == 'basc':
             n_scales_ = f"scale{int(n_scales)}"
             res = fetch_atlas_basc_2015(n_scales=n_scales_)
@@ -181,8 +185,8 @@ class SLRDA(TransformerMixin):
             res = self.hrf_atlas(**atlas_kwargs)
             self.mask_full_brain, self.atlas_rois = res
         else:
-            raise ValueError(f"hrf_atlas should belong to ['havard', 'basc', "
-                             f"given-function], got {self.hrf_atlas}")
+            raise ValueError(f"hrf_atlas should belong to ['aal3', 'harvard', "
+                             f"'basc', given-function], got {self.hrf_atlas}")
         self.hrf_rois = dict()
 
         # fMRI masker
