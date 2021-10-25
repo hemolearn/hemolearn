@@ -277,9 +277,9 @@ class SLRDA(TransformerMixin):
                 confounds = None
 
             if self.verbose > 0:
-                print(f"[SLRDA] Preprocessing subject '{X_fnames[n]}'")
+                print(f"[SLRDA] Clean subject '{X_fnames[n]}'")
 
-            x_clean = signal.clean(X[n].T, sessions=None, detrend=self.detrend,
+            x_clean = signal.clean(X[n].T, runs=None, detrend=self.detrend,
                                    standardize=self.standardize,
                                    confounds=confounds, low_pass=self.low_pass,
                                    high_pass=self.high_pass, t_r=self.t_r,
@@ -413,8 +413,7 @@ class SLRDA(TransformerMixin):
         (SLRDA) have been done.
         """
         if self.n_subjects is None:
-            raise NotFittedError("Fit must be called before accessing the "
-                                 "dictionary")
+            raise NotFittedError("SLDRA must be fitted first.")
 
     @property
     def u_hat(self):
