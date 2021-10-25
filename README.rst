@@ -17,7 +17,7 @@ HemoLearn
 
 HemoLearn is a Python module to estimate the Haemodynamic Response Function (HRF)
 in brain from resting-state or task fMRI data (BOLD signal). It relies on a
-Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
+Blind Deconvolution Analysis (BDA) to distangles the
 neurovascular coupling from the the neural activity.
 
 This package was used to produce the results of the `Cherkaoui et a.l., (submitted to) NeuroImage 2021 <https://hal.archives-ouvertes.fr/hal-03005584>`_, paper

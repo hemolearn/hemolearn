@@ -413,7 +413,7 @@ def blind_deconvolution_multiple_subjects(
         X[n] = X[n].astype(np.float64)
 
     if verbose > 1:
-        print(f"[SLRDA] Seed used = {random_seed}")
+        print(f"[BDA] Seed used = {random_seed}")
 
     rng = check_random_state(random_seed)
 

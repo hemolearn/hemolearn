@@ -19,7 +19,7 @@ import os
 from nilearn import datasets
 import numpy as np
 
-from hemolearn import SLRDA, plotting
+from hemolearn import BDA, plotting
 
 
 ###############################################################################
@@ -40,16 +40,16 @@ confound_fnames = adhd_dataset.confounds[:n_subjects]
 ###############################################################################
 # Distangle the neurovascular coupling from the neural activation
 # ---------------------------------------------------------------
-slrda = SLRDA(n_atoms=10, t_r=TR, n_times_atom=30, lbda=0.1, max_iter=50,
-              standardize=True, shared_spatial_maps=True, random_state=seed,
-              verbose=1)
-a_hat_img = slrda.fit_transform(func_fnames, confound_fnames=confound_fnames)
+bda = BDA(n_atoms=10, t_r=TR, n_times_atom=30, lbda=0.1, max_iter=50,
+          standardize=True, shared_spatial_maps=True, random_state=seed,
+          verbose=1)
+a_hat_img = bda.fit_transform(func_fnames, confound_fnames=confound_fnames)
 
 ###############################################################################
 # Plot the spatial maps
 # ---------------------
 filename = os.path.join(plot_dir, f'spatial_maps.png')
-plotting.plot_spatial_maps(slrda.u_hat_img, filename=filename,
+plotting.plot_spatial_maps(bda.u_hat_img, filename=filename,
                            perc_voxels_to_retain='1%', verbose=True)
 
 ###############################################################################
@@ -57,13 +57,13 @@ plotting.plot_spatial_maps(slrda.u_hat_img, filename=filename,
 # -----------------------------
 for n in range(n_subjects):
     filename = os.path.join(plot_dir, f'activations_{n}.png')
-    plotting.plot_temporal_activations(slrda.z_hat[n], TR, filename=filename,
+    plotting.plot_temporal_activations(bda.z_hat[n], TR, filename=filename,
                                        verbose=True)
 
 ###############################################################################
 # Plot vascular maps
 # ------------------
-vmax = np.max([np.max(slrda.a_hat[n]) for n in range(n_subjects)])
+vmax = np.max([np.max(bda.a_hat[n]) for n in range(n_subjects)])
 for n in range(n_subjects):
     filename = os.path.join(plot_dir, f'vascular_maps_{n}.png')
     plotting.plot_vascular_map(a_hat_img[n], display_mode='z',

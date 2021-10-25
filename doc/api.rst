@@ -10,7 +10,7 @@ Sparse Low Rank Decomposition Analysis
 .. autosummary::
    :toctree: _autosummary
 
-   hemolearn.SLRDA
+   hemolearn.BDA
    hemolearn.deconvolution.blind_deconvolution_multiple_subjects
    hemolearn.deconvolution.multi_runs_blind_deconvolution_multiple_subjects
 

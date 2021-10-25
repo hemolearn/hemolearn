@@ -1,15 +1,15 @@
 """ HemoLearn is a Python module to estimate the Haemodynamic Response Function
 (HRF) in brain from resting-state or task fMRI data (BOLD signal). It relies on
-a Sparse Low-Rank Deconvolution Analysis (SLRDA) to distangles the
+a fMRI Blind-Deconvolution Analysis (BDA) to distangles the
 neurovascular coupling from the the neural activity.
 
-The advantages of SLRDA are:
+The advantages of BDA are:
 
 * The estimation of the HRF for each regions of the given vascular atlas.
 * The decomposition of the neural activity in a set of temporal components and
 its associated spatial map that describe a function network in the brain.
 
-The disadvantages of SLRDA include:
+The disadvantages of BDA include:
 
 * If the temporal resolution in the fMRI data is too low (TR > 1s) it's likely
 that the analysis will not found major difference between the HRFs. This is due
@@ -39,8 +39,8 @@ from .utils import sort_by_expl_var
 build_numba_functions_of_hemolearn()
 
 
-class SLRDA(TransformerMixin):
-    """ Sparse Low-Rank Deconvolution Analysis (SLRDA) is a method to distangle
+class BDA(TransformerMixin):
+    """ Blind Deconvolution Analysis (BDA) is a algorithm to distangle
     the neural activation and the haemodynamic contributions in the fMRI data
     (BOLD signal).
 
@@ -217,7 +217,7 @@ class SLRDA(TransformerMixin):
         self.ltime_ = None
 
     def fit(self, X_fnames, confound_fnames=None):
-        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
+        """ Perform the Blind Deconvolution Analysis (BDA) by
         fitting the model.
 
         Parameters
@@ -280,7 +280,7 @@ class SLRDA(TransformerMixin):
                 confounds = None
 
             if self.verbose > 0:
-                print(f"[SLRDA] Clean subject '{X_fnames[n]}'")
+                print(f"[BDA] Clean subject '{X_fnames[n]}'")
 
             x_clean = signal.clean(X[n].T, runs=None, detrend=self.detrend,
                                    standardize=self.standardize,
@@ -292,11 +292,11 @@ class SLRDA(TransformerMixin):
 
         if self.verbose > 0:
             if self.n_jobs > 1:
-                print(f"[SLRDA] Running {self.nb_fit_try} fit(s) on "
+                print(f"[BDA] Running {self.nb_fit_try} fit(s) on "
                       f"{self.n_subjects} subject(s) in parallel on "
                       f"{self.n_jobs} CPU")
             else:
-                print(f"[SLRDA] Running {self.nb_fit_try} fit(s) on "
+                print(f"[BDA] Running {self.nb_fit_try} fit(s) on "
                       f"{self.n_subjects} subject(s) in series")
 
         params = dict(
@@ -323,7 +323,7 @@ class SLRDA(TransformerMixin):
         else:
             decompose = multi_runs_blind_deconvolution_multiple_subjects
 
-        # SLRDA decomposition
+        # BDA decomposition
         res = decompose(**params)
 
         self.z_hat_ = res[0]
@@ -378,8 +378,8 @@ class SLRDA(TransformerMixin):
         return self
 
     def fit_transform(self, X_fnames, confound_fnames=None):
-        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
-        fitting the model (same as fit).
+        """ Perform the Blind Deconvolution Analysis (BDA) by
+        fitting the model and return the estimated vascular maps.
 
         Parameters
         ----------
@@ -395,8 +395,8 @@ class SLRDA(TransformerMixin):
         return self.a_hat_img
 
     def transform(self, X_fnames, confound_fnames=None):
-        """ Perform the Sparse Low-Rank Deconvolution Analysis (SLRDA) by
-        fitting the model (same as fit).
+        """ Return the vascular maps estimated from the Blind Deconvolution
+        Analysis (BDA).
 
         Parameters
         ----------
@@ -412,8 +412,8 @@ class SLRDA(TransformerMixin):
         return self.a_hat_img
 
     def _check_fitted(self):
-        """ Private helper, check if the Sparse Low-Rank Deconvolution Analysis
-        (SLRDA) have been done.
+        """ Private helper, check if the Blind Deconvolution Analysis (BDA)
+        have been done.
         """
         if self.n_subjects is None:
             raise NotFittedError("SLDRA must be fitted first.")

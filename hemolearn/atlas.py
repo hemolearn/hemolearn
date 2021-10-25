@@ -171,7 +171,7 @@ def fetch_basc_vascular_atlas(n_scales='scale007',
 
 
 def fetch_aal_vascular_atlas(target_affine=np.diag((5, 5, 5))):
-    """ Fetch the AAL3 brain atlas given its resolution.
+    """ Fetch the AAL brain atlas given its resolution.
 
     Parameters
     ----------

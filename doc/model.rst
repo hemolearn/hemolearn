@@ -1,8 +1,8 @@
 Model description
 =================
 
-Sparse Low-Rank Deconvolution Analysis (SLRDA)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Blind Deconvolution Analysis (BDA)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **HemoLearn** is a Python module offering a new algorithm that aims to fit a
 rich multivariate decomposition of the BOLD data using a semi-blind
