@@ -580,12 +580,12 @@ def blind_deconvolution_multiple_subjects(
                             print(f"[{ii + 1:03d}/{max_iter:03d}][001/003] "
                                   f"Temporal activations estimation done in "
                                   f"{ltime[-1]:.3f}s: cost = "
-                                  f"{lobj[-1] / lobj[0]:.6f}% (of "
+                                  f"{lobj[-1] / lobj[0]:.6f} (of "
                                   f"initial value)")
                         else:
                             print(f"[{ii + 1:03d}/{max_iter:03d}][1/3] "
                                   f"Temporal activations estimation done: "
-                                  f"cost = {lobj[-1] / lobj[0]:.6f}% "
+                                  f"cost = {lobj[-1] / lobj[0]:.6f} "
                                   f"(of initial value)")
 
             # check if some z_k vanished
@@ -641,12 +641,12 @@ def blind_deconvolution_multiple_subjects(
                             print(f"[{ii + 1:03d}/{max_iter:03d}][002/003] "
                                   f"Spatial maps estimation         done in "
                                   f"{ltime[-1]:.3f}s: cost = "
-                                  f"{lobj[-1] / lobj[0]:.6f}% (of "
+                                  f"{lobj[-1] / lobj[0]:.6f} (of "
                                   f"initial value)")
                         else:
                             print(f"[{ii + 1:03d}/{max_iter:03d}][002/003] "
                                   f"Spatial maps estimation  done: cost = "
-                                  f"{lobj[-1] / lobj[0]:.6f}% "
+                                  f"{lobj[-1] / lobj[0]:.6f} "
                                   f"(of initial value)")
 
             if not deactivate_v_learning:
@@ -686,12 +686,12 @@ def blind_deconvolution_multiple_subjects(
                             print(f"[{ii + 1:03d}/{max_iter:03d}][003/003] "
                                   f"HRF estimation                  done in "
                                   f"{ltime[-1]:.3f}s: cost = "
-                                  f"{lobj[-1] / lobj[0]:.6f}% (of "
+                                  f"{lobj[-1] / lobj[0]:.6f} (of "
                                   f"initial value)")
                         else:
                             print(f"[{ii + 1:03d}/{max_iter:03d}][003/003] "
                                   f"HRF estimation done:           cost = "
-                                  f"{lobj[-1] / lobj[0]:.6f}% "
+                                  f"{lobj[-1] / lobj[0]:.6f} "
                                   f"(of initial value)")
 
             if get_time == 1:
@@ -711,10 +711,10 @@ def blind_deconvolution_multiple_subjects(
                     if get_time:
                         print(f"[{ii + 1:03d}/{max_iter:03d}] Iteration done "
                               f"in {ltime[-1]:.3f}s: cost = "
-                              f"{lobj[-1] / lobj[0]:.6f}% (of initial value)")
+                              f"{lobj[-1] / lobj[0]:.6f} (of initial value)")
                     else:
                         print(f"[{ii + 1:03d}/{max_iter:03d}] Iteration done: "
-                              f"cost = {lobj[-1] / lobj[0]:.6f}% (of "
+                              f"cost = {lobj[-1] / lobj[0]:.6f} (of "
                               f"initial value)")
 
             if ii > 2 and get_obj:
