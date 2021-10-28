@@ -128,10 +128,11 @@ class BDA(TransformerMixin):
                  delta_init=1.0, u_init_type='ica', eta=10.0, z_init=None,
                  prox_u='l1-positive-simplex', deactivate_v_learning=False,
                  shared_spatial_maps=False, deactivate_z_learning=False,
-                 standardize=False, detrend=False, low_pass=None,
-                 high_pass=None, max_iter=100, random_state=None,
-                 early_stopping=True, eps=1.0e-5, raise_on_increase=True,
-                 cache_dir='__cache__', nb_fit_try=1, n_jobs=1, verbose=0):
+                 idx_first_vols=0, standardize=False, detrend=False,
+                 low_pass=None, high_pass=None, max_iter=100,
+                 random_state=None, early_stopping=True, eps=1.0e-5,
+                 raise_on_increase=True, cache_dir='__cache__', nb_fit_try=1,
+                 n_jobs=1, verbose=0):
 
         # model hyperparameters
         self.t_r = t_r
@@ -161,6 +162,7 @@ class BDA(TransformerMixin):
         self.raise_on_increase = raise_on_increase
 
         # preprocessing parameters
+        self.idx_first_vols = idx_first_vols
         self.standardize = standardize
         self.detrend = detrend
         self.low_pass = low_pass
@@ -248,11 +250,22 @@ class BDA(TransformerMixin):
 
         self.n_subjects = len(X_fnames)
 
+        # Discard first volumes
+        if self.idx_first_vols != 0:
+            X_imgs = []
+            for x_fname in X_fnames:
+                img = image.load_img(x_fname)
+                idx_scans = range(self.idx_first_vols, img.shape[-1])
+                X_imgs.append(image.index_img(img, idx_scans))
+
+        else:
+            X_imgs = X_fnames
+
         # load the fMRI data into a matrix, given-X being a filename,
         # produced-X being a 2d-array (n_voxels, n_time)
-        self.masker_.fit(X_fnames)
-        X = [self.masker_.transform_single_imgs(x_fname).T
-             for x_fname in X_fnames]
+        self.masker_.fit(X_imgs)
+        X = [self.masker_.transform_single_imgs(x_img).T
+             for x_img in X_imgs]
 
         # transformation of the atlas format:
         # flattent the HRF ROIs
@@ -273,9 +286,11 @@ class BDA(TransformerMixin):
         X_clean = []
         for n in range(self.n_subjects):
 
+            # XXX confounds should be CSV file with '\t' sep
             if confound_fnames is not None:
-                # XXX confounds should be CSV file with '\t' sep
-                confounds = pd.read_csv(confound_fnames[n], sep='\t')
+                confounds = pd.read_csv(confound_fnames[n],
+                                        skiprows=self.idx_first_vols, sep='\t')
+
             else:
                 confounds = None
 
