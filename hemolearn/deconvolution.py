@@ -23,27 +23,19 @@ from .prox import (_prox_l1_simplex, _prox_positive_l2_ball, _prox_positive,
                    _prox_tv_multi)
 
 
-def set_get_time_get_obj(verbose, raise_on_increase, early_stopping):
+def set_get_time_get_obj(get_obj, verbose, raise_on_increase, early_stopping):
     """ Set 'get_time' and 'get_obj' from verbosity level.
     """
     if verbose >= 2:
-        get_time = 2
         get_obj = 2
 
-    elif verbose == 1:
-        get_time = 1
+    elif verbose == 1 and get_obj == 0:
         get_obj = 1
-
-    else:
-        get_time = 0
-        get_obj = 0
 
     if (raise_on_increase or early_stopping) and (get_obj == 0):
         get_obj = 1
-        print("If 'raise_on_increase' or 'early_stopping' are enables: "
-              "'get_obj' is forced to '1'")
 
-    return get_obj, get_time
+    return get_obj
 
 
 def init_z_hat(z_init, n_subjects, n_atoms, n_times_valid):
@@ -317,7 +309,7 @@ def blind_deconvolution_multiple_subjects(
         deactivate_u_learning=False, n_atoms=10, n_times_atom=60, prox_z='tv',
         lbda_strategy='ratio', lbda=0.1, rho=2.0, delta_init=1.0,
         u_init_type='ica', eta=10.0, z_init=None, prox_u='l1-positive-simplex',
-        max_iter=100, get_obj=0, get_time=0, random_seed=None,
+        max_iter=100, get_obj=0, get_time=False, random_seed=None,
         early_stopping=True, eps=1.0e-5, raise_on_increase=True, verbose=0):
     """ Multivariate Blind Deconvolution main function for mulitple subjects.
 
@@ -459,8 +451,8 @@ def blind_deconvolution_multiple_subjects(
 
     constants = dict(rois_idx=rois_idx, hrf_model=hrf_model)
 
-    get_obj, get_time = set_get_time_get_obj(verbose, raise_on_increase,
-                                             early_stopping)
+    get_obj = set_get_time_get_obj(get_obj, verbose, raise_on_increase,
+                                   early_stopping)
 
     # v initialization
     v_hat, a_hat = init_v_hat(hrf_model, t_r, n_times_atom, n_subjects,

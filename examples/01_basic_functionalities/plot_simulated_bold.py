@@ -48,8 +48,8 @@ results = deconvolution.multi_runs_blind_deconvolution_multiple_subjects(
                     deactivate_v_learning=True, prox_u='l1-positive-simplex',
                     n_times_atom=n_times_atom, hrf_model='scaled_hrf',
                     lbda_strategy='ratio', lbda=0.5,
-                    u_init_type='gaussian_noise', max_iter=30, get_obj=True,
-                    get_time=True, raise_on_increase=False, random_seed=None,
+                    u_init_type='gaussian_noise', max_iter=30, get_obj=1,
+                    raise_on_increase=True, random_seed=None,
                     n_jobs=4, nb_fit_try=4, verbose=0)
 z_hat, _, u_hat, a_hat, v_hat, v_init, _, pobj, times = results
 z_hat, u_hat, a_hat, v_hat = z_hat[0], u_hat[0], a_hat[0], v_hat[0]
