@@ -9,6 +9,7 @@ import zipfile
 import numpy as np
 import numba
 from nilearn import image, datasets
+from hemolearn import image_nilearn
 
 
 valid_scales = ['scale007', 'scale012', 'scale036', 'scale064', 'scale122',
@@ -131,7 +132,7 @@ def fetch_harvard_vascular_atlas(sym=True, target_affine=np.diag((5, 5, 5))):
     else:
         atlas_to_return = atlas
 
-    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+    brain_mask = image_nilearn.binarize_img(atlas_to_return, threshold=0)
 
     return brain_mask, atlas_to_return
 
@@ -165,7 +166,7 @@ def fetch_basc_vascular_atlas(n_scales='scale007',
     atlas_to_return = image.resample_img(atlas_to_return, target_affine,
                                          interpolation='nearest')
 
-    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+    brain_mask = image_nilearn.binarize_img(atlas_to_return, threshold=0)
 
     return brain_mask, atlas_to_return
 
@@ -190,7 +191,7 @@ def fetch_aal_vascular_atlas(target_affine=np.diag((5, 5, 5))):
     atlas_to_return = image.resample_img(atlas_to_return, target_affine,
                                          interpolation='nearest')
 
-    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+    brain_mask = image_nilearn.binarize_img(atlas_to_return, threshold=0)
 
     return brain_mask, atlas_to_return
 
@@ -240,6 +241,6 @@ def fetch_aal3_vascular_atlas(target_affine=np.diag((5, 5, 5))):
     atlas_to_return = image.resample_img(atlas_to_return, target_affine,
                                          interpolation='nearest')
 
-    brain_mask = image.binarize_img(atlas_to_return, threshold=0)
+    brain_mask = image_nilearn.binarize_img(atlas_to_return, threshold=0)
 
     return brain_mask, atlas_to_return
