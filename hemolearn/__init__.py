@@ -290,6 +290,7 @@ class BDA(TransformerMixin):
             if confound_fnames is not None:
                 confounds = pd.read_csv(confound_fnames[n],
                                         skiprows=self.idx_first_vols, sep='\t')
+                confounds = confounds.fillna(confounds.mean())
 
             else:
                 confounds = None
