@@ -575,7 +575,7 @@ def blind_deconvolution_multiple_subjects(
                                   f"{lobj[-1] / lobj[0]:.6f} (of "
                                   f"initial value)")
                         else:
-                            print(f"[{ii + 1:03d}/{max_iter:03d}][1/3] "
+                            print(f"[{ii + 1:03d}/{max_iter:03d}][001/003] "
                                   f"Temporal activations estimation done: "
                                   f"cost = {lobj[-1] / lobj[0]:.6f} "
                                   f"(of initial value)")
