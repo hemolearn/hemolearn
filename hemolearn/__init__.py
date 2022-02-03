@@ -248,6 +248,15 @@ class BDA(TransformerMixin):
             raise ValueError(f"fMRI data should passed as a list of"
                              f"filenames (string), got {type(X_fnames)}")
 
+        if isinstance(confound_fnames, str):
+            confound_fnames = [confound_fnames]
+
+        if isinstance(confound_fnames, list):
+            for x_i in confound_fnames:
+                if not isinstance(x_i, str):
+                    raise ValueError(f"Confounds should passed as a "
+                                     f"filename (string), got {type(x_i)}")
+
         self.n_subjects = len(X_fnames)
 
         # Discard first volumes
